@@ -13,7 +13,7 @@
 
 <Header />
 
-<main class="pt-16 pb-20 min-h-screen">
+<main class="pt-16 pb-18 min-h-screen">
 	{@render children()}
 </main>
 
