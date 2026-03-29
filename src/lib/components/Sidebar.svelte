@@ -10,11 +10,6 @@
 		dividerBefore?: boolean;
 	};
 
-	/*
-		dividerBefore: adds a hairline separator above the item —
-		used to group (discovery / action / personal) without labels.
-		Grouping through whitespace/dividers is less noisy than section headers.
-	*/
 	const navItems: NavItem[] = [
 		{
 			href: '/',
@@ -63,10 +58,8 @@
 	style="background-color: oklch(0.105 0.026 265 / 0.98);"
 >
 	<!--
-		Atmospheric signal bloom at the bottom of the sidebar.
-		Mirrors the body's background language — both use radial-gradient blooms.
-		pointer-events-none so it never interferes with clicks.
-		This grounds the sidebar in the same visual atmosphere as the page.
+		Atmospheric bloom at bottom-left — same radial-gradient language
+		as the body background. Sidebar feels inside the same space as the page.
 	-->
 	<div
 		class="absolute bottom-0 left-0 w-full h-48 pointer-events-none"
@@ -74,25 +67,36 @@
 		style="background: radial-gradient(ellipse 120% 80% at 0% 100%, oklch(0.45 0.15 265 / 0.07) 0%, transparent 65%);"
 	></div>
 
-	<nav class="flex flex-col px-3 pt-5 flex-1 pb-20 relative" aria-label="Main navigation">
+	<!--
+		User identity block: avatar + name + level.
+		Makes the sidebar feel like it knows who the user is — essential for
+		any product that rewards personal discovery and tracks contribution.
+		shrink-0: never gets compressed when nav overflows.
+	-->
+	<div class="shrink-0 px-4 pt-5 pb-3.5">
+		<div class="flex items-center gap-2.5">
+			<div class="w-8 h-8 rounded-full bg-primary/15 border border-primary/28 flex items-center justify-center text-[12px] font-semibold text-primary/75 shrink-0">
+				D
+			</div>
+			<div class="min-w-0">
+				<p class="text-[13px] font-medium text-base-content/88 truncate leading-snug">Dan</p>
+				<p class="text-[10px] text-base-content/38 leading-snug">Scout · Level 4</p>
+			</div>
+		</div>
+	</div>
+
+	<div class="shrink-0 h-px bg-white/5 mx-3 mb-1" aria-hidden="true"></div>
+
+	<!-- Nav: flex-1 so it fills remaining space between user block and stats -->
+	<nav class="flex flex-col px-3 pt-3 flex-1 relative overflow-y-auto" aria-label="Main navigation">
 		{#each navItems as item (item.href)}
 			{@const isActive = page.url.pathname === item.href}
 
 			{#if item.dividerBefore}
-				<!--
-					Hairline divider: mx-3 so it doesn't span the full sidebar width —
-					a touch more elegant than edge-to-edge. Used to group nav sections.
-				-->
 				<div class="h-px bg-white/5 mx-1 my-2" aria-hidden="true"></div>
 			{/if}
 
 			{#if item.primary}
-				<!--
-					Spark a Signal: uses the brand's signal mark SVG instead of a + cross.
-					The concentric circle motif IS the product identity — using it here
-					makes this button feel like it belongs to Outer Signal specifically,
-					not just any app with a primary action.
-				-->
 				<a
 					href={item.href}
 					class={[
@@ -103,8 +107,8 @@
 					]}
 					aria-current={isActive ? 'page' : undefined}
 				>
-					<!-- Signal mark: the brand motif as the action icon -->
-					<svg class="w-3.5 h-3.5 shrink-0 text-primary" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+					<!-- Signal mark icon: the brand motif as the action icon -->
+					<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 14 14" fill="none" aria-hidden="true">
 						<circle cx="7" cy="7" r="2" fill="currentColor" opacity="0.9" />
 						<circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1" opacity="0.55" />
 						<circle cx="7" cy="7" r="6.5" stroke="currentColor" stroke-width="0.75" opacity="0.28" />
@@ -113,17 +117,11 @@
 				</a>
 			{:else}
 				<!--
-					Regular nav item wrapped in relative so the active bar
-					anchors correctly. The bar uses absolute positioning relative
-					to this wrapper, not the sidebar.
+					relative wrapper: required so the absolute active bar
+					anchors to this element, not an ancestor.
 				-->
 				<div class="relative">
 					{#if isActive}
-						<!--
-							Left edge active bar: 2px wide, positioned at the very left
-							of the sidebar (not the nav item padding).
-							-left-3 reaches back to the sidebar edge (px-3 on the nav).
-						-->
 						<span
 							class="absolute -left-3 top-1/2 -translate-y-1/2 w-0.5 h-5 rounded-r-full bg-primary/65"
 							aria-hidden="true"
@@ -143,7 +141,7 @@
 						<svg
 							class={[
 								'w-3.5 h-3.5 shrink-0 transition-colors',
-								isActive ? 'text-primary/65' : 'text-base-content/38',
+								isActive ? 'text-primary/65' : 'text-base-content/35',
 							]}
 							viewBox={item.viewBox ?? '0 0 16 16'}
 							fill="none"
@@ -161,4 +159,29 @@
 			{/if}
 		{/each}
 	</nav>
+
+	<!--
+		Activity stats: bottom of sidebar, above the bottom player gap.
+		Shows the user's contribution — essential for a product that
+		rewards early discovery. pb-20 clears the fixed bottom player.
+		shrink-0: never compressed even if nav grows.
+	-->
+	<div class="shrink-0 px-3 pb-20 relative">
+		<div class="h-px bg-white/5 mx-0 mb-3" aria-hidden="true"></div>
+		<div class="rounded-lg bg-white/3 border border-white/6 p-3.5">
+			<p class="text-[10px] font-semibold uppercase tracking-widest text-base-content/25 mb-3">Your Activity</p>
+			<div class="flex items-center gap-0">
+				<div class="flex-1">
+					<p class="text-lg font-bold text-base-content/70 leading-none">3</p>
+					<p class="text-[10px] text-base-content/35 mt-1">Amplified</p>
+				</div>
+				<div class="w-px h-8 bg-white/8 shrink-0"></div>
+				<div class="flex-1 pl-4">
+					<p class="text-lg font-bold text-base-content/70 leading-none">12</p>
+					<p class="text-[10px] text-base-content/35 mt-1">Discovered</p>
+				</div>
+			</div>
+		</div>
+	</div>
+
 </aside>
