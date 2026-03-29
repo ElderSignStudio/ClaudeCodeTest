@@ -74,8 +74,8 @@
 					class={[
 						'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200',
 						isActive
-							? 'bg-primary/22 text-primary border border-primary/42 os-play-glow'
-							: 'bg-primary/10 text-primary/80 border border-primary/28 hover:bg-primary/18 hover:text-primary hover:border-primary/45',
+							? 'bg-primary/28 text-primary border border-primary/55 os-play-glow'
+							: 'bg-primary/12 text-primary/85 border border-primary/32 hover:bg-primary/22 hover:text-primary hover:border-primary/52',
 					]}
 					aria-current={isActive ? 'page' : undefined}
 				>
@@ -101,8 +101,8 @@
 						class={[
 							'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all duration-150 w-full',
 							isActive
-								? 'bg-primary/8 text-base-content/92 font-semibold'
-								: 'text-base-content/48 hover:text-base-content/80 hover:bg-white/5',
+								? 'bg-primary/12 text-base-content/95 font-semibold'
+								: 'text-base-content/52 hover:text-base-content/85 hover:bg-white/6',
 						]}
 						aria-current={isActive ? 'page' : undefined}
 					>
@@ -114,7 +114,7 @@
 						<svelte:component
 							this={item.icon}
 							size={14}
-							class={isActive ? 'text-primary/65' : 'text-base-content/35'}
+							class={isActive ? 'text-primary/80' : 'text-base-content/40'}
 						/>
 						{item.label}
 					</a>
