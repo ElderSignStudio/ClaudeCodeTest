@@ -76,12 +76,12 @@ body {
   background-image:
     radial-gradient(
       ellipse 80% 60% at 10% 18%,
-      oklch(0.45 0.15 265 / 0.08) 0%,
+      oklch(0.45 0.15 265 / 0.11) 0%,
       transparent 60%
     ),
     radial-gradient(
       ellipse 65% 70% at 90% 82%,
-      oklch(0.40 0.15 290 / 0.06) 0%,
+      oklch(0.40 0.15 290 / 0.08) 0%,
       transparent 55%
     ),
     radial-gradient(
@@ -138,5 +138,24 @@ body {
     box-shadow:
       0 0 16px -4px var(--color-primary),
       inset 0 1px 0 oklch(1 0 0 / 0.1);
+  }
+
+  /*
+    os-hero-card: ambient primary-tinted shadow that lifts the featured
+    card off the surface. Separate from os-surface so it can be applied
+    to full-bleed cards that don't use the surface background utility.
+    Transitions on hover for a subtle depth-shift without animation.
+  */
+  .os-hero-card {
+    box-shadow:
+      0 4px 28px -4px oklch(0.45 0.15 265 / 0.25),
+      0 1px 6px -1px oklch(0 0 0 / 0.30);
+    transition: box-shadow 0.3s ease;
+
+    &:hover {
+      box-shadow:
+        0 10px 44px -4px oklch(0.45 0.15 265 / 0.42),
+        0 2px 10px -2px oklch(0 0 0 / 0.36);
+    }
   }
 }
