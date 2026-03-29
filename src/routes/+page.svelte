@@ -60,60 +60,62 @@
 			{#each forYouItems as item (item.id)}
 				{#if item.featured}
 					<!--
-						Hero card: full restructure from prior approach.
-
-						Key structural change: no padding on the card itself.
-						The art area is full-bleed top/sides — fills edge to edge.
-						Info section has its own padding below the art.
-						This makes it read as a content object, not a padded container.
-
-						os-hero-card: primary-tinted ambient shadow from app.css —
-						lifts the card off the surface with a glow that intensifies on hover.
-
-						Signal rings: now centered vertically in the art area (not clipped
-						at corner) so they feel composed, not decorative overflow.
-						Three rings at different opacities create the "signal propagating" effect.
-
-						Pick badge: lives inside the art area, top-right, with backdrop-blur
-						so it reads as an editorial stamp on the content.
-
-						Amplify button: surfaces the core product action in the info row —
-						gives the hero card a clear CTA without hover-gating it.
-
-						Play overlay still appears on hover — the two don't conflict because
-						Amplify is always visible while Play only appears on hover.
+						Hero card: full-bleed art area, info section below.
+						os-hero-card provides the primary-tinted ambient shadow.
 					-->
 					<div
-						class="col-span-2 group relative rounded-xl overflow-hidden cursor-pointer os-hero-card border border-primary/22 hover:border-primary/42 transition-colors duration-300 bg-oklch-surface"
-						style="background-color: oklch(0.115 0.028 265 / 0.95);"
+						class="col-span-2 group relative rounded-xl overflow-hidden cursor-pointer os-hero-card border border-primary/20 hover:border-primary/38 transition-colors duration-300"
+						style="background-color: oklch(0.112 0.028 265 / 0.97);"
 					>
-						<!-- Art area: full-bleed, no side padding -->
-						<div class="relative w-full h-40 overflow-hidden">
-							<!-- Atmospheric gradient wash -->
-							<div class="absolute inset-0 bg-linear-to-br from-primary/25 via-primary/8 to-secondary/18"></div>
-							<!-- Subtle noise/texture illusion via layered gradients -->
-							<div class="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent"></div>
+						<!-- Art area: full-bleed -->
+						<div class="relative w-full h-44 overflow-hidden">
+							<!--
+								Two-layer gradient: directional wash + bottom vignette.
+								The directional wash (br) gives depth and color.
+								The vignette (b) darkens the bottom edge so the info
+								section below feels like it emerges from the art rather
+								than sitting beneath a hard line.
+							-->
+							<div class="absolute inset-0 bg-linear-to-br from-primary/28 via-primary/10 to-secondary/20"></div>
+							<div class="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/45"></div>
 
-							<!-- Signal rings — centered, composed, not clipped -->
-							<div class="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
-								<svg class="w-52 h-52 text-primary" viewBox="0 0 208 208" fill="none">
-									<circle cx="104" cy="104" r="14" fill="currentColor" opacity="0.18" />
-									<circle cx="104" cy="104" r="38" stroke="currentColor" stroke-width="1.25" opacity="0.13" />
-									<circle cx="104" cy="104" r="66" stroke="currentColor" stroke-width="1" opacity="0.09" />
-									<circle cx="104" cy="104" r="96" stroke="currentColor" stroke-width="0.75" opacity="0.06" />
+							<!--
+								Signal rings: offset right so they read as a signal
+								propagating from a source point, not just centered decoration.
+								Faint enough to be texture, present enough to be identity.
+							-->
+							<div
+								class="absolute top-1/2 -translate-y-1/2 -right-8 pointer-events-none"
+								aria-hidden="true"
+							>
+								<svg class="w-56 h-56 text-primary" viewBox="0 0 224 224" fill="none">
+									<circle cx="112" cy="112" r="16" fill="currentColor" opacity="0.20" />
+									<circle cx="112" cy="112" r="44" stroke="currentColor" stroke-width="1.25" opacity="0.14" />
+									<circle cx="112" cy="112" r="76" stroke="currentColor" stroke-width="1" opacity="0.09" />
+									<circle cx="112" cy="112" r="108" stroke="currentColor" stroke-width="0.75" opacity="0.05" />
 								</svg>
 							</div>
 
-							<!-- Pick badge: inside art, top-right, editorial stamp -->
+							<!--
+								Faint primary bloom at top-left — a light source that
+								gives the art area a sense of illuminated depth.
+							-->
+							<div
+								class="absolute -top-4 -left-4 w-28 h-28 pointer-events-none"
+								aria-hidden="true"
+								style="background: radial-gradient(circle, oklch(0.55 0.18 265 / 0.18) 0%, transparent 70%);"
+							></div>
+
+							<!-- Pick badge: editorial stamp, top-right -->
 							<div class="absolute top-3 right-3">
-								<span class="text-[10px] font-semibold text-primary/90 border border-primary/35 rounded-full px-2.5 py-1 bg-black/40 backdrop-blur-sm">
+								<span class="text-[10px] font-semibold tracking-wide text-primary/88 border border-primary/32 rounded-full px-2.5 py-1 bg-black/45 backdrop-blur-sm">
 									Pick
 								</span>
 							</div>
 
 							<!-- Play overlay on hover -->
 							<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-								<div class="w-11 h-11 rounded-full bg-primary/28 border border-primary/50 text-primary flex items-center justify-center os-play-glow">
+								<div class="w-11 h-11 rounded-full bg-primary/28 border border-primary/52 text-primary flex items-center justify-center os-play-glow">
 									<svg class="w-4 h-4 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 										<path d="M3 2l8 4-8 4V2z" />
 									</svg>
@@ -121,22 +123,22 @@
 							</div>
 						</div>
 
-						<!-- Info section: padded, sits below full-bleed art -->
+						<!-- Info section -->
 						<div class="px-4 py-3.5 flex items-center justify-between gap-3">
 							<div class="min-w-0">
-								<p class="text-[15px] font-semibold text-base-content/95 truncate tracking-tight">{item.title}</p>
+								<!--
+									text-base (16px) + tracking-tight — matches the card's
+									prominence. Was 15px, which felt slightly undersized
+									relative to the full-bleed art above it.
+								-->
+								<p class="text-base font-semibold text-base-content/95 truncate tracking-tight">{item.title}</p>
 								<p class="text-[11px] text-base-content/45 truncate mt-0.5">
 									{item.artist} · {item.scouts} Scout{item.scouts === 1 ? '' : 's'}
 								</p>
 							</div>
-							<!--
-								Amplify: always visible in hero, not hover-gated.
-								The hero card's CTA should be reachable without hovering.
-								Uses accent color (teal-blue) instead of primary to avoid
-								competing with the primary-tinted art area above.
-							-->
+							<!-- Amplify: always visible, uses accent not primary -->
 							<button
-								class="shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-medium text-accent/75 border border-accent/28 hover:text-accent hover:border-accent/52 hover:bg-accent/8 transition-all"
+								class="shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-medium text-accent/72 border border-accent/25 hover:text-accent hover:border-accent/50 hover:bg-accent/8 transition-all"
 								aria-label="Amplify this signal"
 							>
 								<svg class="w-3 h-3 shrink-0" viewBox="0 0 12 12" fill="none" aria-hidden="true">
