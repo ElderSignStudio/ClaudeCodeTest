@@ -214,29 +214,69 @@
 
 	<!-- ── 2. One Step Away ──────────────────────────────────── -->
 	<section>
-		<div class="flex items-center justify-between mb-4">
+		<!--
+			Two-line header: title + subtitle.
+			mb-1 on the flex row keeps the subtitle close to the title,
+			then mb-4 after the subtitle creates the normal gap before cards.
+		-->
+		<div class="flex items-center justify-between mb-1">
 			<div class="flex items-center gap-2">
 				<div class="w-0.75 h-3.5 rounded-full bg-accent" aria-hidden="true"></div>
 				<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">One Step Away</p>
 			</div>
-			<span class="text-[12px] text-base-content/65">Signals just outside your taste</span>
+			<a href="/discover" class="text-[12px] text-base-content/55 hover:text-accent/80 transition-colors">
+				See all →
+			</a>
 		</div>
+		<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Near your taste, but not obvious</p>
 
-		<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none">
+		<!--
+			w-36 (144px) vs w-40 (160px) in For You — intentionally denser,
+			creates the exploratory "browse more" feeling.
+			items-start prevents stretch distortion between cards.
+			gap-2.5 (tighter than gap-3) reinforces the denser rhythm.
+		-->
+		<div class="flex gap-2.5 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 			{#each oneStepAwayItems as item (item.id)}
-				<div class="group shrink-0 w-40 rounded-lg overflow-hidden border border-white/8 hover:border-white/20 cursor-pointer transition-all duration-200 os-card-glow">
+				<!--
+					relative on the wrapper so the left edge strip can be absolutely positioned.
+					hover:border-accent/28: border shifts toward accent on hover (subtle).
+				-->
+				<div class="group relative shrink-0 w-36 rounded-lg overflow-hidden border border-white/8 hover:border-accent/28 cursor-pointer transition-all duration-200 os-card-glow">
+
+					<!--
+						Left edge strip: visual "connection" hint (Option A).
+						3px wide, accent color at 30% resting → 55% on hover.
+						z-10 keeps it above the image but inside the card border-radius.
+						This is the single design element that makes this lane feel "connected".
+					-->
+					<div
+						class="absolute left-0 top-0 bottom-0 w-0.75 bg-accent/30 group-hover:bg-accent/55 transition-colors duration-200 z-10"
+						aria-hidden="true"
+					></div>
+
 					<div class="relative w-full aspect-square">
 						<img
 							src={item.image}
 							alt={item.title}
-							class="w-full h-full object-cover opacity-70 group-hover:opacity-88 transition-opacity duration-300"
+							class="w-full h-full object-cover opacity-65 group-hover:opacity-82 transition-opacity duration-300"
 						/>
 						<div class="absolute inset-0 bg-linear-to-t from-black/78 via-black/18 to-transparent"></div>
 
-						<!-- Signal pulse -->
+						<!--
+							Faint accent tint: differentiates from For You (primary tint) and
+							Breaking Out (neutral). mix-blend-color preserves image luminance.
+							At 10% it's atmospheric, not heavy.
+						-->
+						<div class="absolute inset-0 bg-linear-to-br from-accent/10 to-transparent mix-blend-color"></div>
+
+						<!--
+							Signal pulse: accent-colored (not primary) to match lane identity.
+							Slightly lower opacity (0.09 vs 0.10) — this lane is quieter.
+						-->
 						<div
 							class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-							style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
+							style="background: radial-gradient(circle at 50% 50%, oklch(0.72 0.16 220 / 0.09) 0%, transparent 65%);"
 							aria-hidden="true"
 						></div>
 
@@ -248,20 +288,22 @@
 								</svg>
 							</div>
 						</div>
-
-						<!-- Adjacent badge -->
-						<div class="absolute top-2 left-2">
-							<span
-								class="text-[10px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
-								style="color: var(--color-accent); border-color: oklch(0.72 0.16 220 / 0.45);"
-							>
-								Adjacent
-							</span>
-						</div>
 					</div>
-					<div class="p-2.5 bg-base-200/70">
+
+					<!--
+						pl-3.5 instead of p-2.5: extra left padding to visually clear the 3px edge strip.
+						adjacencyReason: accent-tinted, smaller than artist, acts as the "why this is here".
+						It communicates intent without dominating the card.
+					-->
+					<div class="pt-2.5 pr-2.5 pb-2.5 pl-3.5 bg-base-200/70">
 						<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-						<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist}</p>
+						<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist} · {item.genre}</p>
+						{#if item.adjacencyReason}
+							<p
+								class="text-[10px] mt-1.5 truncate font-medium"
+								style="color: oklch(0.72 0.16 220 / 0.72);"
+							>{item.adjacencyReason}</p>
+						{/if}
 					</div>
 				</div>
 			{/each}
