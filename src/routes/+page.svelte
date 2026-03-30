@@ -177,7 +177,7 @@
 					<div class="px-4 py-3.5 shrink-0 flex items-center justify-between gap-3" style="background-color: oklch(0.112 0.030 265 / 0.97);">
 						<div class="min-w-0">
 							<p class="text-base font-bold text-base-content truncate tracking-tight">{featuredItem.title}</p>
-							<p class="text-[12px] text-base-content/62 truncate mt-0.5">
+							<p class="text-[12px] text-base-content/70 truncate mt-0.5">
 								{featuredItem.artist} · {featuredItem.scouts} Scout{featuredItem.scouts === 1 ? '' : 's'}
 							</p>
 						</div>
@@ -231,7 +231,7 @@
 								<!-- Info overlay -->
 								<div class="absolute bottom-0 left-0 right-0 p-2.5">
 									<p class="text-[13px] font-bold text-white truncate leading-snug">{item.title}</p>
-									<p class="text-[11px] text-white/68 truncate mt-0.5">{item.genre}</p>
+									<p class="text-[11px] text-white/75 truncate mt-0.5">{item.genre}</p>
 								</div>
 							</div>
 						</div>
@@ -249,8 +249,8 @@
 				<div class="w-0.75 h-3.5 rounded-full bg-success" aria-hidden="true"></div>
 				<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">Gaining Resonance</p>
 			</div>
-			<span class="text-[12px] text-base-content/58 flex items-center gap-1">
-				<TrendingUp size={11} class="text-success/75" />
+			<span class="text-[12px] text-base-content/65 flex items-center gap-1">
+				<TrendingUp size={11} class="text-success/80" />
 				Scouts are accumulating
 			</span>
 		</div>
@@ -298,8 +298,8 @@
 						</div>
 					</div>
 					<div class="p-2.5 bg-base-200/70">
-						<p class="text-[13px] font-bold text-base-content/90 truncate leading-snug">{item.title}</p>
-						<p class="text-[11px] text-base-content/58 truncate mt-0.5">{item.artist}</p>
+						<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
+						<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist}</p>
 					</div>
 				</div>
 			{/each}
@@ -313,7 +313,7 @@
 				<div class="w-0.75 h-3.5 rounded-full bg-base-content/35" aria-hidden="true"></div>
 				<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Weak Signals</p>
 			</div>
-			<span class="text-[12px] text-base-content/55">What almost nobody is hearing yet</span>
+			<span class="text-[12px] text-base-content/65">What almost nobody is hearing yet</span>
 		</div>
 
 		<div class="os-surface divide-y divide-white/5 overflow-hidden">
@@ -327,10 +327,10 @@
 						/>
 					</div>
 					<div class="flex-1 min-w-0">
-						<p class="text-[14px] font-semibold text-base-content/88 truncate">{item.title}</p>
-						<p class="text-[12px] text-base-content/60 truncate">{item.artist} · {item.genre}</p>
+						<p class="text-[14px] font-semibold text-base-content/95 truncate">{item.title}</p>
+						<p class="text-[12px] text-base-content/68 truncate">{item.artist} · {item.genre}</p>
 					</div>
-					<p class="text-[12px] text-base-content/52 shrink-0 group-hover:text-base-content/72 transition-colors">
+					<p class="text-[12px] text-base-content/58 shrink-0 group-hover:text-base-content/80 transition-colors">
 						{item.scouts === 0 ? 'No scouts yet' : `${item.scouts} Scout${item.scouts === 1 ? '' : 's'}`}
 					</p>
 				</div>
@@ -345,7 +345,7 @@
 				<div class="w-0.75 h-3.5 rounded-full bg-secondary/70" aria-hidden="true"></div>
 				<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Deep Field</p>
 			</div>
-			<span class="text-[12px] text-base-content/55">Origin stories. Almost undiscovered.</span>
+			<span class="text-[12px] text-base-content/65">Origin stories. Almost undiscovered.</span>
 		</div>
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -359,13 +359,13 @@
 						/>
 					</div>
 					<div class="flex-1 min-w-0">
-						<p class="text-[13px] font-bold text-base-content/90 truncate">{item.title}</p>
-						<p class="text-[12px] text-base-content/62 truncate mt-0.5">{item.artist} · {item.genre}</p>
-						<p class="text-[12px] text-base-content/58 italic mt-2 leading-relaxed line-clamp-2">{item.note}</p>
+						<p class="text-[13px] font-bold text-base-content/95 truncate">{item.title}</p>
+						<p class="text-[12px] text-base-content/70 truncate mt-0.5">{item.artist} · {item.genre}</p>
+						<p class="text-[12px] text-base-content/62 italic mt-2 leading-relaxed line-clamp-2">{item.note}</p>
 						<div class="flex items-center gap-2 mt-2.5">
-							<span class="text-[11px] text-base-content/50">◈ {item.origin}</span>
+							<span class="text-[11px] text-base-content/55">◈ {item.origin}</span>
 							<span class="text-[11px] text-base-content/28">·</span>
-							<span class="text-[11px] text-base-content/48">
+							<span class="text-[11px] text-base-content/52">
 								{item.scouts === 0 ? 'No scouts yet' : `${item.scouts} Scout${item.scouts === 1 ? '' : 's'}`}
 							</span>
 						</div>

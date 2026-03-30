@@ -103,13 +103,13 @@
 							'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-base transition-all duration-150 w-full',
 							isActive
 								? 'bg-primary/12 text-base-content/95 font-semibold'
-								: 'text-base-content/75 font-medium hover:text-base-content/92 hover:bg-white/6',
+								: 'text-base-content/82 font-medium hover:text-base-content/95 hover:bg-white/6',
 						]}
 						aria-current={isActive ? 'page' : undefined}
 					>
 						<Icon
 							size={16}
-							class={isActive ? 'text-primary/80' : 'text-base-content/60'}
+							class={isActive ? 'text-primary/80' : 'text-base-content/68'}
 						/>
 						{item.label}
 					</a>
