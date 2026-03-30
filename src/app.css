@@ -78,6 +78,18 @@
     0 0 5px -1px oklch(0.72 0.16 220 / 0.50);
 }
 
+/* ─── Breaking Out — resonance bar shimmer ──────────────── */
+
+/*
+  Slow sweep across the resonance bar fill: 3s, ease-in-out so it
+  accelerates through the middle and fades at each edge.
+  Defined outside @layer utilities because @keyframes are always global.
+*/
+@keyframes os-shimmer {
+  0%   { transform: translateX(-150%); }
+  100% { transform: translateX(250%); }
+}
+
 /* ─── Base ───────────────────────────────────────────────── */
 
 body {
@@ -164,5 +176,37 @@ body {
         0 0 20px -8px oklch(0.68 0.20 265 / 0.14);
       transform: translateY(-1px) scale(1.02);
     }
+  }
+
+  /*
+    os-card-breaking: Breaking Out lane card.
+    Resting: faint success-tinted border ring — the card already glows slightly,
+    communicating "this is active". Other lanes have no resting glow.
+    Hover: success ring brightens + ambient bloom + stronger elevation
+    than os-card-glow. Scale(1.015) — slightly less than os-card-glow's 1.02
+    so the extra resting glow reads as the energy source, not the hover.
+  */
+  .os-card-breaking {
+    box-shadow:
+      0 0 0 1px oklch(0.74 0.17 158 / 0.12),
+      0 3px 12px -3px oklch(0 0 0 / 0.35);
+    transition: box-shadow 0.22s ease, transform 0.22s ease;
+
+    &:hover {
+      box-shadow:
+        0 0 0 1px oklch(0.74 0.17 158 / 0.30),
+        0 0 18px -4px oklch(0.74 0.17 158 / 0.22),
+        0 8px 28px -4px oklch(0 0 0 / 0.55);
+      transform: translateY(-2px) scale(1.015);
+    }
+  }
+
+  /*
+    os-bar-shimmer: applied to the highlight sweep inside a resonance bar.
+    Uses the os-shimmer keyframe. duration-[3s] equivalent but defined here
+    so the timing is co-located with the keyframe declaration above.
+  */
+  .os-bar-shimmer {
+    animation: os-shimmer 3s ease-in-out infinite;
   }
 }

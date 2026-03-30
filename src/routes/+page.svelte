@@ -408,45 +408,75 @@
 
 	<!-- ── 4. Breaking Out ──────────────────────────────────── -->
 	<section>
-		<div class="flex items-center justify-between mb-4">
+		<!--
+			Two-line header. Pulse dot beside the title communicates live activity —
+			it's the only ambient motion in the header area.
+		-->
+		<div class="flex items-center justify-between mb-1">
 			<div class="flex items-center gap-2">
 				<div class="w-0.75 h-3.5 rounded-full bg-success" aria-hidden="true"></div>
 				<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">Breaking Out</p>
+				<span class="w-1.5 h-1.5 rounded-full bg-success/75 animate-pulse" aria-hidden="true"></span>
 			</div>
-			<span class="text-[12px] text-base-content/65 flex items-center gap-1">
-				<TrendingUp size={11} class="text-success/80" />
-				Scouts are accumulating
+			<span class="text-[12px] text-base-content/52 flex items-center gap-1">
+				<TrendingUp size={11} class="text-success/65" />
+				Still early
 			</span>
 		</div>
+		<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Signals gaining momentum</p>
 
-		<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none">
+		<!--
+			w-44 (176px) — wider than For You standard cards (w-40).
+			Extra width gives breathing room for the momentum line + resonance bar.
+			os-card-breaking: has a resting success-tinted glow (unlike other lanes).
+			That resting glow is the main energy cue — the card already feels "alive"
+			before you interact with it.
+		-->
+		<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 			{#each breakingOutItems as item (item.id)}
-				<div class="group shrink-0 w-40 rounded-lg overflow-hidden border border-white/8 hover:border-white/20 cursor-pointer transition-all duration-200 os-card-glow">
+				<div class="group shrink-0 w-44 rounded-lg overflow-hidden border border-white/8 hover:border-success/30 cursor-pointer transition-all duration-200 os-card-breaking">
 					<div class="relative w-full aspect-square">
+						<!--
+							Slightly brighter at rest (opacity-72) than standard lanes (opacity-70).
+							The card already feels more present — it's not hidden, it's emerging.
+						-->
 						<img
 							src={item.image}
 							alt={item.title}
-							class="w-full h-full object-cover opacity-70 group-hover:opacity-88 transition-opacity duration-300"
+							class="w-full h-full object-cover opacity-[72%] group-hover:opacity-[88%] transition-opacity duration-300"
 						/>
-						<div class="absolute inset-0 bg-linear-to-t from-black/78 via-black/18 to-transparent"></div>
+						<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
 
-						<!-- Signal pulse -->
+						<!--
+							Success tint: faint green-teal wash.
+							For You uses primary (indigo), One Step Away uses accent (blue),
+							Breaking Out uses success (green-teal). Each lane has its own color identity.
+						-->
+						<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
+
+						<!--
+							Signal pulse: success-colored, opacity 0.12 (vs 0.09–0.10 elsewhere).
+							Slightly stronger — this lane is more energetic.
+						-->
 						<div
 							class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-							style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
+							style="background: radial-gradient(circle at 50% 50%, oklch(0.74 0.17 158 / 0.12) 0%, transparent 65%);"
 							aria-hidden="true"
 						></div>
 
-						<!-- Play overlay -->
+						<!-- Play overlay — w-8 (same as For You featured standard, larger than w-7) -->
 						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-							<div class="w-7 h-7 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-								<svg class="w-3 h-3 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+							<div class="w-8 h-8 rounded-full bg-white/22 border border-white/38 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
+								<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 									<path d="M3 2l8 4-8 4V2z" />
 								</svg>
 							</div>
 						</div>
 
-						<!-- Growth badge -->
+						<!--
+							Trend badge: "Surging" / "Rising" instead of "+N".
+							The numeric growth is now in the momentum line below — no duplication.
+						-->
 						<div class="absolute top-2 left-2">
 							<span
 								class="inline-flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
@@ -455,13 +485,46 @@
 									: `color: var(--color-accent); border-color: oklch(0.72 0.16 220 / 0.40); box-shadow: var(--glow-l3-accent);`}
 							>
 								<ArrowUpRight size={8} />
-								+{item.growth}
+								{item.trend === 'surging' ? 'Surging' : 'Rising'}
 							</span>
 						</div>
 					</div>
+
 					<div class="p-2.5 bg-base-200/70">
 						<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-						<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist}</p>
+						<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist} · {item.genre}</p>
+
+						<!--
+							Momentum line: the primary metadata addition for this lane.
+							Success-tinted (0.80 opacity = readable but not dominant).
+							More visible than artist text — it IS the important information here.
+						-->
+						{#if item.weeklyScouts !== undefined}
+							<p class="text-[11px] font-medium mt-1.5 truncate" style="color: oklch(0.74 0.17 158 / 0.80);">
+								+{item.weeklyScouts} scouts this week
+							</p>
+						{/if}
+
+						<!--
+							Resonance bar: thin 2px track, fill % driven by item.resonance.
+							Fill: success→accent gradient (left to right = growth direction).
+							Shimmer: os-bar-shimmer sweeps a white highlight across the fill —
+							this is the ONE controlled motion element for this lane.
+							The shimmer is contained to the fill div (overflow-hidden).
+						-->
+						{#if item.resonance !== undefined}
+							<div class="mt-2 h-0.5 rounded-full bg-white/10 overflow-hidden">
+								<div
+									class="relative h-full rounded-full bg-linear-to-r from-success/65 to-accent/50 overflow-hidden"
+									style="width: {item.resonance}%;"
+								>
+									<div
+										class="os-bar-shimmer absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/30 to-transparent"
+										aria-hidden="true"
+									></div>
+								</div>
+							</div>
+						{/if}
 					</div>
 				</div>
 			{/each}
