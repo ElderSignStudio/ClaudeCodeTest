@@ -63,6 +63,7 @@
 	<nav class="flex flex-col px-3 pt-3 flex-1 relative overflow-y-auto" aria-label="Main navigation">
 		{#each navItems as item (item.href)}
 			{@const isActive = page.url.pathname === item.href}
+			{@const Icon = item.icon}
 
 			{#if item.dividerBefore}
 				<div class="h-px bg-white/5 mx-1 my-2" aria-hidden="true"></div>
@@ -72,7 +73,7 @@
 				<a
 					href={item.href}
 					class={[
-						'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200',
+						'flex items-center gap-2.5 px-3 py-3 rounded-lg text-[15px] font-semibold transition-all duration-200',
 						isActive
 							? 'bg-primary/25 text-primary border border-primary/50 os-glow-interactive'
 							: 'bg-primary/12 text-primary/82 border border-primary/30 hover:bg-primary/20 hover:text-primary hover:border-primary/48',
@@ -80,7 +81,7 @@
 					aria-current={isActive ? 'page' : undefined}
 				>
 					<!-- Signal mark: brand motif as the CTA icon -->
-					<svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+					<svg class="w-4 h-4 shrink-0" viewBox="0 0 14 14" fill="none" aria-hidden="true">
 						<circle cx="7" cy="7" r="2" fill="currentColor" opacity="0.9" />
 						<circle cx="7" cy="7" r="4.5" stroke="currentColor" stroke-width="1" opacity="0.55" />
 						<circle cx="7" cy="7" r="6.5" stroke="currentColor" stroke-width="0.75" opacity="0.28" />
@@ -99,22 +100,16 @@
 					<a
 						href={item.href}
 						class={[
-							'flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] transition-all duration-150 w-full',
+							'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] transition-all duration-150 w-full',
 							isActive
 								? 'bg-primary/12 text-base-content/95 font-semibold'
-								: 'text-base-content/52 hover:text-base-content/85 hover:bg-white/6',
+								: 'text-base-content/68 font-medium hover:text-base-content/90 hover:bg-white/6',
 						]}
 						aria-current={isActive ? 'page' : undefined}
 					>
-						<!--
-							Lucide components accept size (number) and class props.
-							color is inherited via currentColor — Tailwind text-* classes
-							on the parent <a> flow through to the SVG stroke.
-						-->
-						<svelte:component
-							this={item.icon}
-							size={14}
-							class={isActive ? 'text-primary/80' : 'text-base-content/40'}
+						<Icon
+							size={16}
+							class={isActive ? 'text-primary/80' : 'text-base-content/52'}
 						/>
 						{item.label}
 					</a>
