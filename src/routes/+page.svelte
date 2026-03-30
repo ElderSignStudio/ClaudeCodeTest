@@ -2,9 +2,10 @@
 	import { Radio, TrendingUp, ArrowUpRight } from 'lucide-svelte';
 	import {
 		forYouItems, oneStepAwayItems, deepUndergroundItems,
-		breakingOutItems, humanSignalItems, outsideBubbleItems,
+		breakingOutItems, scoutItems, outsideBubbleItems,
 		originItems, driftItems,
 	} from '$lib/mock/data';
+	import ScoutCard from '$lib/components/ScoutCard.svelte';
 
 	function getGreeting(): string {
 		const hour = new Date().getHours();
@@ -533,36 +534,26 @@
 
 	<!-- ── 5. Human Signals ─────────────────────────────────── -->
 	<section>
-		<div class="flex items-center justify-between mb-4">
+		<!--
+			Two-line header. No right-side action — this lane is about exploration,
+			not filtering. The subtitle states the intent plainly.
+		-->
+		<div class="flex items-center mb-1">
 			<div class="flex items-center gap-2">
 				<div class="w-0.75 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></div>
 				<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Human Signals</p>
 			</div>
-			<span class="text-[12px] text-base-content/65">Discovered by people like you</span>
 		</div>
+		<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Follow people, not just songs</p>
 
 		<!--
-			Right column shows userContext ("Dan amplified this") instead of scout count.
-			Same row structure as Deep Underground — the metadata content changes, not the shape.
+			Scout Cards are wider than signal cards (w-56 vs w-40).
+			3–4 visible at once. items-start prevents height stretching.
+			These are not image-led cards — the avatar and stats are the content.
 		-->
-		<div class="os-surface divide-y divide-white/5 overflow-hidden">
-			{#each humanSignalItems as item (item.id)}
-				<div class="group flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors duration-150 cursor-pointer">
-					<div class="w-7 h-7 rounded-md overflow-hidden border border-white/10 shrink-0">
-						<img
-							src={item.image}
-							alt=""
-							class="w-full h-full object-cover opacity-55 group-hover:opacity-80 transition-opacity"
-						/>
-					</div>
-					<div class="flex-1 min-w-0">
-						<p class="text-[14px] font-semibold text-base-content/95 truncate">{item.title}</p>
-						<p class="text-[12px] text-base-content/68 truncate">{item.artist} · {item.genre}</p>
-					</div>
-					<p class="text-[12px] text-base-content/58 shrink-0 group-hover:text-base-content/80 transition-colors italic max-w-36 text-right truncate">
-						{item.userContext}
-					</p>
-				</div>
+		<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
+			{#each scoutItems as scout (scout.id)}
+				<ScoutCard {scout} />
 			{/each}
 		</div>
 	</section>

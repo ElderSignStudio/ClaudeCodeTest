@@ -109,6 +109,75 @@ export const humanSignalItems: HumanSignalItem[] = [
 	{ id: 'burial-light', title: 'Burial Light', artist: 'Three Thousand', scouts: 1, genre: 'Experimental', image: img('burial-light', 80, 80), userContext: 'Yuki found this last week'    },
 ];
 
+// Scout: a person-card type for the Human Signals lane.
+// Completely separate from Item — this represents a curator, not content.
+export type Scout = {
+	id: string;
+	name: string;
+	avatar: string;         // DiceBear URL
+	tasteProfile: string;   // e.g. "Obscure prog · dark folk · lost tapes"
+	earlySignals: number;   // total early sparks they've contributed
+	resonance: 'High' | 'Medium' | 'Low';
+	hitRate: number;        // percentage of early picks that later gained traction
+	activityLabel?: string; // e.g. "New spark today" — shown as a badge when present
+	following: boolean;     // whether the current user follows this scout
+	recentSignals: string[]; // small picsum image URLs for the thumbnail strip
+};
+
+function avatar(seed: string): string {
+	return `https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=1e1b4b`;
+}
+
+export const scoutItems: Scout[] = [
+	{
+		id:            'dan',
+		name:          'Dan',
+		avatar:        avatar('DanOuter'),
+		tasteProfile:  'Obscure prog · dark folk · lost tapes',
+		earlySignals:  8,
+		resonance:     'High',
+		hitRate:       72,
+		activityLabel: 'New spark today',
+		following:     true,
+		recentSignals: [img('dust-choir', 80, 80), img('forest-mouth', 80, 80), img('pale-static', 80, 80), img('neon-veda', 80, 80), img('iron-weather', 80, 80)],
+	},
+	{
+		id:            'alice',
+		name:          'Alice',
+		avatar:        avatar('AliceSignal'),
+		tasteProfile:  'Brazilian psych · strange collage · obscure finds',
+		earlySignals:  14,
+		resonance:     'High',
+		hitRate:       68,
+		activityLabel: 'Signal gaining resonance',
+		following:     true,
+		recentSignals: [img('ember-field', 80, 80), img('open-window', 80, 80), img('iron-coast', 80, 80), img('brass-weather', 80, 80), img('low-orbit', 80, 80)],
+	},
+	{
+		id:           'marco',
+		name:         'Marco',
+		avatar:       avatar('MarcoAmb'),
+		tasteProfile: 'Ambient · ritual · sonic geography',
+		earlySignals: 22,
+		resonance:    'High',
+		hitRate:      70,
+		following:    false,
+		recentSignals: [img('low-orbit', 80, 80), img('cinder-plain', 80, 80), img('weight-cloud', 80, 80), img('slow-satellite', 80, 80), img('mirror-static', 80, 80)],
+	},
+	{
+		id:            'yuki',
+		name:          'Yuki',
+		avatar:        avatar('YukiDeep'),
+		tasteProfile:  'Early experimental · field recordings · micro-scenes',
+		earlySignals:  6,
+		resonance:     'Medium',
+		hitRate:       58,
+		activityLabel: 'New amplify',
+		following:     false,
+		recentSignals: [img('burial-light', 80, 80), img('orbital-form', 80, 80), img('zero-archive', 80, 80), img('silver-coast', 80, 80), img('hollow-ritual', 80, 80)],
+	},
+];
+
 // 6. Outside the Bubble — intentionally different from user taste
 export const outsideBubbleItems: Item[] = [
 	{ id: 'brass-weather', title: 'Brass Weather', artist: 'South Facing',    scouts: 22, genre: 'Jazz',       image: img('brass-weather'), badge: 'Unexpected' },
