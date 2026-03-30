@@ -312,38 +312,95 @@
 
 	<!-- ── 3. Deep Underground ──────────────────────────────── -->
 	<section>
-		<div class="flex items-center justify-between mb-4">
+		<!-- Two-line header matching One Step Away pattern -->
+		<div class="flex items-center mb-1">
 			<div class="flex items-center gap-2">
 				<div class="w-0.75 h-3.5 rounded-full bg-secondary/60" aria-hidden="true"></div>
-				<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Deep Underground</p>
+				<p class="text-sm font-bold uppercase tracking-widest text-base-content/85">Deep Underground</p>
 			</div>
-			<span class="text-[12px] text-base-content/65">Nobody has heard this yet</span>
 		</div>
+		<p class="text-[12px] text-base-content/45 mb-4 ml-3.5">Almost no one knows these</p>
 
 		<!--
-			Images deliberately dimmer (opacity-40 vs 55) to feel hidden and buried.
-			The "Deep" badge reinforces the obscurity.
+			w-32 (128px) — the narrowest lane in the system. 6–7 cards visible at once.
+			gap-2: tightest gap, reinforces archival density.
+			No os-card-glow: that class adds scale + lift which feels too energetic here.
+			Hover feedback is purely image-opacity-based — restrained, respectful.
 		-->
-		<div class="os-surface divide-y divide-white/5 overflow-hidden">
+		<div class="flex gap-2 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none">
 			{#each deepUndergroundItems as item (item.id)}
-				<div class="group flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors duration-150 cursor-pointer">
-					<div class="w-7 h-7 rounded-md overflow-hidden border border-white/8 shrink-0">
+				<div class="group shrink-0 w-32 rounded-lg overflow-hidden border border-white/6 hover:border-white/14 cursor-pointer transition-colors duration-300">
+					<div class="relative w-full aspect-square">
+						<!--
+							opacity-40 at rest — dimmest of any lane.
+							Rises to opacity-60 on hover: "emerging from darkness".
+							duration-500 (slower than other lanes) reinforces the archival feeling.
+						-->
 						<img
 							src={item.image}
-							alt=""
-							class="w-full h-full object-cover opacity-40 group-hover:opacity-68 transition-opacity"
+							alt={item.title}
+							class="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500"
 						/>
+						<!--
+							Top also darkened (to-black/20) — the card feels enclosed, sealed.
+							Not just a bottom vignette: darkness comes from everywhere.
+						-->
+						<div class="absolute inset-0 bg-linear-to-t from-black/88 via-black/25 to-black/20"></div>
+
+						<!--
+							Signal pulse: near-neutral, very low chroma (0.04 vs 0.16–0.20 elsewhere).
+							Almost imperceptible — just a ghost hint of presence on hover.
+							This lane avoids color accents entirely.
+						-->
+						<div
+							class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
+							style="background: radial-gradient(circle at 50% 50%, oklch(0.75 0.04 265 / 0.07) 0%, transparent 60%);"
+							aria-hidden="true"
+						></div>
+
+						<!--
+							Play button: w-6 (smallest in the system), bg-white/15 (dimmer than w-7 white/20 elsewhere).
+							Same scale-in mechanic but the result is more subtle.
+						-->
+						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+							<div class="w-6 h-6 rounded-full bg-white/15 border border-white/28 text-white flex items-center justify-center scale-90 group-hover:scale-100 transition-transform duration-200">
+								<svg class="w-2.5 h-2.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+									<path d="M3 2l8 4-8 4V2z" />
+								</svg>
+							</div>
+						</div>
 					</div>
-					<div class="flex-1 min-w-0">
-						<p class="text-[14px] font-semibold text-base-content/95 truncate">{item.title}</p>
-						<p class="text-[12px] text-base-content/68 truncate">{item.artist} · {item.genre}</p>
+
+					<!--
+						bg-base-300/70: darker than base-200/70 used in other lanes.
+						Title at text-[11px] (vs [13px] elsewhere) — slightly reduced dominance.
+						Metadata line: scouts + sparks + locality — more data per card than any other lane.
+						Tags: [8px] chips — smallest text in the system, intentionally dense and raw.
+					-->
+					<div class="p-2 bg-base-300/70">
+						<p class="text-[11px] font-semibold text-base-content/88 truncate leading-snug">{item.title}</p>
+						<p class="text-[10px] text-base-content/60 truncate mt-0.5">{item.artist}</p>
+						<div class="flex items-center gap-1 mt-1.5 flex-wrap">
+							<span class="text-[9px] text-base-content/48">{item.scouts} scout{item.scouts === 1 ? '' : 's'}</span>
+							{#if item.sparks !== undefined && item.sparks > 0}
+								<span class="text-[9px] text-base-content/28">·</span>
+								<span class="text-[9px] text-base-content/42">{item.sparks} spark</span>
+							{/if}
+							{#if item.locality}
+								<span class="text-[9px] text-base-content/28">·</span>
+								<span class="text-[9px] text-base-content/38 truncate">{item.locality}</span>
+							{/if}
+						</div>
+						{#if item.tags && item.tags.length > 0}
+							<div class="flex flex-wrap gap-1 mt-1.5">
+								{#each item.tags.slice(0, 2) as tag (tag)}
+									<span class="text-[8px] font-medium px-1 py-0.5 rounded border border-white/10 text-base-content/45 leading-none">
+										{tag}
+									</span>
+								{/each}
+							</div>
+						{/if}
 					</div>
-					<span
-						class="text-[10px] font-semibold shrink-0 rounded-full px-2 py-0.5 border"
-						style="color: oklch(0.65 0.18 290 / 0.85); border-color: oklch(0.65 0.18 290 / 0.25);"
-					>
-						Deep
-					</span>
 				</div>
 			{/each}
 		</div>

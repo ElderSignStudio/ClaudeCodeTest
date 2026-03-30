@@ -17,6 +17,9 @@ export type Item = {
 	featured?: boolean;
 	badge?: string;
 	adjacencyReason?: string;
+	sparks?: number;
+	tags?: string[];
+	locality?: string;
 };
 
 export type GainingItem = {
@@ -77,10 +80,13 @@ export const oneStepAwayItems: Item[] = [
 
 // 3. Deep Underground — very obscure, barely discovered
 export const deepUndergroundItems: Item[] = [
-	{ id: 'dust-choir',   title: 'Dust Choir',   artist: 'Mare Internum',   scouts: 1, genre: 'Ambient',      image: img('dust-choir',   80, 80), badge: 'Deep' },
-	{ id: 'neon-veda',    title: 'Neon Veda',    artist: '3 Scouts',        scouts: 3, genre: 'Electronic',   image: img('neon-veda',    80, 80), badge: 'Deep' },
-	{ id: 'orbital-form', title: 'Orbital Form', artist: 'Ultra Obscure',   scouts: 0, genre: 'Experimental', image: img('orbital-form', 80, 80), badge: 'Deep' },
-	{ id: 'silver-coast', title: 'Silver Coast', artist: 'Unnamed Project', scouts: 1, genre: 'Folk',         image: img('silver-coast', 80, 80), badge: 'Deep' },
+	{ id: 'dust-choir',    title: 'Dust Choir',    artist: 'Mare Internum',   scouts: 1, sparks: 0, genre: 'Ambient',      image: img('dust-choir'),    badge: 'Deep', tags: ['Field recording', 'Self-released'], locality: 'Slovenia'  },
+	{ id: 'neon-veda',     title: 'Neon Veda',     artist: '3 Scouts',        scouts: 3, sparks: 1, genre: 'Electronic',   image: img('neon-veda'),     badge: 'Deep', tags: ['Cassette'],                         locality: 'Poland'    },
+	{ id: 'orbital-form',  title: 'Orbital Form',  artist: 'Ultra Obscure',   scouts: 0, sparks: 0, genre: 'Experimental', image: img('orbital-form'),  badge: 'Deep', tags: ['Ultra obscure', 'No label'],        locality: 'Unknown'   },
+	{ id: 'silver-coast',  title: 'Silver Coast',  artist: 'Unnamed Project', scouts: 1, sparks: 0, genre: 'Folk',         image: img('silver-coast'),  badge: 'Deep', tags: ['Demo'],                              locality: 'Halifax'   },
+	{ id: 'hollow-ritual', title: 'Hollow Ritual', artist: 'Cave Press',      scouts: 2, sparks: 1, genre: 'Drone',        image: img('hollow-ritual'), badge: 'Deep', tags: ['Cassette rip'],                     locality: 'Romania'   },
+	{ id: 'static-bloom',  title: 'Static Bloom',  artist: 'Margin Signal',   scouts: 1, sparks: 0, genre: 'Ambient',      image: img('static-bloom'),  badge: 'Deep', tags: ['No label', 'Self-released'],        locality: 'Estonia'   },
+	{ id: 'zero-archive',  title: 'Zero Archive',  artist: 'Unknown',         scouts: 0, sparks: 0, genre: 'Experimental', image: img('zero-archive'),  badge: 'Deep', tags: ['Ultra obscure'],                    locality: 'Unknown'   },
 ];
 
 // 4. Breaking Out — signals gaining traction fast
