@@ -46,7 +46,7 @@
 				<span class="text-[11px] font-semibold uppercase tracking-widest text-primary/70">Your Signal</span>
 			</div>
 			<h1 class="text-3xl font-extrabold tracking-tight text-base-content">{getGreeting()}</h1>
-			<p class="text-sm text-base-content/55 max-w-sm">
+			<p class="text-sm text-base-content/68 max-w-sm">
 				Signals curated to your frequency. What's faint today may resonate tomorrow.
 			</p>
 		</div>
@@ -63,7 +63,7 @@
 						'px-3 py-1 rounded-full text-[12px] font-semibold transition-all duration-150',
 						activeFilter === filter
 							? 'bg-primary/22 text-primary border border-primary/45 os-glow-interactive'
-							: 'text-base-content/48 border border-white/10 hover:text-base-content/80 hover:border-white/22 hover:bg-white/5',
+							: 'text-base-content/62 border border-white/10 hover:text-base-content/85 hover:border-white/22 hover:bg-white/5',
 					]}
 				>
 					{filter}
@@ -81,9 +81,9 @@
 					Section labels are navigation anchors — they should be clear.
 				-->
 				<div class="w-0.75 h-3.5 rounded-full bg-primary" aria-hidden="true"></div>
-				<p class="text-xs font-bold uppercase tracking-widest text-base-content/75">For You</p>
+				<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">For You</p>
 			</div>
-			<a href="/discover" class="text-[11px] text-base-content/42 hover:text-primary/80 transition-colors">
+			<a href="/discover" class="text-[12px] text-base-content/55 hover:text-primary/80 transition-colors">
 				See all →
 			</a>
 		</div>
@@ -177,7 +177,7 @@
 					<div class="px-4 py-3.5 shrink-0 flex items-center justify-between gap-3" style="background-color: oklch(0.112 0.030 265 / 0.97);">
 						<div class="min-w-0">
 							<p class="text-base font-bold text-base-content truncate tracking-tight">{featuredItem.title}</p>
-							<p class="text-[11px] text-base-content/50 truncate mt-0.5">
+							<p class="text-[12px] text-base-content/62 truncate mt-0.5">
 								{featuredItem.artist} · {featuredItem.scouts} Scout{featuredItem.scouts === 1 ? '' : 's'}
 							</p>
 						</div>
@@ -186,7 +186,7 @@
 							The core product CTA should feel alive, not muted.
 						-->
 						<button
-							class="shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/42 bg-accent/10 hover:bg-accent/18 hover:border-accent/62 transition-all os-glow-interactive-accent"
+							class="shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full text-[12px] font-semibold text-accent border border-accent/42 bg-accent/10 hover:bg-accent/18 hover:border-accent/62 transition-all os-glow-interactive-accent"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={10} />
@@ -230,8 +230,8 @@
 
 								<!-- Info overlay -->
 								<div class="absolute bottom-0 left-0 right-0 p-2.5">
-									<p class="text-[12px] font-bold text-white truncate leading-snug">{item.title}</p>
-									<p class="text-[10px] text-white/55 truncate mt-0.5">{item.genre}</p>
+									<p class="text-[13px] font-bold text-white truncate leading-snug">{item.title}</p>
+									<p class="text-[11px] text-white/68 truncate mt-0.5">{item.genre}</p>
 								</div>
 							</div>
 						</div>
@@ -247,9 +247,9 @@
 		<div class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-2">
 				<div class="w-0.75 h-3.5 rounded-full bg-success" aria-hidden="true"></div>
-				<p class="text-xs font-bold uppercase tracking-widest text-base-content/75">Gaining Resonance</p>
+				<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">Gaining Resonance</p>
 			</div>
-			<span class="text-[11px] text-base-content/40 flex items-center gap-1">
+			<span class="text-[12px] text-base-content/58 flex items-center gap-1">
 				<TrendingUp size={11} class="text-success/75" />
 				Scouts are accumulating
 			</span>
@@ -287,7 +287,7 @@
 								using the centralized glow values.
 							-->
 							<span
-								class="inline-flex items-center gap-0.5 text-[9px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
+								class="inline-flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
 								style={item.trend === 'surging'
 									? `color: var(--color-success); border-color: oklch(0.74 0.17 158 / 0.45); box-shadow: var(--glow-l3-success);`
 									: `color: var(--color-accent); border-color: oklch(0.72 0.16 220 / 0.40); box-shadow: var(--glow-l3-accent);`}
@@ -298,8 +298,8 @@
 						</div>
 					</div>
 					<div class="p-2.5 bg-base-200/70">
-						<p class="text-[12px] font-bold text-base-content/88 truncate leading-snug">{item.title}</p>
-						<p class="text-[10px] text-base-content/45 truncate mt-0.5">{item.artist}</p>
+						<p class="text-[13px] font-bold text-base-content/90 truncate leading-snug">{item.title}</p>
+						<p class="text-[11px] text-base-content/58 truncate mt-0.5">{item.artist}</p>
 					</div>
 				</div>
 			{/each}
@@ -311,9 +311,9 @@
 		<div class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-2">
 				<div class="w-0.75 h-3.5 rounded-full bg-base-content/35" aria-hidden="true"></div>
-				<p class="text-xs font-bold uppercase tracking-widest text-base-content/62">Weak Signals</p>
+				<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Weak Signals</p>
 			</div>
-			<span class="text-[11px] text-base-content/35">What almost nobody is hearing yet</span>
+			<span class="text-[12px] text-base-content/55">What almost nobody is hearing yet</span>
 		</div>
 
 		<div class="os-surface divide-y divide-white/5 overflow-hidden">
@@ -327,10 +327,10 @@
 						/>
 					</div>
 					<div class="flex-1 min-w-0">
-						<p class="text-[13px] font-semibold text-base-content/82 truncate">{item.title}</p>
-						<p class="text-[11px] text-base-content/42 truncate">{item.artist} · {item.genre}</p>
+						<p class="text-[14px] font-semibold text-base-content/88 truncate">{item.title}</p>
+						<p class="text-[12px] text-base-content/60 truncate">{item.artist} · {item.genre}</p>
 					</div>
-					<p class="text-[11px] text-base-content/35 shrink-0 group-hover:text-base-content/55 transition-colors">
+					<p class="text-[12px] text-base-content/52 shrink-0 group-hover:text-base-content/72 transition-colors">
 						{item.scouts === 0 ? 'No scouts yet' : `${item.scouts} Scout${item.scouts === 1 ? '' : 's'}`}
 					</p>
 				</div>
@@ -343,9 +343,9 @@
 		<div class="flex items-center justify-between mb-4">
 			<div class="flex items-center gap-2">
 				<div class="w-0.75 h-3.5 rounded-full bg-secondary/70" aria-hidden="true"></div>
-				<p class="text-xs font-bold uppercase tracking-widest text-base-content/62">Deep Field</p>
+				<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Deep Field</p>
 			</div>
-			<span class="text-[11px] text-base-content/35">Origin stories. Almost undiscovered.</span>
+			<span class="text-[12px] text-base-content/55">Origin stories. Almost undiscovered.</span>
 		</div>
 
 		<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -360,12 +360,12 @@
 					</div>
 					<div class="flex-1 min-w-0">
 						<p class="text-[13px] font-bold text-base-content/90 truncate">{item.title}</p>
-						<p class="text-[11px] text-base-content/50 truncate mt-0.5">{item.artist} · {item.genre}</p>
-						<p class="text-[12px] text-base-content/45 italic mt-2 leading-relaxed line-clamp-2">{item.note}</p>
+						<p class="text-[12px] text-base-content/62 truncate mt-0.5">{item.artist} · {item.genre}</p>
+						<p class="text-[12px] text-base-content/58 italic mt-2 leading-relaxed line-clamp-2">{item.note}</p>
 						<div class="flex items-center gap-2 mt-2.5">
-							<span class="text-[10px] text-base-content/38">◈ {item.origin}</span>
-							<span class="text-[10px] text-base-content/22">·</span>
-							<span class="text-[10px] text-base-content/35">
+							<span class="text-[11px] text-base-content/50">◈ {item.origin}</span>
+							<span class="text-[11px] text-base-content/28">·</span>
+							<span class="text-[11px] text-base-content/48">
 								{item.scouts === 0 ? 'No scouts yet' : `${item.scouts} Scout${item.scouts === 1 ? '' : 's'}`}
 							</span>
 						</div>

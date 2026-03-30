@@ -73,7 +73,7 @@
 				<a
 					href={item.href}
 					class={[
-						'flex items-center gap-2.5 px-3 py-3 rounded-lg text-[15px] font-semibold transition-all duration-200',
+						'flex items-center gap-2.5 px-3 py-3 rounded-lg text-base font-semibold transition-all duration-200',
 						isActive
 							? 'bg-primary/25 text-primary border border-primary/50 os-glow-interactive'
 							: 'bg-primary/12 text-primary/82 border border-primary/30 hover:bg-primary/20 hover:text-primary hover:border-primary/48',
@@ -100,16 +100,16 @@
 					<a
 						href={item.href}
 						class={[
-							'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[15px] transition-all duration-150 w-full',
+							'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-base transition-all duration-150 w-full',
 							isActive
 								? 'bg-primary/12 text-base-content/95 font-semibold'
-								: 'text-base-content/68 font-medium hover:text-base-content/90 hover:bg-white/6',
+								: 'text-base-content/75 font-medium hover:text-base-content/92 hover:bg-white/6',
 						]}
 						aria-current={isActive ? 'page' : undefined}
 					>
 						<Icon
 							size={16}
-							class={isActive ? 'text-primary/80' : 'text-base-content/52'}
+							class={isActive ? 'text-primary/80' : 'text-base-content/60'}
 						/>
 						{item.label}
 					</a>
