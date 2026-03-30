@@ -165,7 +165,7 @@
 							Uses os-glow-interactive (L2) rather than a bespoke shadow.
 						-->
 						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-							<div class="w-14 h-14 rounded-full bg-primary/32 border border-primary/62 text-primary flex items-center justify-center os-glow-interactive">
+							<div class="w-14 h-14 rounded-full bg-primary/32 border border-primary/62 text-primary flex items-center justify-center os-glow-interactive scale-90 group-hover:scale-100 transition-transform duration-200">
 								<svg class="w-5 h-5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 									<path d="M3 2l8 4-8 4V2z" />
 								</svg>
@@ -219,9 +219,16 @@
 								<!-- Bottom vignette for text -->
 								<div class="absolute inset-0 bg-linear-to-t from-black/82 via-black/25 to-transparent"></div>
 
+								<!-- Signal pulse: soft radial on hover, same center as play button -->
+								<div
+									class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
+									style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
+									aria-hidden="true"
+								></div>
+
 								<!-- Play overlay -->
-								<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-									<div class="w-8 h-8 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm">
+								<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+									<div class="w-8 h-8 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
 										<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 											<path d="M3 2l8 4-8 4V2z" />
 										</svg>
@@ -269,8 +276,15 @@
 							class="w-full h-full object-cover opacity-70 group-hover:opacity-88 transition-opacity duration-300"
 						/>
 						<div class="absolute inset-0 bg-linear-to-t from-black/78 via-black/18 to-transparent"></div>
-						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-							<div class="w-7 h-7 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm">
+						<!-- Signal pulse -->
+						<div
+							class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
+							style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
+							aria-hidden="true"
+						></div>
+
+						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+							<div class="w-7 h-7 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
 								<svg class="w-3 h-3 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 									<path d="M3 2l8 4-8 4V2z" />
 								</svg>
