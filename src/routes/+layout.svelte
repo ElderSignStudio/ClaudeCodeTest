@@ -28,13 +28,31 @@
 	Sidebar is fixed, starts at top-14 (below header), ends above player.
 	Main shifts right with md:pl-56 to avoid overlap with sidebar.
 	pt-14 clears the header, pb-18 clears the bottom player.
+
+	Background: space.png fixed behind all content (-z-10).
+	App chrome + content render above it at their own z-index levels.
 -->
 
-<Header />
-<Sidebar />
+<!--
+	Root wrapper: establishes the stacking context for all background layers.
+	min-h-screen ensures it always covers the full viewport even on short pages.
+-->
+<div class="relative min-h-screen">
 
-<main class="pt-14 pb-18 min-h-screen md:pl-56">
-	{@render children()}
-</main>
+	<!-- Background — space image, fixed to viewport, behind all content -->
+	<div
+		class="fixed inset-0 -z-10 bg-[url('/backgrounds/space.png')] bg-cover bg-center bg-no-repeat"
+		aria-hidden="true"
+	></div>
 
-<BottomPlayer />
+	<!-- App chrome + content — z-index is auto (above -z-10 layers) -->
+	<Header />
+	<Sidebar />
+
+	<main class="pt-14 pb-18 min-h-screen md:pl-56">
+		{@render children()}
+	</main>
+
+	<BottomPlayer />
+
+</div>

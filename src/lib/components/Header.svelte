@@ -2,7 +2,7 @@
 	import { Bell } from 'lucide-svelte';
 </script>
 
-<header class="os-surface-raised fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/6">
+<header class="os-surface-raised fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/6" style="background-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none;">
 	<div class="h-full flex items-center justify-between px-5">
 
 		<!-- Logo + wordmark -->

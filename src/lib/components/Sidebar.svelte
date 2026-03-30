@@ -28,7 +28,7 @@
 
 <aside
 	class="fixed top-14 left-0 bottom-0 w-56 z-40 hidden md:flex flex-col border-r border-white/6 overflow-hidden"
-	style="background-color: oklch(0.105 0.026 265 / 0.98);"
+	style="background-color: transparent;"
 >
 	<!-- Atmospheric bloom at bottom-left -->
 	<div
