@@ -7,48 +7,75 @@
 /* ─────────────────────────────────────────────────────────────
    Outer Signal — Design System
    "Signals emerging from darkness"
-   Dark atmospheric. Space influence felt as depth + energy.
+
+   Glow hierarchy (three levels):
+   L1 — Hero source:   wide ambient bloom, transform lift, color fringe
+   L2 — Interactive:   tight focused glow on buttons/chips/play
+   L3 — Micro accent:  4–6px max, badges and section marks only
 ───────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Base surfaces ── deep blue-black, cool undertone ─────── */
+  /* ── Base surfaces ─────────────────────────────────────────── */
   --color-base-100: oklch(0.09 0.022 264);
   --color-base-200: oklch(0.11 0.027 265);
   --color-base-300: oklch(0.15 0.033 265);
-  --color-base-content: oklch(0.88 0.018 272);   /* lifted: /84 → /88 for brighter body text */
+  --color-base-content: oklch(0.88 0.018 272);
 
-  /* ── Primary — signal indigo, brighter + more saturated ─── */
-  --color-primary: oklch(0.68 0.20 265);          /* was 0.64 0.17 — more vivid */
+  /* ── Primary — signal indigo ───────────────────────────────── */
+  --color-primary: oklch(0.68 0.20 265);
   --color-primary-content: oklch(0.98 0.005 0);
 
-  /* ── Secondary — violet, lifted ──────────────────────────── */
-  --color-secondary: oklch(0.65 0.18 290);        /* was 0.62 0.16 */
+  /* ── Secondary — violet ────────────────────────────────────── */
+  --color-secondary: oklch(0.65 0.18 290);
   --color-secondary-content: oklch(0.98 0.005 0);
 
-  /* ── Accent — teal-blue, more saturated ──────────────────── */
-  --color-accent: oklch(0.72 0.16 220);           /* was 0.70 0.12 — more chromatic */
+  /* ── Accent — teal-blue ────────────────────────────────────── */
+  --color-accent: oklch(0.72 0.16 220);
   --color-accent-content: oklch(0.98 0.005 0);
 
-  /* ── Neutral ──────────────────────────────────────────────── */
+  /* ── Neutral ───────────────────────────────────────────────── */
   --color-neutral: oklch(0.16 0.025 265);
   --color-neutral-content: oklch(0.88 0.018 272);
 
-  /* ── Semantic ─────────────────────────────────────────────── */
+  /* ── Semantic ──────────────────────────────────────────────── */
   --color-info: oklch(0.70 0.14 240);
   --color-info-content: oklch(0.98 0 0);
-  --color-success: oklch(0.74 0.17 158);          /* more vivid green */
+  --color-success: oklch(0.74 0.17 158);
   --color-success-content: oklch(0.98 0 0);
   --color-warning: oklch(0.78 0.17 78);
   --color-warning-content: oklch(0.20 0.04 78);
   --color-error: oklch(0.65 0.20 24);
   --color-error-content: oklch(0.98 0 0);
 
-  /* ── Shape ────────────────────────────────────────────────── */
+  /* ── Shape ─────────────────────────────────────────────────── */
   --radius-btn: 0.5rem;
   --radius-box: 0.75rem;
   --radius-badge: 9999px;
 
   color-scheme: dark;
+
+  /*
+    ── Glow tokens ─────────────────────────────────────────────
+    Centralizing glow values as variables means adjusting the whole
+    system is a one-line change per level, not a hunt across files.
+
+    L2-primary: used by play button, active filter, spark nav item
+    L2-accent:  used by Amplify button
+    L3-primary: used by Pick badge, section bar (very subtle)
+    L3-success/accent: used by growth badges
+  */
+  --glow-l2-primary:
+    0 0 10px -3px oklch(0.68 0.20 265 / 0.65),
+    0 0 22px -8px oklch(0.68 0.20 265 / 0.40);
+  --glow-l2-accent:
+    0 0 10px -3px oklch(0.72 0.16 220 / 0.60),
+    0 0 20px -8px oklch(0.72 0.16 220 / 0.35);
+  --glow-l3-primary:
+    0 0 6px -2px oklch(0.68 0.20 265 / 0.45);
+  --glow-l3-success:
+    0 0 5px -1px oklch(0.74 0.17 158 / 0.50);
+  --glow-l3-accent:
+    0 0 5px -1px oklch(0.72 0.16 220 / 0.50);
 }
 
 /* ─── Base ───────────────────────────────────────────────── */
@@ -62,13 +89,6 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /*
-    Background: starfield + atmospheric blooms.
-    Blooms strengthened: 11%→15% (top-left) and 8%→12% (bottom-right).
-    These are the "light sources" of the page — making them more present
-    is the single biggest lever for overall page energy.
-    Starfield unchanged — it reads as texture, not energy.
-  */
   background-image:
     radial-gradient(circle, oklch(1 0 0 / 0.055) 1px, transparent 1px),
     radial-gradient(circle, oklch(1 0 0 / 0.035) 1px, transparent 1px),
@@ -92,9 +112,10 @@ body {
   background-attachment: fixed;
 }
 
-/* ─── Layered surface utilities ──────────────────────────── */
+/* ─── Surface utilities ──────────────────────────────────── */
 
 @layer utilities {
+
   .os-surface {
     background-color: oklch(0.135 0.028 265 / 0.75);
     border: 1px solid oklch(1 0 0 / 0.11);
@@ -113,54 +134,59 @@ body {
       inset 0 1px 0 oklch(1 0 0 / 0.09),
       0 8px 32px -4px oklch(0 0 0 / 0.6),
       0 2px 8px -2px oklch(0 0 0 / 0.35),
-      0 0 60px -20px oklch(0.50 0.18 265 / 0.20);   /* stronger bloom */
+      0 0 60px -20px oklch(0.50 0.18 265 / 0.18);
   }
 
   /*
-    os-play-glow: stronger than before.
-    The button should clearly emit light when active.
-    Two shadow layers: tight inner glow + wider ambient bloom.
+    L2 — Interactive glow. Applied to:
+      - Play/pause button (active + hover)
+      - Active filter chip
+      - Spark a Signal nav item (active)
+    Uses --glow-l2-primary token. Inset rim highlight included.
   */
-  .os-play-glow {
-    box-shadow:
-      0 0 12px -2px var(--color-primary),
-      0 0 28px -6px var(--color-primary),
-      inset 0 1px 0 oklch(1 0 0 / 0.12);
+  .os-glow-interactive {
+    box-shadow: var(--glow-l2-primary), inset 0 1px 0 oklch(1 0 0 / 0.10);
+  }
+
+  .os-glow-interactive-accent {
+    box-shadow: var(--glow-l2-accent), inset 0 1px 0 oklch(1 0 0 / 0.08);
   }
 
   /*
-    os-hero-card: significantly stronger glow.
-    The hero card should feel like a signal source — light emanating
-    from it, not just a card sitting on a surface.
-    Dual shadow: tight primary + wider ambient + subtle color fringe.
+    L1 — Hero source. The single most prominent glow in the interface.
+    Resting: ambient bloom beneath + subtle color-fringe border ring.
+    Hover: bloom expands, card lifts 3px, fringe brightens.
+    No tight glow at rest — it should feel like ambient light, not a border.
   */
   .os-hero-card {
     box-shadow:
-      0 0 0 1px oklch(0.68 0.20 265 / 0.18),
-      0 6px 32px -4px oklch(0.50 0.18 265 / 0.35),
-      0 2px 8px -2px oklch(0 0 0 / 0.35);
-    transition: box-shadow 0.35s ease, transform 0.35s ease;
+      0 0 0 1px oklch(0.68 0.20 265 / 0.16),
+      0 8px 40px -6px oklch(0.50 0.18 265 / 0.32),
+      0 2px 8px -2px oklch(0 0 0 / 0.40);
+    transition: box-shadow 0.40s ease, transform 0.40s ease;
 
     &:hover {
       box-shadow:
-        0 0 0 1px oklch(0.68 0.20 265 / 0.32),
-        0 12px 52px -4px oklch(0.50 0.18 265 / 0.55),
-        0 4px 14px -2px oklch(0 0 0 / 0.40);
-      transform: translateY(-2px);
+        0 0 0 1px oklch(0.68 0.20 265 / 0.28),
+        0 0 40px -4px oklch(0.50 0.18 265 / 0.28),
+        0 16px 56px -6px oklch(0.50 0.18 265 / 0.42),
+        0 4px 14px -2px oklch(0 0 0 / 0.45);
+      transform: translateY(-3px);
     }
   }
 
   /*
-    os-card-glow: lighter lift for regular cards.
-    Used on Gaining Resonance cards on hover.
+    os-card-glow: L3-adjacent card lift. No color component —
+    regular cards should not compete with the hero's color bloom.
+    Just elevation: shadow deepens + 1px lift on hover.
   */
   .os-card-glow {
-    transition: box-shadow 0.25s ease, transform 0.25s ease;
+    transition: box-shadow 0.22s ease, transform 0.22s ease;
 
     &:hover {
       box-shadow:
-        0 0 0 1px oklch(1 0 0 / 0.10),
-        0 8px 24px -4px oklch(0 0 0 / 0.45);
+        0 0 0 1px oklch(1 0 0 / 0.09),
+        0 6px 20px -4px oklch(0 0 0 / 0.50);
       transform: translateY(-1px);
     }
   }

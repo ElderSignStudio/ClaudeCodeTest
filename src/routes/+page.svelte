@@ -62,7 +62,7 @@
 					class={[
 						'px-3 py-1 rounded-full text-[12px] font-semibold transition-all duration-150',
 						activeFilter === filter
-							? 'bg-primary/25 text-primary border border-primary/50 shadow-[0_0_12px_-4px_var(--color-primary)]'
+							? 'bg-primary/22 text-primary border border-primary/45 os-glow-interactive'
 							: 'text-base-content/48 border border-white/10 hover:text-base-content/80 hover:border-white/22 hover:bg-white/5',
 					]}
 				>
@@ -93,7 +93,7 @@
 
 				<!-- Hero card -->
 				<div
-					class="group relative rounded-xl overflow-hidden cursor-pointer os-hero-card border border-primary/28 hover:border-primary/52 transition-colors duration-300 flex flex-col"
+					class="group relative rounded-xl overflow-hidden cursor-pointer os-hero-card border border-primary/22 flex flex-col"
 					style="min-height: 280px;"
 				>
 					<div class="relative flex-1 overflow-hidden min-h-36">
@@ -109,53 +109,63 @@
 						/>
 
 						<!--
-							Overlay strategy: one directional tint + one vignette.
-							Removed the flat darkening layer — it was killing image color.
-							Primary tint reduced: from/35 → from/28 so less color override.
-							Vignette stays strong at bottom — that's where text lives.
+							Two overlays only — color tint + bottom vignette.
+							Tint is directional br → pushing image into brand space.
+							Vignette is only at the bottom third — info section text.
 						-->
-						<div class="absolute inset-0 bg-linear-to-br from-primary/28 via-transparent to-secondary/18"></div>
-						<div class="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/70"></div>
+						<div class="absolute inset-0 bg-linear-to-br from-primary/25 via-transparent to-secondary/15"></div>
+						<div class="absolute inset-0 bg-linear-to-b from-transparent via-transparent to-black/72"></div>
 
 						<!--
-							Radial "light source" bloom at top-left — makes the hero feel
-							like it's emitting energy rather than displaying content.
-							This is the "signal source" effect: a concentrated light point
-							that bleeds outward into the image.
+							Signal origin point: centered radial bloom + concentric rings
+							form a unified "signal source" in the middle of the art area.
+							The bloom is the light, the rings are the propagation.
+							Both centered so they read as ONE element, not two decorations.
 						-->
 						<div
-							class="absolute -top-8 -left-8 w-48 h-48 pointer-events-none"
+							class="absolute inset-0 flex items-center justify-center pointer-events-none"
 							aria-hidden="true"
-							style="background: radial-gradient(circle, oklch(0.68 0.20 265 / 0.28) 0%, transparent 65%);"
-						></div>
-
-						<!-- Signal rings: slightly more visible -->
-						<div class="absolute top-1/2 -translate-y-1/2 -right-8 pointer-events-none" aria-hidden="true">
-							<svg class="w-56 h-56 text-primary" viewBox="0 0 224 224" fill="none">
-								<circle cx="112" cy="112" r="16" fill="currentColor" opacity="0.22" />
-								<circle cx="112" cy="112" r="44" stroke="currentColor" stroke-width="1.25" opacity="0.16" />
-								<circle cx="112" cy="112" r="76" stroke="currentColor" stroke-width="1" opacity="0.10" />
-								<circle cx="112" cy="112" r="108" stroke="currentColor" stroke-width="0.75" opacity="0.06" />
+						>
+							<!-- Ambient bloom behind rings -->
+							<div
+								class="absolute w-44 h-44 rounded-full"
+								style="background: radial-gradient(circle, oklch(0.68 0.20 265 / 0.20) 0%, transparent 70%);"
+							></div>
+							<!-- Rings propagating outward from bloom center -->
+							<svg class="w-64 h-64 text-primary" viewBox="0 0 256 256" fill="none">
+								<circle cx="128" cy="128" r="14" fill="currentColor" opacity="0.25" />
+								<circle cx="128" cy="128" r="38" stroke="currentColor" stroke-width="1.25" opacity="0.18" />
+								<circle cx="128" cy="128" r="68" stroke="currentColor" stroke-width="1" opacity="0.11" />
+								<circle cx="128" cy="128" r="100" stroke="currentColor" stroke-width="0.75" opacity="0.06" />
+								<circle cx="128" cy="128" r="125" stroke="currentColor" stroke-width="0.5" opacity="0.03" />
 							</svg>
 						</div>
 
-						<!-- Pick badge: primary/90 → full primary text, brighter border -->
+						<!-- Pick badge: L3 glow via token -->
 						<div class="absolute top-3 right-3">
-							<span class="text-[10px] font-bold tracking-wide text-primary border border-primary/55 rounded-full px-2.5 py-1 bg-black/55 backdrop-blur-sm shadow-[0_0_8px_-2px_var(--color-primary)]">
+							<span
+								class="text-[10px] font-bold tracking-wide text-primary border border-primary/50 rounded-full px-2.5 py-1 bg-black/55 backdrop-blur-sm"
+								style="box-shadow: var(--glow-l3-primary);"
+							>
 								Pick
 							</span>
 						</div>
 
-						<!-- Genre chip -->
+						<!-- Genre chip: no glow — L3 is already for badges -->
 						<div class="absolute bottom-3 left-3">
-							<span class="text-[10px] font-semibold text-white/75 border border-white/18 rounded-full px-2 py-0.5 bg-black/50 backdrop-blur-sm">
+							<span class="text-[10px] font-semibold text-white/72 border border-white/16 rounded-full px-2 py-0.5 bg-black/50 backdrop-blur-sm">
 								{featuredItem.genre}
 							</span>
 						</div>
 
-						<!-- Play overlay on hover: larger, brighter -->
+						<!--
+							Play button: centered, connected to the signal rings.
+							Appears at hover at the same center point as the rings —
+							feels like the play button IS the signal source activating.
+							Uses os-glow-interactive (L2) rather than a bespoke shadow.
+						-->
 						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-							<div class="w-14 h-14 rounded-full bg-primary/35 border border-primary/65 text-primary flex items-center justify-center os-play-glow">
+							<div class="w-14 h-14 rounded-full bg-primary/32 border border-primary/62 text-primary flex items-center justify-center os-glow-interactive">
 								<svg class="w-5 h-5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 									<path d="M3 2l8 4-8 4V2z" />
 								</svg>
@@ -176,7 +186,7 @@
 							The core product CTA should feel alive, not muted.
 						-->
 						<button
-							class="shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/45 bg-accent/10 hover:bg-accent/18 hover:border-accent/65 transition-all shadow-[0_0_10px_-4px_var(--color-accent)]"
+							class="shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/42 bg-accent/10 hover:bg-accent/18 hover:border-accent/62 transition-all os-glow-interactive-accent"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={10} />
@@ -271,13 +281,16 @@
 							These are the stat readouts — they should be legible and energetic.
 						-->
 						<div class="absolute top-2 left-2">
+							<!--
+								Growth badges use L3 glow via inline style referencing
+								the CSS tokens. Keeps the class list clean while still
+								using the centralized glow values.
+							-->
 							<span
-								class={[
-									'inline-flex items-center gap-0.5 text-[9px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm',
-									item.trend === 'surging'
-										? 'text-success bg-black/55 border-success/50 shadow-[0_0_6px_-1px_var(--color-success)]'
-										: 'text-accent bg-black/55 border-accent/45 shadow-[0_0_6px_-1px_var(--color-accent)]',
-								]}
+								class="inline-flex items-center gap-0.5 text-[9px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
+								style={item.trend === 'surging'
+									? `color: var(--color-success); border-color: oklch(0.74 0.17 158 / 0.45); box-shadow: var(--glow-l3-success);`
+									: `color: var(--color-accent); border-color: oklch(0.72 0.16 220 / 0.40); box-shadow: var(--glow-l3-accent);`}
 							>
 								<ArrowUpRight size={8} />
 								+{item.growth}

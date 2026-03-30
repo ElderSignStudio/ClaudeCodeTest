@@ -74,8 +74,8 @@
 					class={[
 						'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13px] font-semibold transition-all duration-200',
 						isActive
-							? 'bg-primary/28 text-primary border border-primary/55 os-play-glow'
-							: 'bg-primary/12 text-primary/85 border border-primary/32 hover:bg-primary/22 hover:text-primary hover:border-primary/52',
+							? 'bg-primary/25 text-primary border border-primary/50 os-glow-interactive'
+							: 'bg-primary/12 text-primary/82 border border-primary/30 hover:bg-primary/20 hover:text-primary hover:border-primary/48',
 					]}
 					aria-current={isActive ? 'page' : undefined}
 				>

@@ -47,8 +47,8 @@
 					class={[
 						'w-10 h-10 flex items-center justify-center rounded-full border text-primary transition-all duration-200',
 						isPlaying
-							? 'bg-primary/30 border-primary/65 os-play-glow'
-							: 'bg-primary/18 border-primary/42 hover:bg-primary/28 hover:border-primary/60 hover:os-play-glow',
+							? 'bg-primary/28 border-primary/58 os-glow-interactive'
+							: 'bg-primary/16 border-primary/38 hover:bg-primary/26 hover:border-primary/55 hover:os-glow-interactive',
 					]}
 					aria-label={isPlaying ? 'Pause' : 'Play'}
 					onclick={() => (isPlaying = !isPlaying)}
@@ -73,7 +73,7 @@
 			<div class="hidden sm:flex items-center gap-2 shrink-0 pl-3 border-l border-white/6">
 
 				<button
-					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/40 bg-accent/8 hover:bg-accent/16 hover:border-accent/62 transition-all shadow-[0_0_8px_-3px_var(--color-accent)]"
+					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/38 bg-accent/8 hover:bg-accent/16 hover:border-accent/58 transition-all os-glow-interactive-accent"
 					aria-label="Amplify this signal"
 				>
 					<!--
