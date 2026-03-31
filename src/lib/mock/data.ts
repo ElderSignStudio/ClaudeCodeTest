@@ -20,6 +20,7 @@ export type Item = {
 	sparks?: number;
 	tags?: string[];
 	locality?: string;
+	whyHere?: string; // explanation of why this item appears in Outside the Bubble
 };
 
 export type GainingItem = {
@@ -180,11 +181,11 @@ export const scoutItems: Scout[] = [
 
 // 6. Outside the Bubble — intentionally different from user taste
 export const outsideBubbleItems: Item[] = [
-	{ id: 'brass-weather', title: 'Brass Weather', artist: 'South Facing',    scouts: 22, genre: 'Jazz',       image: img('brass-weather'), badge: 'Unexpected' },
-	{ id: 'loud-harbour',  title: 'Loud Harbour',  artist: 'Dock Street',     scouts: 18, genre: 'Post-Punk',  image: img('loud-harbour'),  badge: 'Unexpected' },
-	{ id: 'red-satellite', title: 'Red Satellite', artist: 'Power Station',   scouts: 31, genre: 'Industrial', image: img('red-satellite'), badge: 'Unexpected' },
-	{ id: 'paper-engine',  title: 'Paper Engine',  artist: 'The Office Club', scouts: 9,  genre: 'R&B',        image: img('paper-engine'),  badge: 'Unexpected' },
-	{ id: 'signal-green',  title: 'Signal Green',  artist: 'Grasslands',      scouts: 14, genre: 'Country',    image: img('signal-green'),  badge: 'Unexpected' },
+	{ id: 'brass-weather', title: 'Brass Weather', artist: 'South Facing',    scouts: 22, genre: 'Jazz',       image: img('brass-weather'), badge: 'Unexpected', featured: true, whyHere: 'Scouts you trust in dark ambient and neofolk have been amplifying this — even though it lives far outside those scenes. Something crosses over here.'          },
+	{ id: 'loud-harbour',  title: 'Loud Harbour',  artist: 'Dock Street',     scouts: 18, genre: 'Post-Punk',  image: img('loud-harbour'),  badge: 'Unexpected',                whyHere: 'Breaking through via listeners who usually live in drone and minimalism.'  },
+	{ id: 'red-satellite', title: 'Red Satellite', artist: 'Power Station',   scouts: 31, genre: 'Industrial', image: img('red-satellite'), badge: 'Unexpected',                whyHere: 'Found by a trusted curator far outside your usual orbit.'                },
+	{ id: 'paper-engine',  title: 'Paper Engine',  artist: 'The Office Club', scouts: 9,  genre: 'R&B',        image: img('paper-engine'),  badge: 'Unexpected',                whyHere: 'Surfaced by curators with overlapping taste'                             },
+	{ id: 'signal-green',  title: 'Signal Green',  artist: 'Grasslands',      scouts: 14, genre: 'Country',    image: img('signal-green'),  badge: 'Unexpected',                whyHere: 'Shared listeners found this across genre lines'                          },
 ];
 
 // 7. Origin Stories — how signals spread and propagate

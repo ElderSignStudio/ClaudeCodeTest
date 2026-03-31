@@ -20,6 +20,9 @@
 	const featuredItem = forYouItems.find(i => i.featured)!;
 	const regularItems = forYouItems.filter(i => !i.featured);
 
+	const bubbleFeatured = outsideBubbleItems.find(i => i.featured)!;
+	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
+
 	/*
 		Each regular card gets a different color tint so they feel varied,
 		not uniformly grey. Tint indices cycle through primary/accent/secondary.
@@ -559,58 +562,180 @@
 	</section>
 
 	<!-- ── 6. Outside the Bubble ────────────────────────────── -->
+	<!--
+		Magazine asymmetric layout: left feature (3fr) + right stacked (2fr).
+		This is the only lane that uses a two-column inline layout —
+		the shape itself communicates "this has a different purpose".
+		No horizontal scroll. No grid of equal tiles.
+	-->
 	<section>
-		<div class="flex items-center justify-between mb-4">
+		<div class="flex items-center justify-between mb-1">
 			<div class="flex items-center gap-2">
 				<div class="w-0.75 h-3.5 rounded-full bg-warning/70" aria-hidden="true"></div>
 				<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Outside the Bubble</p>
 			</div>
-			<span class="text-[12px] text-base-content/65">Intentionally different</span>
+			<a href="/discover" class="text-[12px] text-base-content/45 hover:text-base-content/70 transition-colors">
+				Refresh picks →
+			</a>
 		</div>
+		<p class="text-[12px] text-base-content/50 mb-5 ml-3.5">This is intentionally not your usual thing</p>
 
-		<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none">
-			{#each outsideBubbleItems as item (item.id)}
-				<div class="group shrink-0 w-40 rounded-lg overflow-hidden border border-white/8 hover:border-white/20 cursor-pointer transition-all duration-200 os-card-glow">
-					<div class="relative w-full aspect-square">
+		<!--
+			grid-cols: 3fr left, 2fr right (≈ 60 / 40 split).
+			items-stretch: right column stretches to match left card height.
+			h-full on the right flex-col ensures the two cards fill that height.
+		-->
+		<div class="grid gap-4 items-stretch" style="grid-template-columns: 3fr 2fr;">
+
+			<!--
+				LEFT: Feature card.
+				Full-bleed image as absolute fill. Content at bottom via absolute overlay.
+				min-h set on the wrapper so the image has real estate even on narrow viewports.
+				All text renders in the overlay — no separate text bar below.
+			-->
+			<div
+				class="group relative rounded-xl overflow-hidden cursor-pointer border border-warning/18 min-h-56 transition-transform duration-400 hover:-translate-y-0.5"
+				style="box-shadow: 0 0 0 1px oklch(0.78 0.17 78 / 0.10), 0 6px 32px -6px oklch(0 0 0 / 0.55);"
+			>
+				<img
+					src={bubbleFeatured.image}
+					alt={bubbleFeatured.title}
+					class="absolute inset-0 w-full h-full object-cover opacity-68 group-hover:opacity-80 transition-opacity duration-500"
+				/>
+				<!-- Amber wash: lane color identity -->
+				<div class="absolute inset-0 bg-linear-to-br from-warning/14 to-transparent mix-blend-color"></div>
+				<!--
+					Gradient: gentle top darkness + heavy bottom vignette.
+					The top is only slightly darkened — the image breathes in the middle.
+					Text sits entirely on the strong black/90 at the very bottom.
+				-->
+				<div class="absolute inset-0 bg-linear-to-b from-black/30 via-transparent to-black/90"></div>
+
+				<!-- Signal pulse: amber, on hover -->
+				<div
+					class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
+					style="background: radial-gradient(ellipse at 50% 60%, oklch(0.78 0.17 78 / 0.09) 0%, transparent 65%);"
+					aria-hidden="true"
+				></div>
+
+				<!-- Genre chip top-left -->
+				<div class="absolute top-3.5 left-3.5">
+					<span class="text-[10px] font-semibold text-white/70 border border-white/15 rounded-full px-2 py-0.5 bg-black/48 backdrop-blur-sm">
+						{bubbleFeatured.genre}
+					</span>
+				</div>
+				<!-- Unexpected badge top-right -->
+				<div class="absolute top-3.5 right-3.5">
+					<span
+						class="text-[10px] font-bold rounded-full px-2.5 py-1 border bg-black/55 backdrop-blur-sm"
+						style="color: var(--color-warning); border-color: oklch(0.78 0.17 78 / 0.45);"
+					>
+						Unexpected
+					</span>
+				</div>
+
+				<!-- Play button, centered, reveal on hover -->
+				<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+					<div class="w-12 h-12 rounded-full bg-white/18 border border-white/32 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
+						<svg class="w-4 h-4 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+							<path d="M3 2l8 4-8 4V2z" />
+						</svg>
+					</div>
+				</div>
+
+				<!--
+					Editorial text block: the heart of this card.
+					Title is large (text-[22px]) — more prominent than any other card in the system.
+					whyHere is two lines, warning-tinted, given its own label "Why this is here".
+					This is the only card in the app that explains itself with a label + paragraph.
+				-->
+				<div class="absolute bottom-0 left-0 right-0 px-5 pb-5 pt-14">
+					<p class="text-[22px] font-extrabold text-white leading-tight tracking-tight mb-0.5">
+						{bubbleFeatured.title}
+					</p>
+					<p class="text-[12px] text-white/58 mb-4">
+						{bubbleFeatured.artist} · {bubbleFeatured.genre} · {bubbleFeatured.scouts} scouts
+					</p>
+					{#if bubbleFeatured.whyHere}
+						<div class="mb-4">
+							<p class="text-[9px] font-bold uppercase tracking-widest mb-1.5" style="color: oklch(0.78 0.17 78 / 0.55);">
+								Why this is here
+							</p>
+							<p class="text-[13px] leading-relaxed" style="color: oklch(0.78 0.17 78 / 0.88);">
+								{bubbleFeatured.whyHere}
+							</p>
+						</div>
+					{/if}
+					<div class="flex items-center gap-2">
+						<button
+							class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/42 bg-black/40 hover:bg-accent/18 hover:border-accent/62 transition-all os-glow-interactive-accent backdrop-blur-sm"
+							aria-label="Amplify this signal"
+						>
+							<Radio size={10} />
+							Amplify
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!--
+				RIGHT: two stacked landscape cards, each flex-1.
+				flex-1 means they split the left card's computed height equally.
+				Landscape ratio because they're wider than tall at this column width —
+				no explicit aspect ratio needed; the flex height determines their shape.
+			-->
+			<div class="flex flex-col gap-4 h-full">
+				{#each bubbleSupporting.slice(0, 2) as item (item.id)}
+					<!--
+						Each card: image as absolute fill, content in bottom overlay.
+						flex-1: stretches to fill half the right column height.
+						overflow-hidden required for the absolute image to clip correctly.
+					-->
+					<div
+						class="group relative flex-1 rounded-xl overflow-hidden cursor-pointer border border-white/8 hover:border-warning/22 transition-all duration-250 os-card-glow"
+					>
 						<img
 							src={item.image}
 							alt={item.title}
-							class="w-full h-full object-cover opacity-70 group-hover:opacity-88 transition-opacity duration-300"
+							class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-78 transition-opacity duration-400"
 						/>
-						<div class="absolute inset-0 bg-linear-to-t from-black/78 via-black/18 to-transparent"></div>
+						<!-- Amber tint: consistent lane identity -->
+						<div class="absolute inset-0 bg-linear-to-br from-warning/10 to-transparent mix-blend-color"></div>
+						<!-- Bottom vignette: strong enough to hold two lines of text -->
+						<div class="absolute inset-0 bg-linear-to-t from-black/88 via-black/30 to-transparent"></div>
 
 						<!-- Signal pulse -->
 						<div
 							class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-							style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
+							style="background: radial-gradient(circle at 50% 50%, oklch(0.78 0.17 78 / 0.07) 0%, transparent 65%);"
 							aria-hidden="true"
 						></div>
 
 						<!-- Play overlay -->
 						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-							<div class="w-7 h-7 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-								<svg class="w-3 h-3 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+							<div class="w-8 h-8 rounded-full bg-white/18 border border-white/30 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
+								<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 									<path d="M3 2l8 4-8 4V2z" />
 								</svg>
 							</div>
 						</div>
 
-						<!-- Unexpected badge -->
-						<div class="absolute top-2 left-2">
-							<span
-								class="text-[10px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
-								style="color: var(--color-warning); border-color: oklch(0.78 0.17 78 / 0.40);"
-							>
-								Unexpected
-							</span>
+						<!--
+							Bottom overlay: title + artist/genre + whyHere.
+							whyHere is warning-tinted, smaller than on the feature card,
+							but still readable — it's the key piece of information.
+						-->
+						<div class="absolute bottom-0 left-0 right-0 px-3.5 pb-3.5 pt-8">
+							<p class="text-[14px] font-bold text-white leading-snug truncate">{item.title}</p>
+							<p class="text-[11px] text-white/55 truncate mt-0.5 mb-2">{item.artist} · {item.genre}</p>
+							{#if item.whyHere}
+								<p class="text-[11px] leading-snug" style="color: oklch(0.78 0.17 78 / 0.80);">{item.whyHere}</p>
+							{/if}
 						</div>
 					</div>
-					<div class="p-2.5 bg-base-200/70">
-						<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-						<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist}</p>
-					</div>
-				</div>
-			{/each}
+				{/each}
+			</div>
+
 		</div>
 	</section>
 
