@@ -46,7 +46,7 @@
 	  - Width: w-72 (288px) — wider than any signal card, fewer visible per row
 -->
 <div
-	class="group shrink-0 w-80 rounded-xl border border-white/8 hover:border-white/18 cursor-pointer bg-base-200/45 hover:bg-base-200/62 transition-all duration-250 hover:-translate-y-0.5 flex flex-col"
+	class="group rounded-xl border border-white/8 hover:border-white/18 cursor-pointer bg-base-200/45 hover:bg-base-200/62 transition-all duration-250 hover:-translate-y-0.5 flex flex-col"
 >
 	<div class="p-4 flex-1 flex flex-col">
 

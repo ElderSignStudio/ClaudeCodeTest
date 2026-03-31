@@ -14,7 +14,9 @@
 
 	<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 		{#each originItems as item (item.id)}
-			<StoryCard {item} />
+			<div class="shrink-0 w-80">
+				<StoryCard {item} />
+			</div>
 		{/each}
 	</div>
 </section>

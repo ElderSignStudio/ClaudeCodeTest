@@ -6,7 +6,7 @@
 	import HumanSignalsLane from '$lib/components/lanes/HumanSignalsLane.svelte';
 	import OutsideTheBubbleLane from '$lib/components/lanes/OutsideTheBubbleLane.svelte';
 	import OriginStoriesLane from '$lib/components/lanes/OriginStoriesLane.svelte';
-	import DriftLane from '$lib/components/lanes/DriftLane.svelte';
+	import DriftSection from '$lib/components/DriftSection.svelte';
 
 	function getGreeting(): string {
 		const hour = new Date().getHours();
@@ -62,6 +62,6 @@
 	<HumanSignalsLane />
 	<OutsideTheBubbleLane />
 	<OriginStoriesLane />
-	<DriftLane />
+	<DriftSection />
 
 </div>
