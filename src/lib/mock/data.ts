@@ -55,7 +55,9 @@ export type OriginItem = {
 	image: string;
 	reachedScouts: number;
 	discoveries: number;
-	branch: string; // e.g. "Branch growing from Rome"
+	branch: string;       // sub-headline, e.g. "Branch growing from Rome"
+	headline: string;     // narrative sentence for the Story Card
+	seedLocation: string; // where the signal originated
 };
 
 // Helper: consistent picsum URL from an id string
@@ -190,10 +192,27 @@ export const outsideBubbleItems: Item[] = [
 
 // 7. Origin Stories — how signals spread and propagate
 export const originItems: OriginItem[] = [
-	{ id: 'forest-mouth',    title: 'Forest Mouth',    artist: 'Haul',            genre: 'Experimental', image: img('forest-mouth',  120, 120), reachedScouts: 18, discoveries: 3, branch: 'Branch growing from Łódź'   },
-	{ id: 'iron-coast',      title: 'Iron Coast',      artist: 'The Meridian',    genre: 'Drone',        image: img('iron-coast',    120, 120), reachedScouts: 12, discoveries: 2, branch: 'Spreading from Halifax, NS' },
-	{ id: 'weight-of-cloud', title: 'Weight of Cloud', artist: 'Six Months',      genre: 'Ambient',      image: img('weight-cloud',  120, 120), reachedScouts: 31, discoveries: 6, branch: 'Started in Copenhagen'      },
-	{ id: 'slow-burn-atlas', title: 'Slow Burn Atlas', artist: 'No Name Project', genre: 'Folk',         image: img('slow-burn',     120, 120), reachedScouts: 7,  discoveries: 1, branch: 'Origin unknown'             },
+	{
+		id: 'forest-mouth',    title: 'Forest Mouth',    artist: 'Haul',            genre: 'Experimental',
+		image: img('forest-mouth',  120, 120), reachedScouts: 18, discoveries: 3,
+		branch:       'Branch growing from Łódź',
+		headline:     'Three scouts found this independently before it spread',
+		seedLocation: 'Łódź, Poland',
+	},
+	{
+		id: 'iron-coast',      title: 'Iron Coast',      artist: 'The Meridian',    genre: 'Drone',
+		image: img('iron-coast',    120, 120), reachedScouts: 12, discoveries: 2,
+		branch:       'Spreading from Halifax, NS',
+		headline:     'Two separate paths reached the same signal from different scenes',
+		seedLocation: 'Halifax, NS',
+	},
+	{
+		id: 'weight-of-cloud', title: 'Weight of Cloud', artist: 'Six Months',      genre: 'Ambient',
+		image: img('weight-cloud',  120, 120), reachedScouts: 31, discoveries: 6,
+		branch:       'Started in Copenhagen',
+		headline:     'From one spark in Copenhagen to 31 scouts across six branches',
+		seedLocation: 'Copenhagen',
+	},
 ];
 
 // 8. Explore / Drift — mixed discovery, no algorithm, let it wander
