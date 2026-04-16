@@ -3,23 +3,16 @@
 </script>
 
 <header class="os-surface-raised fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/6" style="background-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none;">
-	<div class="h-full flex items-center justify-between px-5">
+	<div class="h-full flex items-center justify-between pl-4 pr-5">
 
-		<!-- Logo + wordmark -->
-		<a href="/" class="flex items-center gap-2.5 group">
-			<svg
-				class="w-4.5 h-4.5 text-primary shrink-0"
-				viewBox="0 0 18 18"
-				fill="none"
-				aria-hidden="true"
-			>
-				<circle cx="9" cy="9" r="2.5" fill="currentColor" />
-				<circle cx="9" cy="9" r="5.5" stroke="currentColor" stroke-width="1" opacity="0.45" />
-				<circle cx="9" cy="9" r="8.5" stroke="currentColor" stroke-width="0.75" opacity="0.18" />
-			</svg>
-			<span class="text-[13px] font-semibold tracking-[0.14em] uppercase text-base-content/82 group-hover:text-base-content transition-colors">
-				Outer Signal
-			</span>
+		<!-- Logo -->
+		<!-- -ml-8: compensates for the PNG's built-in transparent left padding -->
+		<a href="/" class="shrink-0 -ml-13">
+			<img
+				src="/logo/Outer Signal Logo 2.png"
+				alt="Outer Signal"
+				class="h-45 w-auto mt-3"
+			/>
 		</a>
 
 		<!-- Right: notification bell + avatar -->
