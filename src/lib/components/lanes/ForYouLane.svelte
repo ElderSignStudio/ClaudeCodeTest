@@ -27,7 +27,7 @@
 	<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 
 		<!-- Featured card -->
-		<div class="group relative shrink-0 w-64 h-52 rounded-xl overflow-hidden cursor-pointer border border-primary/22 os-hero-card">
+		<div class="group relative shrink-0 w-64 h-72 rounded-xl overflow-hidden cursor-pointer border border-primary/22 os-hero-card">
 			<img
 				src={featuredItem.image}
 				alt={featuredItem.title}
@@ -51,12 +51,6 @@
 					Pick
 				</span>
 			</div>
-			<div class="absolute top-3 left-3">
-				<span class="text-[10px] font-semibold text-white/72 border border-white/16 rounded-full px-2 py-0.5 bg-black/50 backdrop-blur-sm">
-					{featuredItem.genre}
-				</span>
-			</div>
-
 			<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
 				<div class="w-12 h-12 rounded-full bg-primary/32 border border-primary/62 text-primary flex items-center justify-center os-glow-interactive scale-90 group-hover:scale-100 transition-transform duration-200">
 					<svg class="w-4 h-4 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
@@ -65,20 +59,19 @@
 				</div>
 			</div>
 
-			<div class="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-6 flex items-end justify-between gap-2">
-				<div class="min-w-0">
-					<p class="text-[15px] font-bold text-white truncate leading-snug tracking-tight">{featuredItem.title}</p>
-					<p class="text-[11px] text-white/70 truncate mt-0.5">
-						{featuredItem.artist} · {featuredItem.scouts} Scout{featuredItem.scouts === 1 ? '' : 's'}
-					</p>
+			<div class="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-12">
+				<p class="text-[16px] font-extrabold text-white truncate leading-snug tracking-tight">{featuredItem.title}</p>
+				<p class="text-[12px] text-white/72 truncate mt-1">{featuredItem.artist}</p>
+				<p class="text-[10px] text-white/40 truncate mt-0.5">{featuredItem.genre}</p>
+				<div class="flex justify-end mt-2">
+					<button
+						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/55 bg-black/50 hover:bg-accent/22 hover:border-accent/72 transition-all os-glow-interactive-accent backdrop-blur-sm"
+						aria-label="Amplify this signal"
+					>
+						<Radio size={10} />
+						Amplify
+					</button>
 				</div>
-				<button
-					class="shrink-0 flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/42 bg-black/40 hover:bg-accent/18 hover:border-accent/62 transition-all os-glow-interactive-accent backdrop-blur-sm"
-					aria-label="Amplify this signal"
-				>
-					<Radio size={10} />
-					Amplify
-				</button>
 			</div>
 		</div>
 
@@ -105,13 +98,20 @@
 							</svg>
 						</div>
 					</div>
-					<div class="absolute bottom-0 left-0 right-0 p-2.5">
-						<p class="text-[13px] font-bold text-white truncate leading-snug">{item.title}</p>
-						<p class="text-[11px] text-white/75 truncate mt-0.5">{item.genre}</p>
-					</div>
 				</div>
-				<div class="px-2.5 py-2 bg-base-200/70">
-					<p class="text-[11px] text-base-content/68 truncate">{item.artist}</p>
+				<div class="px-2.5 pt-2.5 pb-2 bg-base-200/70">
+					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
+					<p class="text-[11px] text-base-content/70 truncate mt-0.5">{item.artist}</p>
+					<p class="text-[10px] text-base-content/45 truncate mt-0.5">{item.genre}{item.type ? ` · ${item.type}` : ''}</p>
+					<div class="flex justify-end mt-1.5">
+						<button
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/75 border border-accent/28 hover:bg-accent/12 hover:border-accent/50 hover:text-accent transition-all"
+							aria-label="Amplify this signal"
+						>
+							<Radio size={8} />
+							Amplify
+						</button>
+					</div>
 				</div>
 			</div>
 		{/each}

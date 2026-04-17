@@ -13,6 +13,7 @@ export type Item = {
 	artist: string;
 	scouts: number;
 	genre: string;
+	type?: 'Song' | 'Album';
 	image: string;
 	featured?: boolean;
 	badge?: string;
@@ -67,11 +68,11 @@ function img(seed: string, w = 600, h = 600): string {
 
 // 1. For You — personalized signals based on user taste
 export const forYouItems: Item[] = [
-	{ id: 'frozen-sun',         title: 'Frozen Sun',         artist: 'Obscure Slovenian Band', scouts: 1,  genre: 'Ambient',      image: img('frozen-sun', 800, 500), featured: true },
-	{ id: 'night-forest',       title: 'Night Forest',       artist: 'Album',                  scouts: 53, genre: 'Drone',        image: img('night-forest')    },
-	{ id: 'wolves-under-glass', title: 'Wolves Under Glass', artist: 'Aesthian Ritual',        scouts: 7,  genre: 'Experimental', image: img('wolves-glass')    },
-	{ id: 'ashes-in-snow',      title: 'Ashes in Snow',      artist: 'Demo',                   scouts: 12, genre: 'Folk',         image: img('ashes-snow')      },
-	{ id: 'pale-static',        title: 'Pale Static',        artist: 'Meridian Line',          scouts: 4,  genre: 'Electronic',   image: img('pale-static')     },
+	{ id: 'frozen-sun',         title: 'Frozen Sun',         artist: 'Obscure Slovenian Band', scouts: 1,  genre: 'Ambient',      type: 'Song',  image: img('frozen-sun', 800, 500), featured: true },
+	{ id: 'night-forest',       title: 'Night Forest',       artist: 'Pale Atelier',           scouts: 53, genre: 'Drone',        type: 'Album', image: img('night-forest')    },
+	{ id: 'wolves-under-glass', title: 'Wolves Under Glass', artist: 'Aesthian Ritual',        scouts: 7,  genre: 'Experimental', type: 'Song',  image: img('wolves-glass')    },
+	{ id: 'ashes-in-snow',      title: 'Ashes in Snow',      artist: 'Meridian Depth',         scouts: 12, genre: 'Folk',         type: 'Song',  image: img('ashes-snow')      },
+	{ id: 'pale-static',        title: 'Pale Static',        artist: 'Meridian Line',          scouts: 4,  genre: 'Electronic',   type: 'Song',  image: img('pale-static')     },
 ];
 
 // 2. One Step Away — adjacent discovery, related but not obvious
