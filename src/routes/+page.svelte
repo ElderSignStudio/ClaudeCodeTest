@@ -15,8 +15,6 @@
 		return 'Good evening.';
 	}
 
-	const filters = ['All', 'Ambient', 'Drone', 'Experimental', 'Electronic', 'Folk'];
-	let activeFilter = $state('All');
 </script>
 
 <div class="max-w-5xl mx-auto px-5 py-8 space-y-10">
@@ -36,22 +34,6 @@
 			<p class="text-sm text-base-content/68 max-w-sm">
 				Signals curated to your frequency. What's faint today may resonate tomorrow.
 			</p>
-		</div>
-
-		<div class="flex items-center gap-1.5 flex-wrap">
-			{#each filters as filter (filter)}
-				<button
-					onclick={() => (activeFilter = filter)}
-					class={[
-						'px-3 py-1 rounded-full text-[12px] font-semibold transition-all duration-150',
-						activeFilter === filter
-							? 'bg-primary/22 text-primary border border-primary/45 os-glow-interactive'
-							: 'text-base-content/62 border border-white/10 hover:text-base-content/85 hover:border-white/22 hover:bg-white/5',
-					]}
-				>
-					{filter}
-				</button>
-			{/each}
 		</div>
 	</div>
 
