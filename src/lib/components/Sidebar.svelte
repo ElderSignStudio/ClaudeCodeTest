@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Home, Search, Bookmark, Users, User } from 'lucide-svelte';
+	import { Home, Search, Radio, Users, User } from 'lucide-svelte';
 
 	type NavItem = {
 		href: string;
@@ -20,7 +20,7 @@
 			primary: true,
 			dividerBefore: true,
 		},
-		{ href: '/saved',   label: 'Saved Signals',  icon: Bookmark, dividerBefore: true },
+		{ href: '/saved',   label: 'Amplified Signals', icon: Radio, dividerBefore: true },
 		{ href: '/scouts',  label: 'Scouts',         icon: Users    },
 		{ href: '/profile', label: 'Profile',        icon: User     },
 	];
@@ -53,7 +53,7 @@
 			</div>
 			<div class="min-w-0">
 				<p class="text-[13px] font-semibold text-base-content/88 truncate leading-snug">Dan</p>
-				<p class="text-[10px] text-base-content/38 leading-snug">Scout · Level 4</p>
+				<p class="text-[10px] text-base-content/38 leading-snug">Scout Sore: 4</p>
 			</div>
 		</div>
 	</div>
@@ -118,22 +118,4 @@
 		{/each}
 	</nav>
 
-	<!-- Activity stats -->
-	<div class="shrink-0 px-3 pb-20 relative">
-		<div class="h-px bg-white/5 mb-3" aria-hidden="true"></div>
-		<div class="rounded-lg bg-white/3 border border-white/6 p-3.5">
-			<p class="text-[10px] font-semibold uppercase tracking-widest text-base-content/25 mb-3">Your Activity</p>
-			<div class="flex items-center">
-				<div class="flex-1">
-					<p class="text-lg font-extrabold text-base-content/75 leading-none">3</p>
-					<p class="text-[10px] text-base-content/35 mt-1">Amplified</p>
-				</div>
-				<div class="w-px h-8 bg-white/8 shrink-0"></div>
-				<div class="flex-1 pl-4">
-					<p class="text-lg font-extrabold text-base-content/75 leading-none">12</p>
-					<p class="text-[10px] text-base-content/35 mt-1">Discovered</p>
-				</div>
-			</div>
-		</div>
-	</div>
 </aside>
