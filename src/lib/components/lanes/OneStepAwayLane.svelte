@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Radio } from 'lucide-svelte';
 	import { oneStepAwayItems } from '$lib/mock/data';
 </script>
 
@@ -42,12 +43,22 @@
 						</div>
 					</div>
 				</div>
-				<div class="pt-2.5 pr-2.5 pb-2.5 pl-3.5 bg-base-200/70">
+				<div class="pt-2.5 pr-2.5 pb-2 pl-3.5 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-					<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist} · {item.genre}</p>
+					<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist}</p>
 					{#if item.adjacencyReason}
-						<p class="text-[10px] mt-1.5 truncate font-medium" style="color: oklch(0.72 0.16 220 / 0.72);">{item.adjacencyReason}</p>
+						<p class="text-[11px] font-medium mt-1.5 line-clamp-2 leading-snug" style="color: oklch(0.72 0.16 220 / 0.88);">{item.adjacencyReason}</p>
 					{/if}
+					<p class="text-[10px] text-base-content/45 truncate mt-1">{item.genre}</p>
+					<div class="flex justify-end mt-2">
+						<button
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/75 border border-accent/28 hover:bg-accent/12 hover:border-accent/50 hover:text-accent transition-all"
+							aria-label="Amplify this signal"
+						>
+							<Radio size={8} />
+							Amplify
+						</button>
+					</div>
 				</div>
 			</div>
 		{/each}
