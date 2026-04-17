@@ -34,7 +34,8 @@
 				class="absolute inset-0 w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105"
 			/>
 			<div class="absolute inset-0 bg-linear-to-br from-primary/22 via-transparent to-secondary/12"></div>
-			<div class="absolute inset-0 bg-linear-to-b from-transparent via-black/10 to-black/80"></div>
+			<div class="absolute inset-0 bg-linear-to-b from-transparent via-black/25 to-black/90"></div>
+			<div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.38) 100%);" aria-hidden="true"></div>
 
 			<div class="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
 				<div class="absolute w-28 h-28 rounded-full" style="background: radial-gradient(circle, oklch(0.68 0.20 265 / 0.15) 0%, transparent 70%);"></div>
@@ -62,8 +63,8 @@
 			<div class="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-12">
 				<p class="text-[16px] font-extrabold text-white truncate leading-snug tracking-tight">{featuredItem.title}</p>
 				<p class="text-[12px] text-white/72 truncate mt-1">{featuredItem.artist}</p>
-				<p class="text-[10px] text-white/40 truncate mt-0.5">{featuredItem.genre}</p>
-				<div class="flex justify-end mt-2">
+				<p class="text-[10px] text-white/40 truncate mt-2">{featuredItem.genre}</p>
+				<div class="flex justify-end mt-3">
 					<button
 						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/55 bg-black/50 hover:bg-accent/22 hover:border-accent/72 transition-all os-glow-interactive-accent backdrop-blur-sm"
 						aria-label="Amplify this signal"
@@ -102,8 +103,8 @@
 				<div class="px-2.5 pt-2.5 pb-2 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
 					<p class="text-[11px] text-base-content/70 truncate mt-0.5">{item.artist}</p>
-					<p class="text-[10px] text-base-content/45 truncate mt-0.5">{item.genre}{item.type ? ` · ${item.type}` : ''}</p>
-					<div class="flex justify-end mt-1.5">
+					<p class="text-[10px] text-base-content/45 truncate mt-2">{item.genre}{item.type ? ` — ${item.type}` : ''}</p>
+					<div class="flex justify-end mt-3">
 						<button
 							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/75 border border-accent/28 hover:bg-accent/12 hover:border-accent/50 hover:text-accent transition-all"
 							aria-label="Amplify this signal"
