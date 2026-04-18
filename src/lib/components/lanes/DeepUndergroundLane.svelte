@@ -37,25 +37,9 @@
 				<div class="p-2 bg-base-300/70">
 					<p class="text-[11px] font-semibold text-base-content/88 truncate leading-snug">{item.title}</p>
 					<p class="text-[10px] text-base-content/60 truncate mt-0.5">{item.artist}</p>
-					<div class="flex items-center gap-1 mt-1.5 flex-wrap">
-						<span class="text-[9px] text-base-content/48">{item.scouts} scout{item.scouts === 1 ? '' : 's'}</span>
-						{#if item.sparks !== undefined && item.sparks > 0}
-							<span class="text-[9px] text-base-content/28">·</span>
-							<span class="text-[9px] text-base-content/42">{item.sparks} spark</span>
-						{/if}
-						{#if item.locality}
-							<span class="text-[9px] text-base-content/28">·</span>
-							<span class="text-[9px] text-base-content/38 truncate">{item.locality}</span>
-						{/if}
-					</div>
+					<p class="text-[9px] text-base-content/48 mt-1.5">{item.scouts} scout{item.scouts === 1 ? '' : 's'}</p>
 					{#if item.tags && item.tags.length > 0}
-						<div class="flex flex-wrap gap-1 mt-1.5">
-							{#each item.tags.slice(0, 2) as tag (tag)}
-								<span class="text-[8px] font-medium px-1 py-0.5 rounded border border-white/10 text-base-content/45 leading-none">
-									{tag}
-								</span>
-							{/each}
-						</div>
+						<span class="inline-block text-[8px] font-medium px-1 py-0.5 rounded border border-white/10 text-base-content/45 leading-none mt-1.5">{item.tags[0]}</span>
 					{/if}
 				</div>
 			</div>
