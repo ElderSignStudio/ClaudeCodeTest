@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TrendingUp, ArrowUpRight } from 'lucide-svelte';
+	import { TrendingUp } from 'lucide-svelte';
 	import { breakingOutItems } from '$lib/mock/data';
 </script>
 
@@ -40,17 +40,6 @@
 							</svg>
 						</div>
 					</div>
-					<div class="absolute top-2 left-2">
-						<span
-							class="inline-flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
-							style={item.trend === 'surging'
-								? `color: var(--color-success); border-color: oklch(0.74 0.17 158 / 0.45); box-shadow: var(--glow-l3-success);`
-								: `color: var(--color-accent); border-color: oklch(0.72 0.16 220 / 0.40); box-shadow: var(--glow-l3-accent);`}
-						>
-							<ArrowUpRight size={8} />
-							{item.trend === 'surging' ? 'Surging' : 'Rising'}
-						</span>
-					</div>
 				</div>
 				<div class="p-2.5 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
@@ -61,16 +50,11 @@
 						</p>
 					{/if}
 					{#if item.resonance !== undefined}
-						<div class="mt-2 h-0.5 rounded-full bg-white/10 overflow-hidden">
+						<div class="mt-2 h-px rounded-full bg-white/8 overflow-hidden">
 							<div
-								class="relative h-full rounded-full bg-linear-to-r from-success/65 to-accent/50 overflow-hidden"
+								class="h-full rounded-full bg-linear-to-r from-success/38 to-accent/28"
 								style="width: {item.resonance}%;"
-							>
-								<div
-									class="os-bar-shimmer absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/30 to-transparent"
-									aria-hidden="true"
-								></div>
-							</div>
+							></div>
 						</div>
 					{/if}
 				</div>
