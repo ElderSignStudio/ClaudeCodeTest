@@ -32,24 +32,14 @@
 			<img
 				src={featuredItem.image}
 				alt={featuredItem.title}
-				class="absolute inset-0 w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105"
+				class="absolute inset-0 w-full h-full object-cover opacity-85 transition-transform duration-700 group-hover:scale-105"
 			/>
 			<div class="absolute inset-0 bg-linear-to-br from-primary/22 via-transparent to-secondary/12"></div>
-			<div class="absolute inset-0 bg-linear-to-b from-transparent via-black/25 to-black/90"></div>
-			<div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.38) 100%);" aria-hidden="true"></div>
-
-			<div class="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
-				<div class="absolute w-28 h-28 rounded-full" style="background: radial-gradient(circle, oklch(0.68 0.20 265 / 0.15) 0%, transparent 70%);"></div>
-				<svg class="w-44 h-44 text-primary" viewBox="0 0 256 256" fill="none">
-					<circle cx="128" cy="128" r="14" fill="currentColor" opacity="0.20" />
-					<circle cx="128" cy="128" r="38" stroke="currentColor" stroke-width="1.25" opacity="0.13" />
-					<circle cx="128" cy="128" r="68" stroke="currentColor" stroke-width="1" opacity="0.08" />
-					<circle cx="128" cy="128" r="100" stroke="currentColor" stroke-width="0.75" opacity="0.04" />
-				</svg>
-			</div>
+			<div class="absolute inset-0" style="background: linear-gradient(to bottom, transparent 65%, rgba(0,0,0,0.72) 100%);" aria-hidden="true"></div>
+			<div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.18) 100%);" aria-hidden="true"></div>
 
 			<div class="absolute top-3 right-3">
-				<span class="text-[10px] font-bold tracking-wide text-primary border border-primary/50 rounded-full px-2.5 py-1 bg-black/55 backdrop-blur-sm" style="box-shadow: var(--glow-l3-primary);">
+				<span class="text-[10px] font-medium tracking-wide text-primary/48 border border-primary/15 rounded-full px-2.5 py-1 bg-black/22 backdrop-blur-sm">
 					Pick
 				</span>
 			</div>
@@ -61,13 +51,12 @@
 				</div>
 			</div>
 
-			<div class="absolute bottom-0 left-0 right-0 px-3 pb-3 pt-12">
-				<p class="text-[16px] font-extrabold text-white truncate leading-snug tracking-tight">{featuredItem.title}</p>
-				<p class="text-[12px] text-white/72 truncate mt-1">{featuredItem.artist}</p>
-				<p class="text-[10px] text-white/40 truncate mt-2">{featuredItem.genre}</p>
-				<div class="flex justify-end mt-3">
+			<div class="absolute bottom-0 left-0 right-0 px-3 pb-1.5 pt-5">
+				<p class="text-[22px] font-extrabold text-white truncate leading-snug tracking-tight">{featuredItem.title}</p>
+				<p class="text-[12px] text-white/68 truncate mt-3">{featuredItem.artist}</p>
+				<div class="flex justify-end mt-2">
 					<button
-						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/55 bg-black/50 hover:bg-accent/22 hover:border-accent/72 transition-all os-glow-interactive-accent backdrop-blur-sm"
+						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent/58 border border-accent/22 bg-black/22 hover:bg-accent/12 hover:border-accent/45 hover:text-accent/85 transition-all backdrop-blur-sm"
 						aria-label="Amplify this signal"
 					>
 						<Radio size={10} />
