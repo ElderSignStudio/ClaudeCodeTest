@@ -47,8 +47,10 @@
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
 					<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist}</p>
 					{#if item.adjacencyReason}
-						<div class="h-7 overflow-hidden mt-1">
-							<p class="text-[10px] font-semibold line-clamp-2 leading-snug" style="background: linear-gradient(to bottom, oklch(0.72 0.16 220 / 0.95) 40%, oklch(0.72 0.16 220 / 0.62) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;">{item.adjacencyReason}</p>
+						<div class="h-9 mt-1.5 overflow-hidden">
+							<div class="rounded py-1 px-1.5" style="background: oklch(0.72 0.16 220 / 0.09);">
+								<p class="text-[10px] font-semibold line-clamp-2 leading-snug" style="color: oklch(0.72 0.16 220 / 0.92);"><span style="font-size: 8px; opacity: 0.40; margin-right: 2px;">↗</span>{item.adjacencyReason}</p>
+							</div>
 						</div>
 					{/if}
 					<p class="text-[10px] text-base-content/45 truncate mt-2.5">{item.genre}</p>
