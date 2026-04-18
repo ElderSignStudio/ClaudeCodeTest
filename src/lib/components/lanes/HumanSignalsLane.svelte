@@ -10,7 +10,7 @@
 			<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Human Signals</p>
 		</div>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Follow people, not just songs</p>
+	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Scouts shaping the signal network with taste close to yours</p>
 
 	<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 		{#each scoutItems as scout (scout.id)}

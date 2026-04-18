@@ -15,7 +15,7 @@
 			Still early
 		</span>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Signals gaining momentum</p>
+	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Signals gaining momentum — help them spread</p>
 
 	<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 		{#each breakingOutItems as item (item.id)}

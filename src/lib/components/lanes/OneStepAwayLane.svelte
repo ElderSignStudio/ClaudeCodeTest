@@ -13,7 +13,7 @@
 			See all →
 		</a>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Near your taste, but not obvious</p>
+	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Signals discovered by scouts just outside your taste orbit</p>
 
 	<div class="flex gap-2.5 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 		{#each oneStepAwayItems as item (item.id)}
@@ -47,9 +47,11 @@
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
 					<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist}</p>
 					{#if item.adjacencyReason}
-						<p class="text-[11px] font-medium mt-1.5 line-clamp-2 leading-snug" style="color: oklch(0.72 0.16 220 / 0.88);">{item.adjacencyReason}</p>
+						<div class="h-7 overflow-hidden mt-1">
+							<p class="text-[10px] font-semibold line-clamp-2 leading-snug" style="background: linear-gradient(to bottom, oklch(0.72 0.16 220 / 0.95) 40%, oklch(0.72 0.16 220 / 0.62) 100%); -webkit-background-clip: text; background-clip: text; color: transparent;">{item.adjacencyReason}</p>
+						</div>
 					{/if}
-					<p class="text-[10px] text-base-content/45 truncate mt-1">{item.genre}</p>
+					<p class="text-[10px] text-base-content/45 truncate mt-2.5">{item.genre}</p>
 					<div class="flex justify-end mt-2">
 						<button
 							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/75 border border-accent/28 hover:bg-accent/12 hover:border-accent/50 hover:text-accent transition-all"

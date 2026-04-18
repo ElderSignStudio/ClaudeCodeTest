@@ -9,7 +9,7 @@
 			<p class="text-sm font-bold uppercase tracking-widest text-base-content/85">Deep Underground</p>
 		</div>
 	</div>
-	<p class="text-[12px] text-base-content/45 mb-4 ml-3.5">Almost no one knows these</p>
+	<p class="text-[12px] text-base-content/45 mb-4 ml-3.5">Signals barely discovered anywhere — find them first</p>
 
 	<div class="flex gap-2 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none">
 		{#each deepUndergroundItems as item (item.id)}

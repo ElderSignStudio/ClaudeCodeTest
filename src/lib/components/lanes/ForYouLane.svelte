@@ -14,7 +14,7 @@
 </script>
 
 <section>
-	<div class="flex items-center justify-between mb-4">
+	<div class="flex items-center justify-between mb-1">
 		<div class="flex items-center gap-2">
 			<div class="w-0.75 h-3.5 rounded-full bg-primary" aria-hidden="true"></div>
 			<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">For You</p>
@@ -23,6 +23,7 @@
 			See all →
 		</a>
 	</div>
+	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Signals emerging in your orbit, picked for your taste</p>
 
 	<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 

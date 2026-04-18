@@ -16,7 +16,7 @@
 			Refresh picks →
 		</a>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-5 ml-3.5">This is intentionally not your usual thing</p>
+	<p class="text-[12px] text-base-content/50 mb-5 ml-3.5">This is intentionally not your usual thing — you might find a new world</p>
 
 	<div class="grid gap-4 items-stretch" style="grid-template-columns: 3fr 2fr;">
 
