@@ -5,16 +5,6 @@
 	let { scout }: { scout: Scout } = $props();
 </script>
 
-<!--
-	Scout Card — person-focused card for the Human Signals lane.
-	Deliberately different from Signal Cards:
-	  - No large artwork image; avatar is the visual anchor
-	  - Flat surface (bg-base-200/55) — calmer than os-surface or os-hero-card
-	  - Minimal hover: border brightens + tiny lift, no strong glow
-	  - Following state: primary-tinted border ring + "Following" pill
-	  - Activity dot on avatar: communicates recent action without text
-	  - Resonance color: success=High, accent=Medium, neutral=Low
--->
 <div
 	class={[
 		'group shrink-0 w-56 rounded-xl border cursor-pointer',
@@ -73,37 +63,20 @@
 		</div>
 
 		<!-- ── Stats row ── -->
-		<!--
-			Three stats separated by thin vertical dividers.
-			earlySignals: total early picks
-			hitRate: % that later gained traction
-			resonance: High / Medium / Low — colored to signal quality
-		-->
-		<div class="flex items-center gap-3 mb-3.5">
+		<div class="flex items-center justify-between mb-3.5">
 			<div>
-				<p class="text-[14px] font-extrabold text-base-content/82 leading-none">{scout.earlySignals}</p>
-				<p class="text-[9px] text-base-content/45 mt-0.5 leading-none">early sparks</p>
+				<p class="text-[14px] font-extrabold text-base-content/82 leading-none">{scout.sparks}</p>
+				<p class="text-[9px] text-base-content/45 mt-0.5 leading-none">sparks</p>
+			</div>
+			<div class="w-px h-7 bg-white/8 shrink-0"></div>
+			<div>
+				<p class="text-[14px] font-extrabold text-base-content/82 leading-none">{scout.reach}</p>
+				<p class="text-[9px] text-base-content/45 mt-0.5 leading-none">reach</p>
 			</div>
 			<div class="w-px h-7 bg-white/8 shrink-0"></div>
 			<div>
 				<p class="text-[14px] font-extrabold text-base-content/82 leading-none">{scout.hitRate}%</p>
 				<p class="text-[9px] text-base-content/45 mt-0.5 leading-none">hit rate</p>
-			</div>
-			<div class="w-px h-7 bg-white/8 shrink-0"></div>
-			<div>
-				<p
-					class={[
-						'text-[14px] font-extrabold leading-none',
-						scout.resonance === 'High'
-							? 'text-success/82'
-							: scout.resonance === 'Medium'
-								? 'text-accent/78'
-								: 'text-base-content/65',
-					]}
-				>
-					{scout.resonance}
-				</p>
-				<p class="text-[9px] text-base-content/45 mt-0.5 leading-none">resonance</p>
 			</div>
 		</div>
 
@@ -133,18 +106,12 @@
 	</div>
 
 	<!-- ── Recent signal thumbnails ── -->
-	<!--
-		Label sits above the grid so images can fill the full row width.
-		grid-cols-5: each of 5 cells fills (card-width - 2×padding - 4×gap) / 5.
-		At w-56 (224px) with px-3.5 (14px each side) and gap-1 (4px):
-		(224 - 28 - 16) / 5 = 36px per cell — comfortably square.
-	-->
 	{#if scout.recentSignals.length > 0}
 		<div class="border-t border-white/5 px-3.5 pt-2 pb-3">
 			<p class="text-[9px] font-semibold uppercase tracking-wider text-base-content/30 mb-1.5">Recent signals</p>
-			<div class="grid grid-cols-5 gap-1">
-				{#each scout.recentSignals.slice(0, 5) as src, i (i)}
-					<div class="aspect-square rounded-sm overflow-hidden border border-white/8">
+			<div class="grid grid-cols-3 gap-1.5">
+				{#each scout.recentSignals.slice(0, 3) as src, i (i)}
+					<div class="aspect-square rounded overflow-hidden border border-white/8">
 						<img
 							src={src}
 							alt=""

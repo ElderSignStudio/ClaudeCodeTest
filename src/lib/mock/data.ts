@@ -120,10 +120,10 @@ export type Scout = {
 	name: string;
 	avatar: string;         // DiceBear URL
 	tasteProfile: string;   // e.g. "Obscure prog · dark folk · lost tapes"
-	earlySignals: number;   // total early sparks they've contributed
-	resonance: 'High' | 'Medium' | 'Low';
+	sparks: number;         // total signals they've sparked
+	reach: number;          // total scouts reached by their signals
 	hitRate: number;        // percentage of early picks that later gained traction
-	activityLabel?: string; // e.g. "New spark today" — shown as a badge when present
+	activityLabel?: 'New Spark' | 'New Amplify' | 'Gaining Resonance';
 	following: boolean;     // whether the current user follows this scout
 	recentSignals: string[]; // small picsum image URLs for the thumbnail strip
 };
@@ -138,47 +138,47 @@ export const scoutItems: Scout[] = [
 		name:          'Dan',
 		avatar:        avatar('DanOuter'),
 		tasteProfile:  'Obscure prog · dark folk · lost tapes',
-		earlySignals:  8,
-		resonance:     'High',
+		sparks:        8,
+		reach:         41,
 		hitRate:       72,
-		activityLabel: 'New spark today',
+		activityLabel: 'New Spark',
 		following:     true,
-		recentSignals: [img('dust-choir', 80, 80), img('forest-mouth', 80, 80), img('pale-static', 80, 80), img('neon-veda', 80, 80), img('iron-weather', 80, 80)],
+		recentSignals: [img('dust-choir', 80, 80), img('forest-mouth', 80, 80), img('pale-static', 80, 80)],
 	},
 	{
 		id:            'alice',
 		name:          'Alice',
 		avatar:        avatar('AliceSignal'),
 		tasteProfile:  'Brazilian psych · strange collage · obscure finds',
-		earlySignals:  14,
-		resonance:     'High',
+		sparks:        14,
+		reach:         88,
 		hitRate:       68,
-		activityLabel: 'Signal gaining resonance',
+		activityLabel: 'Gaining Resonance',
 		following:     true,
-		recentSignals: [img('ember-field', 80, 80), img('open-window', 80, 80), img('iron-coast', 80, 80), img('brass-weather', 80, 80), img('low-orbit', 80, 80)],
+		recentSignals: [img('ember-field', 80, 80), img('open-window', 80, 80), img('iron-coast', 80, 80)],
 	},
 	{
 		id:           'marco',
 		name:         'Marco',
 		avatar:       avatar('MarcoAmb'),
 		tasteProfile: 'Ambient · ritual · sonic geography',
-		earlySignals: 22,
-		resonance:    'High',
+		sparks:       22,
+		reach:        134,
 		hitRate:      70,
 		following:    false,
-		recentSignals: [img('low-orbit', 80, 80), img('cinder-plain', 80, 80), img('weight-cloud', 80, 80), img('slow-satellite', 80, 80), img('mirror-static', 80, 80)],
+		recentSignals: [img('low-orbit', 80, 80), img('cinder-plain', 80, 80), img('weight-cloud', 80, 80)],
 	},
 	{
 		id:            'yuki',
 		name:          'Yuki',
 		avatar:        avatar('YukiDeep'),
 		tasteProfile:  'Early experimental · field recordings · micro-scenes',
-		earlySignals:  6,
-		resonance:     'Medium',
+		sparks:        6,
+		reach:         29,
 		hitRate:       58,
-		activityLabel: 'New amplify',
+		activityLabel: 'New Amplify',
 		following:     false,
-		recentSignals: [img('burial-light', 80, 80), img('orbital-form', 80, 80), img('zero-archive', 80, 80), img('silver-coast', 80, 80), img('hollow-ritual', 80, 80)],
+		recentSignals: [img('burial-light', 80, 80), img('orbital-form', 80, 80), img('zero-archive', 80, 80)],
 	},
 ];
 
