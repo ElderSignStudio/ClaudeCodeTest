@@ -54,7 +54,7 @@
 
 			<div class="absolute bottom-0 left-0 right-0 px-4 pb-3.5 pt-10">
 				<p class="text-[22px] font-extrabold text-white leading-tight tracking-tight mb-0.5">{bubbleFeatured.title}</p>
-				<p class="text-[12px] text-white/58 mb-4">{bubbleFeatured.artist} · {bubbleFeatured.genre}</p>
+				<p class="text-[12px] text-white/58 mb-4">{bubbleFeatured.artist} · {bubbleFeatured.genre}{bubbleFeatured.type ? ` — ${bubbleFeatured.type}` : ''}</p>
 				{#if bubbleFeatured.whyHere}
 					<div class="mb-4">
 						<p class="text-[9px] font-bold uppercase tracking-widest mb-1.5" style="color: oklch(0.78 0.17 78 / 0.55);">Why this is here</p>
@@ -101,6 +101,9 @@
 					<div class="flex-1 px-3 py-2.5 bg-base-200/70">
 						<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
 						<p class="text-[11px] text-base-content/55 truncate mt-0.5">{item.artist} · {item.genre}</p>
+						{#if item.whyHere}
+							<p class="text-[10px] mt-1.5 leading-snug line-clamp-2" style="color: oklch(0.78 0.17 78 / 0.72);">{item.whyHere}</p>
+						{/if}
 					</div>
 				</div>
 			{/each}
