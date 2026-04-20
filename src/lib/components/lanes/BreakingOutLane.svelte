@@ -33,6 +33,11 @@
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.74 0.17 158 / 0.12) 0%, transparent 65%);"
 						aria-hidden="true"
 					></div>
+					{#if item.tag}
+						<div class="absolute top-2 right-2 z-10">
+							<span class="text-[9px] font-semibold px-1.5 py-0.5 rounded border border-success/25 text-success/70 leading-none" style="background: rgba(0,0,0,0.38); backdrop-filter: blur(4px);">{item.tag}</span>
+						</div>
+					{/if}
 					<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
 						<div class="w-8 h-8 rounded-full bg-white/22 border border-white/38 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
 							<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">

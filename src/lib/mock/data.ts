@@ -36,6 +36,7 @@ export type GainingItem = {
 	weeklyScouts?: number;  // new scouts added this week
 	sparksToday?: number;   // amplifications today
 	resonance?: number;     // 0–100, drives the resonance bar fill
+	tag?: 'Rising' | 'Surging' | 'Breakthrough';
 };
 
 export type HumanSignalItem = {
@@ -98,11 +99,11 @@ export const deepUndergroundItems: Item[] = [
 
 // 4. Breaking Out — signals gaining traction fast
 export const breakingOutItems: GainingItem[] = [
-	{ id: 'ember-field',    title: 'Ember Field',    artist: 'Pale Iris',     scouts: 8,  genre: 'Electronic',   image: img('ember-field'),    growth: 6, trend: 'surging', weeklyScouts: 6,  sparksToday: 2, resonance: 65 },
-	{ id: 'low-orbit',      title: 'Low Orbit',      artist: 'Contour',       scouts: 14, genre: 'Ambient',      image: img('low-orbit'),      growth: 9, trend: 'surging', weeklyScouts: 9,  sparksToday: 3, resonance: 82 },
-	{ id: 'mirror-static',  title: 'Mirror Static',  artist: 'Pale Signal',   scouts: 5,  genre: 'Drone',        image: img('mirror-static'),  growth: 3, trend: 'rising',  weeklyScouts: 3,  sparksToday: 1, resonance: 38 },
-	{ id: 'pale-cathedral', title: 'Pale Cathedral', artist: 'Herd of Birds', scouts: 11, genre: 'Experimental', image: img('pale-cathedral'), growth: 7, trend: 'surging', weeklyScouts: 7,  sparksToday: 2, resonance: 72 },
-	{ id: 'ground-hum',     title: 'Ground Hum',     artist: 'Vessel',        scouts: 3,  genre: 'Electronic',   image: img('ground-hum'),     growth: 2, trend: 'rising',  weeklyScouts: 2,  sparksToday: 1, resonance: 28 },
+	{ id: 'ember-field',    title: 'Ember Field',    artist: 'Pale Iris',     scouts: 8,  genre: 'Electronic',   image: img('ember-field'),    growth: 6, trend: 'surging', weeklyScouts: 6,  sparksToday: 2, resonance: 65, tag: 'Surging'      },
+	{ id: 'low-orbit',      title: 'Low Orbit',      artist: 'Contour',       scouts: 14, genre: 'Ambient',      image: img('low-orbit'),      growth: 9, trend: 'surging', weeklyScouts: 9,  sparksToday: 3, resonance: 82, tag: 'Breakthrough' },
+	{ id: 'mirror-static',  title: 'Mirror Static',  artist: 'Pale Signal',   scouts: 5,  genre: 'Drone',        image: img('mirror-static'),  growth: 3, trend: 'rising',  weeklyScouts: 3,  sparksToday: 1, resonance: 38                      },
+	{ id: 'pale-cathedral', title: 'Pale Cathedral', artist: 'Herd of Birds', scouts: 11, genre: 'Experimental', image: img('pale-cathedral'), growth: 7, trend: 'surging', weeklyScouts: 7,  sparksToday: 2, resonance: 72, tag: 'Surging'      },
+	{ id: 'ground-hum',     title: 'Ground Hum',     artist: 'Vessel',        scouts: 3,  genre: 'Electronic',   image: img('ground-hum'),     growth: 2, trend: 'rising',  weeklyScouts: 2,  sparksToday: 1, resonance: 28, tag: 'Rising'       },
 ];
 
 // 5. Human Signals — discovery driven by real people
