@@ -124,7 +124,7 @@ export type Scout = {
 	sparks: number;         // total signals they've sparked
 	reach: number;          // total scouts reached by their signals
 	hitRate: number;        // percentage of early picks that later gained traction
-	activityLabel?: 'New Spark' | 'New Amplify' | 'Gaining Resonance';
+	activityLabel?: 'Similar Taste' | 'High Hit Rate' | 'Early Picks';
 	following: boolean;     // whether the current user follows this scout
 	recentSignals: string[]; // small picsum image URLs for the thumbnail strip
 };
@@ -142,7 +142,7 @@ export const scoutItems: Scout[] = [
 		sparks:        8,
 		reach:         41,
 		hitRate:       72,
-		activityLabel: 'New Spark',
+		activityLabel: 'Early Picks',
 		following:     true,
 		recentSignals: [img('dust-choir', 80, 80), img('forest-mouth', 80, 80), img('pale-static', 80, 80)],
 	},
@@ -154,7 +154,7 @@ export const scoutItems: Scout[] = [
 		sparks:        14,
 		reach:         88,
 		hitRate:       68,
-		activityLabel: 'Gaining Resonance',
+		activityLabel: 'Similar Taste',
 		following:     true,
 		recentSignals: [img('ember-field', 80, 80), img('open-window', 80, 80), img('iron-coast', 80, 80)],
 	},
@@ -177,7 +177,7 @@ export const scoutItems: Scout[] = [
 		sparks:        6,
 		reach:         29,
 		hitRate:       58,
-		activityLabel: 'New Amplify',
+		activityLabel: 'High Hit Rate',
 		following:     false,
 		recentSignals: [img('burial-light', 80, 80), img('orbital-form', 80, 80), img('zero-archive', 80, 80)],
 	},
@@ -185,7 +185,7 @@ export const scoutItems: Scout[] = [
 
 // 6. Outside the Bubble — intentionally different from user taste
 export const outsideBubbleItems: Item[] = [
-	{ id: 'brass-weather', title: 'Brass Weather', artist: 'South Facing',    scouts: 22, genre: 'Jazz',       image: img('brass-weather'), badge: 'Unexpected', featured: true, whyHere: 'Scouts you trust in dark ambient and neofolk have been amplifying this — even though it lives far outside those scenes. Something crosses over here.'          },
+	{ id: 'brass-weather', title: 'Brass Weather', artist: 'South Facing',    scouts: 22, genre: 'Jazz',       image: img('brass-weather'), badge: 'Unexpected', featured: true, whyHere: 'Picked up by scouts you trust — far outside your usual taste' },
 	{ id: 'loud-harbour',  title: 'Loud Harbour',  artist: 'Dock Street',     scouts: 18, genre: 'Post-Punk',  image: img('loud-harbour'),  badge: 'Unexpected',                whyHere: 'Breaking through via listeners who usually live in drone and minimalism.'  },
 	{ id: 'red-satellite', title: 'Red Satellite', artist: 'Power Station',   scouts: 31, genre: 'Industrial', image: img('red-satellite'), badge: 'Unexpected',                whyHere: 'Found by a trusted curator far outside your usual orbit.'                },
 	{ id: 'paper-engine',  title: 'Paper Engine',  artist: 'The Office Club', scouts: 9,  genre: 'R&B',        image: img('paper-engine'),  badge: 'Unexpected',                whyHere: 'Surfaced by curators with overlapping taste'                             },
