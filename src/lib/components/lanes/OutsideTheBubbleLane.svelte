@@ -12,17 +12,14 @@
 			<div class="w-0.75 h-3.5 rounded-full bg-warning/70" aria-hidden="true"></div>
 			<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Outside the Bubble</p>
 		</div>
-		<a href="/discover" class="text-[12px] text-base-content/45 hover:text-base-content/70 transition-colors">
-			Refresh picks →
-		</a>
 	</div>
 	<p class="text-[12px] text-base-content/50 mb-5 ml-3.5">This is intentionally not your usual thing — you might find a new world</p>
 
-	<div class="grid gap-4 items-stretch" style="grid-template-columns: 3fr 2fr;">
+	<div class="grid gap-4 items-stretch" style="grid-template-columns: 6fr 5fr;">
 
-		<!-- Feature card (left, ~60% width) -->
+		<!-- Featured card (left) -->
 		<div
-			class="group relative rounded-xl overflow-hidden cursor-pointer border border-warning/18 min-h-44 transition-transform duration-400 hover:-translate-y-0.5"
+			class="group relative rounded-xl overflow-hidden cursor-pointer border border-warning/18 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
 			style="box-shadow: 0 0 0 1px oklch(0.78 0.17 78 / 0.10), 0 6px 32px -6px oklch(0 0 0 / 0.55);"
 		>
 			<img
@@ -71,40 +68,46 @@
 			</div>
 		</div>
 
-		<!-- Supporting cards (right, stacked) -->
-		<div class="flex flex-col gap-4 h-full">
+		<!-- Editorial right column — horizontal rows -->
+		<div class="flex flex-col gap-5 pt-1 pl-3" style="border-left: 1px solid oklch(0.78 0.17 78 / 0.11);">
+
 			{#each bubbleSupporting.slice(0, 2) as item (item.id)}
-				<div class="group flex-1 rounded-xl overflow-hidden cursor-pointer border border-white/8 hover:border-warning/22 transition-all duration-250 os-card-glow flex flex-col">
-					<!-- Portrait artwork -->
-					<div class="relative w-full h-24 shrink-0">
+				<div class="group flex gap-3 cursor-pointer">
+
+					<!-- Square thumbnail -->
+					<div class="relative w-20 h-14 rounded-md overflow-hidden shrink-0">
 						<img
 							src={item.image}
 							alt={item.title}
-							class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-78 transition-opacity duration-400"
+							class="absolute inset-0 w-full h-full object-cover opacity-58 group-hover:opacity-75 transition-opacity duration-300"
 						/>
-						<div class="absolute inset-0 bg-linear-to-br from-warning/10 to-transparent mix-blend-color"></div>
-						<div class="absolute inset-0 bg-linear-to-t from-black/60 via-transparent to-transparent"></div>
-						<div
-							class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-							style="background: radial-gradient(circle at 50% 50%, oklch(0.78 0.17 78 / 0.07) 0%, transparent 65%);"
-							aria-hidden="true"
-						></div>
+						<div class="absolute inset-0 bg-linear-to-br from-warning/8 to-transparent mix-blend-color"></div>
 						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-							<div class="w-8 h-8 rounded-full bg-white/18 border border-white/30 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-								<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+							<div class="w-5 h-5 rounded-full bg-white/20 border border-white/32 text-white flex items-center justify-center backdrop-blur-sm">
+								<svg class="w-2 h-2 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 									<path d="M3 2l8 4-8 4V2z" />
 								</svg>
 							</div>
 						</div>
 					</div>
-					<!-- Text panel below artwork -->
-					<div class="flex-1 px-3 py-2.5 bg-base-200/70">
-						<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-						<p class="text-[11px] text-base-content/55 truncate mt-0.5">{item.artist} · {item.genre}</p>
+
+					<!-- Text block -->
+					<div class="flex-1 min-w-0 flex flex-col">
+						<p class="text-[13px] font-semibold text-base-content/88 leading-snug truncate">{item.title}</p>
+						<p class="text-[11px] text-base-content/40 mt-0.5 mb-2">{item.artist}</p>
 						{#if item.whyHere}
-							<p class="text-[10px] mt-1.5 leading-snug line-clamp-2" style="color: oklch(0.78 0.17 78 / 0.72);">{item.whyHere}</p>
+							<p class="text-[10px] text-base-content/34 mb-0.5">Why this</p>
+							<p class="text-[11px] leading-normal text-base-content/64 mb-2.5">{item.whyHere}</p>
 						{/if}
+						<button
+							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/60 border border-accent/18 hover:bg-accent/10 hover:border-accent/35 hover:text-accent transition-all"
+							aria-label="Amplify this signal"
+						>
+							<Radio size={7} />
+							Amplify
+						</button>
 					</div>
+
 				</div>
 			{/each}
 		</div>
