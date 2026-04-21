@@ -3,15 +3,11 @@
 </script>
 
 <section>
-	<div class="flex items-center mb-2">
-		<div class="flex items-center gap-2">
-			<div class="w-0.75 h-3.5 rounded-full bg-secondary/60" aria-hidden="true"></div>
-			<p class="text-sm font-bold uppercase tracking-widest leading-relaxed text-base-content/85">Deep Underground</p>
-		</div>
-	</div>
-	<p class="text-[12px] leading-relaxed text-base-content/45 mb-6 ml-3.5">Signals barely discovered anywhere — find them first</p>
+	<div class="w-0.75 h-3.5 rounded-full bg-secondary/60" aria-hidden="true"></div>
+	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/85">Deep Underground</p>
+	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals barely discovered anywhere — find them first</p>
 
-	<div class="flex gap-2 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none">
+	<div class="mt-5 flex gap-2 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none">
 		{#each deepUndergroundItems as item (item.id)}
 			<div class="group shrink-0 w-32 rounded-lg overflow-hidden border border-white/6 hover:border-white/14 cursor-pointer transition-colors duration-300">
 				<div class="relative w-full aspect-square">

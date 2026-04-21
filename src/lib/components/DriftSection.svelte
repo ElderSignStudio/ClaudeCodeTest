@@ -34,16 +34,12 @@
 	<div style="max-width: 1200px; margin: 0 auto;">
 
 	<!-- Section header -->
-	<div class="flex items-center mb-2">
-		<div class="flex items-center gap-2">
-			<div class="w-0.75 h-3.5 rounded-full bg-primary/55" aria-hidden="true"></div>
-			<p class="text-sm font-bold uppercase tracking-widest leading-relaxed text-base-content/88">Drift</p>
-		</div>
-	</div>
-	<p class="text-[12px] leading-relaxed text-base-content/50 mb-6 ml-3.5">Keep exploring — there's always more</p>
+	<div class="w-0.75 h-3.5 rounded-full bg-primary/55" aria-hidden="true"></div>
+	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/88">Drift</p>
+	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Keep exploring — there's always more</p>
 
 	<!-- ── Block 1: Hero (full-width intentional anchor) ─────────── -->
-	<div class="group rounded-xl overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow mb-3">
+	<div class="mt-5 group rounded-xl overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow mb-3">
 		<div class="relative h-56 w-full">
 			<img
 				src={d[0].image}
