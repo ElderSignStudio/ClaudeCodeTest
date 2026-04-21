@@ -60,6 +60,7 @@ export type OriginItem = {
 	branch: string;       // sub-headline, e.g. "Branch growing from Rome"
 	headline: string;     // narrative sentence for the Story Card
 	seedLocation: string; // where the signal originated
+	graphType: 'converging' | 'parallel' | 'spreading';
 };
 
 // Helper: consistent picsum URL from an id string
@@ -200,6 +201,7 @@ export const originItems: OriginItem[] = [
 		branch:       'Branch growing from Łódź',
 		headline:     'Three scouts found this independently before it spread',
 		seedLocation: 'Łódź, Poland',
+		graphType:    'converging',
 	},
 	{
 		id: 'iron-coast',      title: 'Iron Coast',      artist: 'The Meridian',    genre: 'Drone',
@@ -207,6 +209,7 @@ export const originItems: OriginItem[] = [
 		branch:       'Spreading from Halifax, NS',
 		headline:     'Two separate paths reached the same signal from different scenes',
 		seedLocation: 'Halifax, NS',
+		graphType:    'parallel',
 	},
 	{
 		id: 'weight-of-cloud', title: 'Weight of Cloud', artist: 'Six Months',      genre: 'Ambient',
@@ -214,6 +217,7 @@ export const originItems: OriginItem[] = [
 		branch:       'Started in Copenhagen',
 		headline:     'From one spark in Copenhagen to 31 scouts across six branches',
 		seedLocation: 'Copenhagen',
+		graphType:    'spreading',
 	},
 ];
 
