@@ -34,13 +34,13 @@
 	<div style="max-width: 1200px; margin: 0 auto;">
 
 	<!-- Section header -->
-	<div class="flex items-center mb-1">
+	<div class="flex items-center mb-2">
 		<div class="flex items-center gap-2">
 			<div class="w-0.75 h-3.5 rounded-full bg-primary/55" aria-hidden="true"></div>
-			<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Drift</p>
+			<p class="text-sm font-bold uppercase tracking-widest leading-relaxed text-base-content/88">Drift</p>
 		</div>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-6 ml-3.5">Keep exploring — there's always more</p>
+	<p class="text-[12px] leading-relaxed text-base-content/50 mb-6 ml-3.5">Keep exploring — there's always more</p>
 
 	<!-- ── Block 1: Hero (full-width intentional anchor) ─────────── -->
 	<div class="group rounded-xl overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow mb-3">
@@ -74,7 +74,7 @@
 	<!-- ── Block 2: Row of 3 standard signal cards (w-40 each) ───── -->
 	<div class="flex gap-3 mb-8">
 
-		{#each [d[1], d[2], d[3]] as item, i (item.id)}
+		{#each [d[1], d[2], d[3]] as item (item.id)}
 			<div class="group shrink-0 w-40 rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow">
 				<div class="relative aspect-square w-full">
 					<img

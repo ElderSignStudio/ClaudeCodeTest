@@ -4,10 +4,10 @@
 </script>
 
 <section>
-	<div class="flex items-center justify-between mb-1">
+	<div class="flex items-center justify-between mb-2">
 		<div class="flex items-center gap-2">
 			<div class="w-0.75 h-3.5 rounded-full bg-success" aria-hidden="true"></div>
-			<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">Breaking Out</p>
+			<p class="text-sm font-bold uppercase tracking-widest leading-relaxed text-base-content/90">Breaking Out</p>
 			<span class="w-1.5 h-1.5 rounded-full bg-success/75 animate-pulse" aria-hidden="true"></span>
 		</div>
 		<span class="text-[12px] text-base-content/52 flex items-center gap-1">
@@ -15,7 +15,7 @@
 			Still early
 		</span>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Signals gaining momentum — help them spread</p>
+	<p class="text-[12px] leading-relaxed text-base-content/50 mb-6 ml-3.5">Signals gaining momentum — help them spread</p>
 
 	<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 		{#each breakingOutItems as item (item.id)}
@@ -48,7 +48,7 @@
 				</div>
 				<div class="p-2.5 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-					<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist} · {item.genre}</p>
+					<p class="text-[11px] text-base-content/68 truncate mt-1">{item.artist} · {item.genre}</p>
 					{#if item.weeklyScouts !== undefined}
 						<p class="text-[11px] font-medium mt-1.5 truncate" style="color: oklch(0.74 0.17 158 / 0.80);">
 							+{item.weeklyScouts} scouts this week

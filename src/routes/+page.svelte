@@ -17,11 +17,11 @@
 
 </script>
 
-<div class="max-w-5xl mx-auto px-5 py-8 space-y-10">
+<div class="max-w-5xl mx-auto px-5 py-8 space-y-16">
 
 	<!-- Greeting + filter chips -->
 	<div class="space-y-5">
-		<div class="space-y-2.5">
+		<div class="space-y-5">
 			<div class="h-px w-28 bg-linear-to-r from-primary to-transparent rounded-full" aria-hidden="true"></div>
 			<div class="flex items-center gap-1.5">
 				<svg class="w-2.5 h-2.5 text-primary/70 shrink-0" viewBox="0 0 10 10" fill="none" aria-hidden="true">

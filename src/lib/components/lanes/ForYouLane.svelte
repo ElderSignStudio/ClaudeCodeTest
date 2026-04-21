@@ -14,16 +14,16 @@
 </script>
 
 <section>
-	<div class="flex items-center justify-between mb-1">
+	<div class="flex items-center justify-between mb-2">
 		<div class="flex items-center gap-2">
 			<div class="w-0.75 h-3.5 rounded-full bg-primary" aria-hidden="true"></div>
-			<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">Best picks for you</p>
+			<p class="text-sm font-bold uppercase tracking-widest leading-relaxed text-base-content/90">Best picks for you</p>
 		</div>
 		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-primary/80 transition-colors">
 			See all →
 		</a>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Signals picked for your taste</p>
+	<p class="text-[12px] leading-relaxed text-base-content/50 mb-6 ml-3.5">Signals picked for your taste</p>
 
 	<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 
@@ -92,7 +92,7 @@
 				</div>
 				<div class="px-2.5 pt-2.5 pb-2 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-					<p class="text-[11px] text-base-content/70 truncate mt-0.5">{item.artist}</p>
+					<p class="text-[11px] text-base-content/70 truncate mt-1">{item.artist}</p>
 					<p class="text-[10px] text-base-content/45 truncate mt-2">{item.genre}{item.type ? ` — ${item.type}` : ''}</p>
 					<div class="flex justify-end mt-3">
 						<button

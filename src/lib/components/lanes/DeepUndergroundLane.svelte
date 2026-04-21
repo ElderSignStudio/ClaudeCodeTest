@@ -3,13 +3,13 @@
 </script>
 
 <section>
-	<div class="flex items-center mb-1">
+	<div class="flex items-center mb-2">
 		<div class="flex items-center gap-2">
 			<div class="w-0.75 h-3.5 rounded-full bg-secondary/60" aria-hidden="true"></div>
-			<p class="text-sm font-bold uppercase tracking-widest text-base-content/85">Deep Underground</p>
+			<p class="text-sm font-bold uppercase tracking-widest leading-relaxed text-base-content/85">Deep Underground</p>
 		</div>
 	</div>
-	<p class="text-[12px] text-base-content/45 mb-4 ml-3.5">Signals barely discovered anywhere — find them first</p>
+	<p class="text-[12px] leading-relaxed text-base-content/45 mb-6 ml-3.5">Signals barely discovered anywhere — find them first</p>
 
 	<div class="flex gap-2 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none">
 		{#each deepUndergroundItems as item (item.id)}

@@ -4,16 +4,16 @@
 </script>
 
 <section>
-	<div class="flex items-center justify-between mb-1">
+	<div class="flex items-center justify-between mb-2">
 		<div class="flex items-center gap-2">
 			<div class="w-0.75 h-3.5 rounded-full bg-accent" aria-hidden="true"></div>
-			<p class="text-sm font-bold uppercase tracking-widest text-base-content/90">One Step Away</p>
+			<p class="text-sm font-bold uppercase tracking-widest leading-relaxed text-base-content/90">One Step Away</p>
 		</div>
 		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-accent/80 transition-colors">
 			See all →
 		</a>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">Signals discovered by scouts just outside your taste orbit</p>
+	<p class="text-[12px] leading-relaxed text-base-content/50 mb-6 ml-3.5">Signals discovered by scouts just outside your taste orbit</p>
 
 	<div class="flex gap-2.5 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
 		{#each oneStepAwayItems as item (item.id)}
@@ -45,7 +45,7 @@
 				</div>
 				<div class="pt-2.5 pr-2.5 pb-2 pl-3.5 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-					<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist}</p>
+					<p class="text-[11px] text-base-content/68 truncate mt-1">{item.artist}</p>
 					{#if item.adjacencyReason}
 						<div class="h-9 mt-1.5 overflow-hidden">
 							<div class="rounded py-1 px-1.5" style="background: oklch(0.72 0.16 220 / 0.09);">

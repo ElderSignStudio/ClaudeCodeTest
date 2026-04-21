@@ -7,13 +7,13 @@
 </script>
 
 <section>
-	<div class="flex items-center justify-between mb-1">
+	<div class="flex items-center justify-between mb-2">
 		<div class="flex items-center gap-2">
 			<div class="w-0.75 h-3.5 rounded-full bg-warning/70" aria-hidden="true"></div>
-			<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Outside the Bubble</p>
+			<p class="text-sm font-bold uppercase tracking-widest leading-relaxed text-base-content/88">Outside the Bubble</p>
 		</div>
 	</div>
-	<p class="text-[12px] text-base-content/50 mb-5 ml-3.5">This is intentionally not your usual thing — you might find a new world</p>
+	<p class="text-[12px] leading-relaxed text-base-content/50 mb-6 ml-3.5">This is intentionally not your usual thing — you might find a new world</p>
 
 	<div class="grid gap-4 items-stretch" style="grid-template-columns: 6fr 5fr;">
 
