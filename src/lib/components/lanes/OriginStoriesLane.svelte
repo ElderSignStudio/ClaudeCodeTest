@@ -12,9 +12,9 @@
 	</div>
 	<p class="text-[12px] text-base-content/50 mb-4 ml-3.5">How signals spread through the network</p>
 
-	<div class="flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
+	<div class="grid grid-cols-3 gap-3">
 		{#each originItems as item (item.id)}
-			<div class="shrink-0 w-80">
+			<div class="h-full">
 				<StoryCard {item} />
 			</div>
 		{/each}
