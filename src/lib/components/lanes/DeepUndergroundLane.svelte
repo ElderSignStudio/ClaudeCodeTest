@@ -16,7 +16,7 @@
 		</a>
 	</div>
 
-	<div class="mt-5 grid gap-3 pb-2 w-full deep-grid">
+	<div class="mt-5 grid gap-3 pb-2 w-full" style="grid-template-columns: repeat(7, minmax(130px, 1fr));">
 		{#each deepUndergroundItems as item (item.id)}
 			<div class="group rounded-lg overflow-hidden border border-white/6 hover:border-white/14 cursor-pointer transition-colors duration-300">
 				<div class="relative w-full aspect-square">
@@ -51,14 +51,3 @@
 		{/each}
 	</div>
 </section>
-
-<style>
-	.deep-grid {
-		grid-template-columns: repeat(7, minmax(130px, 1fr));
-	}
-	@media (min-width: 1536px) {
-		.deep-grid {
-			grid-template-columns: repeat(8, minmax(120px, 1fr));
-		}
-	}
-</style>
