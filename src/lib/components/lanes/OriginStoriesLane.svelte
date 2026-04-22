@@ -12,7 +12,7 @@
 				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">How signals spread through the network</p>
 			</div>
 		</div>
-		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-secondary/80 transition-colors shrink-0 2xl:mr-30">
+		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-secondary/80 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			See all →
 		</a>
 	</div>
