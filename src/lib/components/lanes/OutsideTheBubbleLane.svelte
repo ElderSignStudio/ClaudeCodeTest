@@ -7,17 +7,21 @@
 </script>
 
 <section class="pt-6 pb-2">
-	<div class="flex items-center justify-between">
-		<div class="w-0.75 h-3.5 rounded-full bg-warning/70" aria-hidden="true"></div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors">
+	<div class="flex items-start justify-between w-full">
+		<div class="flex items-start gap-3">
+			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-warning/70 shrink-0" aria-hidden="true"></div>
+			<div>
+				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/95">Outside the Bubble</p>
+				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">This is intentionally not your usual thing — you might find a new world</p>
+			</div>
+		</div>
+		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors shrink-0 2xl:mr-30">
 			Refresh
 			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
 	</div>
-	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/95">Outside the Bubble</p>
-	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">This is intentionally not your usual thing — you might find a new world</p>
 
-	<div class="mt-5 grid gap-4 items-stretch" style="grid-template-columns: 6fr 5fr;">
+	<div class="mt-5 grid gap-6 items-stretch" style="grid-template-columns: 1.6fr 1fr;">
 
 		<!-- Featured card (left) -->
 		<div
@@ -71,7 +75,7 @@
 		</div>
 
 		<!-- Editorial right column — horizontal rows -->
-		<div class="flex flex-col gap-5 pt-1 pl-3" style="border-left: 1px solid oklch(0.78 0.17 78 / 0.11);">
+		<div class="flex flex-col gap-6 pt-1 pl-3" style="border-left: 1px solid oklch(0.78 0.17 78 / 0.11);">
 
 			{#each bubbleSupporting.slice(0, 2) as item (item.id)}
 				<div class="group flex gap-3 cursor-pointer">
@@ -95,7 +99,7 @@
 
 					<!-- Text block -->
 					<div class="flex-1 min-w-0 flex flex-col">
-						<p class="text-[13px] font-semibold text-base-content/88 leading-snug truncate">{item.title}</p>
+						<p class="text-[13px] font-semibold text-base-content/90 leading-snug truncate">{item.title}</p>
 						<p class="text-[11px] text-base-content/40 mt-0.5 mb-2">{item.artist}</p>
 						{#if item.whyHere}
 							<p class="text-[10px] text-base-content/34 mb-0.5">Why this</p>

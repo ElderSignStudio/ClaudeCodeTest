@@ -4,15 +4,19 @@
 </script>
 
 <section>
-	<div class="flex items-center justify-between">
-		<div class="w-0.75 h-3.5 rounded-full bg-accent" aria-hidden="true"></div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors">
+	<div class="flex items-start justify-between w-full">
+		<div class="flex items-start gap-3">
+			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-accent shrink-0" aria-hidden="true"></div>
+			<div>
+				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">One Step Away</p>
+				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals discovered by scouts just outside your taste orbit</p>
+			</div>
+		</div>
+		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors shrink-0 2xl:mr-30">
 			Refresh
 			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
 	</div>
-	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">One Step Away</p>
-	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals discovered by scouts just outside your taste orbit</p>
 
 	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(6, minmax(150px, 1fr));">
 		{#each oneStepAwayItems as item (item.id)}

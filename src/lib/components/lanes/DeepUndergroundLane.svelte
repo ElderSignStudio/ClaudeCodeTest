@@ -3,16 +3,20 @@
 </script>
 
 <section>
-	<div class="flex items-center justify-between">
-		<div class="w-0.75 h-3.5 rounded-full bg-secondary/60" aria-hidden="true"></div>
-		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-base-content/70 transition-colors">
+	<div class="flex items-start justify-between w-full">
+		<div class="flex items-start gap-3">
+			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-secondary/60 shrink-0" aria-hidden="true"></div>
+			<div>
+				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/85">Deep Underground</p>
+				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals barely discovered anywhere — find them first</p>
+			</div>
+		</div>
+		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-base-content/70 transition-colors shrink-0 2xl:mr-30">
 			See all →
 		</a>
 	</div>
-	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/85">Deep Underground</p>
-	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals barely discovered anywhere — find them first</p>
 
-	<div class="mt-5 grid gap-3 pb-2 w-full" style="grid-template-columns: repeat(7, minmax(130px, 1fr));">
+	<div class="mt-5 grid gap-3 pb-2 w-full deep-grid">
 		{#each deepUndergroundItems as item (item.id)}
 			<div class="group rounded-lg overflow-hidden border border-white/6 hover:border-white/14 cursor-pointer transition-colors duration-300">
 				<div class="relative w-full aspect-square">
@@ -47,3 +51,14 @@
 		{/each}
 	</div>
 </section>
+
+<style>
+	.deep-grid {
+		grid-template-columns: repeat(7, minmax(130px, 1fr));
+	}
+	@media (min-width: 1536px) {
+		.deep-grid {
+			grid-template-columns: repeat(8, minmax(120px, 1fr));
+		}
+	}
+</style>

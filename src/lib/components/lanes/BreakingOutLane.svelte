@@ -3,17 +3,21 @@ import { breakingOutItems } from '$lib/mock/data';
 </script>
 
 <section>
-	<div class="flex items-center justify-between">
-		<div class="flex items-center gap-1.5">
-			<div class="w-0.75 h-3.5 rounded-full bg-success" aria-hidden="true"></div>
-			<span class="w-1.5 h-1.5 rounded-full bg-success/75 animate-pulse" aria-hidden="true"></span>
+	<div class="flex items-start justify-between w-full">
+		<div class="flex items-start gap-3">
+			<div class="flex items-center gap-1.5 mt-0.5 shrink-0">
+				<div class="w-0.5 h-5 rounded-full bg-success" aria-hidden="true"></div>
+				<span class="w-1.5 h-1.5 rounded-full bg-success/75 animate-pulse" aria-hidden="true"></span>
+			</div>
+			<div>
+				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Breaking Out</p>
+				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals gaining momentum — help them spread</p>
+			</div>
 		</div>
-		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-success/80 transition-colors">
+		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-success/80 transition-colors shrink-0 2xl:mr-30">
 			See all →
 		</a>
 	</div>
-	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Breaking Out</p>
-	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals gaining momentum — help them spread</p>
 
 	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(5, minmax(180px, 1fr));">
 		{#each breakingOutItems as item (item.id)}
@@ -22,7 +26,7 @@ import { breakingOutItems } from '$lib/mock/data';
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-[72%] group-hover:opacity-[88%] transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
 					/>
 					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
