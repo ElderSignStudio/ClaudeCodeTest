@@ -7,7 +7,7 @@
 
 <div
 	class={[
-		'group shrink-0 w-56 rounded-xl border cursor-pointer',
+		'group rounded-xl border cursor-pointer w-full',
 		'transition-all duration-250 hover:-translate-y-px',
 		scout.following
 			? 'bg-base-200/62 border-primary/18 hover:border-primary/30'

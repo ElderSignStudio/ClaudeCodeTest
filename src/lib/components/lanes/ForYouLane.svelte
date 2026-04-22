@@ -24,10 +24,10 @@
 	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Best picks for you</p>
 	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals picked for your taste</p>
 
-	<div class="mt-5 flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
+	<div class="mt-5 grid gap-4 pb-2 w-full items-start" style="grid-template-columns: minmax(320px, 1.55fr) repeat(4, minmax(170px, 1fr));">
 
 		<!-- Featured card -->
-		<div class="group relative shrink-0 w-64 h-72 rounded-xl overflow-hidden cursor-pointer border border-primary/22 os-hero-card">
+		<div class="group relative h-72 rounded-xl overflow-hidden cursor-pointer border border-primary/22 os-hero-card">
 			<img
 				src={featuredItem.image}
 				alt={featuredItem.title}
@@ -67,7 +67,7 @@
 
 		<!-- Standard cards -->
 		{#each regularItems as item, i (item.id)}
-			<div class="group shrink-0 w-40 rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow">
+			<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow">
 				<div class="relative aspect-square w-full">
 					<img
 						src={item.image}

@@ -17,7 +17,7 @@
 
 </script>
 
-<div class="max-w-5xl mx-auto px-5 py-8 space-y-18">
+<div class="max-w-400 mx-auto w-full px-6 xl:px-8 py-8 space-y-18">
 
 	<!-- Greeting -->
 	<div class="space-y-5">

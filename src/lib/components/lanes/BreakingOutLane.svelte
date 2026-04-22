@@ -15,9 +15,9 @@ import { breakingOutItems } from '$lib/mock/data';
 	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Breaking Out</p>
 	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals gaining momentum — help them spread</p>
 
-	<div class="mt-5 flex gap-3 overflow-x-auto -mx-5 px-5 pb-2 scrollbar-none items-start">
+	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(5, minmax(180px, 1fr));">
 		{#each breakingOutItems as item (item.id)}
-			<div class="group shrink-0 w-44 rounded-lg overflow-hidden border border-white/8 hover:border-success/30 cursor-pointer transition-all duration-200 os-card-breaking">
+			<div class="group rounded-lg overflow-hidden border border-white/8 hover:border-success/30 cursor-pointer transition-all duration-200 os-card-breaking">
 				<div class="relative w-full aspect-square">
 					<img
 						src={item.image}
