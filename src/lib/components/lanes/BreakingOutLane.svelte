@@ -5,10 +5,7 @@ import { breakingOutItems } from '$lib/mock/data';
 <section>
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
-			<div class="flex items-center gap-1.5 mt-0.5 shrink-0">
-				<div class="w-0.5 h-5 rounded-full bg-success" aria-hidden="true"></div>
-				<span class="w-1.5 h-1.5 rounded-full bg-success/75 animate-pulse" aria-hidden="true"></span>
-			</div>
+			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-success shrink-0" aria-hidden="true"></div>
 			<div>
 				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Breaking Out</p>
 				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals gaining momentum — help them spread</p>
