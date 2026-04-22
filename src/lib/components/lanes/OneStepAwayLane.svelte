@@ -1,13 +1,14 @@
 <script lang="ts">
-	import { Radio } from 'lucide-svelte';
+	import { Radio, RefreshCw } from 'lucide-svelte';
 	import { oneStepAwayItems } from '$lib/mock/data';
 </script>
 
 <section>
 	<div class="flex items-center justify-between">
 		<div class="w-0.75 h-3.5 rounded-full bg-accent" aria-hidden="true"></div>
-		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-accent/80 transition-colors">
+		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors">
 			Refresh
+			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
 	</div>
 	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">One Step Away</p>
