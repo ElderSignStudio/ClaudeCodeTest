@@ -7,7 +7,12 @@
 </script>
 
 <section class="pt-6 pb-2">
-	<div class="w-0.75 h-3.5 rounded-full bg-warning/70" aria-hidden="true"></div>
+	<div class="flex items-center justify-between">
+		<div class="w-0.75 h-3.5 rounded-full bg-warning/70" aria-hidden="true"></div>
+		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-warning/80 transition-colors">
+			Refresh
+		</a>
+	</div>
 	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/95">Outside the Bubble</p>
 	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">This is intentionally not your usual thing — you might find a new world</p>
 

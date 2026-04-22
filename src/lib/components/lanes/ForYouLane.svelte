@@ -17,7 +17,7 @@
 	<div class="flex items-center justify-between">
 		<div class="w-0.75 h-3.5 rounded-full bg-primary" aria-hidden="true"></div>
 		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-primary/80 transition-colors">
-			See all →
+			Refresh
 		</a>
 	</div>
 	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Best picks for you</p>

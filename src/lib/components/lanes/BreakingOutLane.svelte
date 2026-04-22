@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { TrendingUp } from 'lucide-svelte';
-	import { breakingOutItems } from '$lib/mock/data';
+import { breakingOutItems } from '$lib/mock/data';
 </script>
 
 <section>
@@ -9,10 +8,9 @@
 			<div class="w-0.75 h-3.5 rounded-full bg-success" aria-hidden="true"></div>
 			<span class="w-1.5 h-1.5 rounded-full bg-success/75 animate-pulse" aria-hidden="true"></span>
 		</div>
-		<span class="text-[12px] text-base-content/52 flex items-center gap-1">
-			<TrendingUp size={11} class="text-success/65" />
-			Still early
-		</span>
+		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-success/80 transition-colors">
+			See all →
+		</a>
 	</div>
 	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Breaking Out</p>
 	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals gaining momentum — help them spread</p>
