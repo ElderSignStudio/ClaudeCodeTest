@@ -1,0 +1,693 @@
+{
+  "bestPicksForYou": {
+    "featured": {
+      "id": "frozen-sun",
+      "title": "Frozen Sun",
+      "artist": "Obscure Slovenian Band",
+      "genre": "Ambient",
+      "type": "Song",
+      "featured": true,
+      "cover": "https://i.scdn.co/image/ab67616d0000b273a175e8328da69042a036ce6c",
+      "spotifyId": "5dtR9gNYzogw5VngWk9P8h",
+      "spotifyUri": "spotify:track:5dtR9gNYzogw5VngWk9P8h",
+      "spotifyUrl": "https://open.spotify.com/track/5dtR9gNYzogw5VngWk9P8h",
+      "spotifyType": "track",
+      "spotifyName": "Ode To Solitude",
+      "spotifyArtist": "Estatic Fear",
+      "spotifyAlbumName": "Somnium Obmutum"
+    },
+    "items": [
+      {
+        "id": "night-forest",
+        "title": "Night Forest",
+        "artist": "Pale Atelier",
+        "genre": "Drone",
+        "type": "Album",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273c94b590151ebd0a78bcc2e57",
+        "spotifyId": "4XrhapfKtOHM8vM9oRAkCi",
+        "spotifyUri": "spotify:album:4XrhapfKtOHM8vM9oRAkCi",
+        "spotifyUrl": "https://open.spotify.com/album/4XrhapfKtOHM8vM9oRAkCi",
+        "spotifyType": "album",
+        "spotifyName": "Night Forest",
+        "spotifyArtist": "Nature's Essence",
+        "spotifyAlbumName": null
+      },
+      {
+        "id": "wolves-under-glass",
+        "title": "Wolves Under Glass",
+        "artist": "Aesthian Ritual",
+        "genre": "Experimental",
+        "type": "Song",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273df33a17b45b42e2b686b8c03",
+        "spotifyId": "4G5P8iFosipk75ka1Zi4ob",
+        "spotifyUri": "spotify:track:4G5P8iFosipk75ka1Zi4ob",
+        "spotifyUrl": "https://open.spotify.com/track/4G5P8iFosipk75ka1Zi4ob",
+        "spotifyType": "track",
+        "spotifyName": "Cruelty Brought Thee Orchids",
+        "spotifyArtist": "Cradle Of Filth",
+        "spotifyAlbumName": "Cruelty & The Beast"
+      },
+      {
+        "id": "ashes-in-snow",
+        "title": "Ashes in Snow",
+        "artist": "Meridian Depth",
+        "genre": "Folk",
+        "type": "Song",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273de5211b3ae7ea65a213e4c20",
+        "spotifyId": "0iNOg79E2yJb80J2ULiOsJ",
+        "spotifyUri": "spotify:track:0iNOg79E2yJb80J2ULiOsJ",
+        "spotifyUrl": "https://open.spotify.com/track/0iNOg79E2yJb80J2ULiOsJ",
+        "spotifyType": "track",
+        "spotifyName": "Meridian",
+        "spotifyArtist": "Waves Of Aware",
+        "spotifyAlbumName": "Meridian"
+      },
+      {
+        "id": "pale-static",
+        "title": "Pale Static",
+        "artist": "Meridian Line",
+        "genre": "Electronic",
+        "type": "Song",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273e5898cf2036e77d11a73e5ad",
+        "spotifyId": "5ZNYGl1R2l2LZSq9QtSRYG",
+        "spotifyUri": "spotify:track:5ZNYGl1R2l2LZSq9QtSRYG",
+        "spotifyUrl": "https://open.spotify.com/track/5ZNYGl1R2l2LZSq9QtSRYG",
+        "spotifyType": "track",
+        "spotifyName": "Fractured Meridian",
+        "spotifyArtist": "Radical Aenima",
+        "spotifyAlbumName": "Epoch Residue"
+      }
+    ]
+  },
+  "oneStepAway": {
+    "items": [
+      {
+        "id": "edge-of-field",
+        "title": "Edge of Field",
+        "artist": "Dusk Bureau",
+        "genre": "Ambient",
+        "badge": "Adjacent",
+        "adjacencyReason": "From scouts who explore ambient",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27376fb09a39d1f21a685c86ea7",
+        "spotifyId": "6Z8mcFe97SN3w0OKLy2SOZ",
+        "spotifyUri": "spotify:track:6Z8mcFe97SN3w0OKLy2SOZ",
+        "spotifyUrl": "https://open.spotify.com/track/6Z8mcFe97SN3w0OKLy2SOZ",
+        "spotifyType": "track",
+        "spotifyName": "Embraced by the Flame",
+        "spotifyArtist": "UNDEAD CORPORATION DOUJIN WORKS",
+        "spotifyAlbumName": "瞬殺"
+      },
+      {
+        "id": "iron-weather",
+        "title": "Iron Weather",
+        "artist": "Pale Motion",
+        "genre": "Drone",
+        "badge": "Adjacent",
+        "adjacencyReason": "Crossed over from drone listeners",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273cbf27ba8bde5589140cbba03",
+        "spotifyId": "2r5grlr8yKXrY3xpJe1sIq",
+        "spotifyUri": "spotify:track:2r5grlr8yKXrY3xpJe1sIq",
+        "spotifyUrl": "https://open.spotify.com/track/2r5grlr8yKXrY3xpJe1sIq",
+        "spotifyType": "track",
+        "spotifyName": "294 Moons",
+        "spotifyArtist": "STRsd",
+        "spotifyAlbumName": "Phases of The Moon"
+      },
+      {
+        "id": "soft-collapse",
+        "title": "Soft Collapse",
+        "artist": "Terrain",
+        "genre": "Electronic",
+        "badge": "Adjacent",
+        "adjacencyReason": "From scouts with overlapping taste",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27354f6ac0335b7ecd797c80802",
+        "spotifyId": "4ROAaD0tqLfpc209CurenH",
+        "spotifyUri": "spotify:track:4ROAaD0tqLfpc209CurenH",
+        "spotifyUrl": "https://open.spotify.com/track/4ROAaD0tqLfpc209CurenH",
+        "spotifyType": "track",
+        "spotifyName": "Soft Collapse",
+        "spotifyArtist": "Palmscape",
+        "spotifyAlbumName": "Soft Collapse"
+      },
+      {
+        "id": "slow-satellite",
+        "title": "Slow Satellite",
+        "artist": "White Canvas",
+        "genre": "Experimental",
+        "badge": "Adjacent",
+        "adjacencyReason": "Close to your orbit",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27385886fbcf93cea8216a0b1f3",
+        "spotifyId": "7o7xQpITGzCbqujJQLo3V7",
+        "spotifyUri": "spotify:track:7o7xQpITGzCbqujJQLo3V7",
+        "spotifyUrl": "https://open.spotify.com/track/7o7xQpITGzCbqujJQLo3V7",
+        "spotifyType": "track",
+        "spotifyName": "CANVAS",
+        "spotifyArtist": "King James III",
+        "spotifyAlbumName": "CANVAS"
+      },
+      {
+        "id": "minor-current",
+        "title": "Minor Current",
+        "artist": "Field Notes",
+        "genre": "Folk",
+        "badge": "Adjacent",
+        "adjacencyReason": "From scouts with overlapping taste",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273a010eb25782a0daf852e8def",
+        "spotifyId": "2EsKOSHmBf8olWIWxgnD6o",
+        "spotifyUri": "spotify:track:2EsKOSHmBf8olWIWxgnD6o",
+        "spotifyUrl": "https://open.spotify.com/track/2EsKOSHmBf8olWIWxgnD6o",
+        "spotifyType": "track",
+        "spotifyName": "Velvet Currents",
+        "spotifyArtist": "Gaspar LeMarc",
+        "spotifyAlbumName": "Velvet Currents"
+      },
+      {
+        "id": "glass-signal",
+        "title": "Glass Signal",
+        "artist": "Pale Archive",
+        "genre": "Post-Rock",
+        "badge": "Adjacent",
+        "adjacencyReason": "Crossed over from ambient black metal",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273c8fdc3c4f9ef8895146c71fa",
+        "spotifyId": "2p1J64qv855SGsv3pBlsnP",
+        "spotifyUri": "spotify:track:2p1J64qv855SGsv3pBlsnP",
+        "spotifyUrl": "https://open.spotify.com/track/2p1J64qv855SGsv3pBlsnP",
+        "spotifyType": "track",
+        "spotifyName": "the last beautiful thing I saw is the thing that blinded me",
+        "spotifyArtist": "Paris Paloma",
+        "spotifyAlbumName": "the last beautiful thing I saw is the thing that blinded me"
+      }
+    ]
+  },
+  "deepUnderground": {
+    "items": [
+      {
+        "id": "dust-choir",
+        "title": "Dust Choir",
+        "artist": "Mare Internum",
+        "genre": "Ambient",
+        "badge": "Deep",
+        "tags": [
+          "Field recording",
+          "Self-released"
+        ],
+        "locality": "Slovenia",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273d0346b3f2676e0f3a2c1cd05",
+        "spotifyId": "2BebPjVK4o2f36Ws4Pnvqj",
+        "spotifyUri": "spotify:track:2BebPjVK4o2f36Ws4Pnvqj",
+        "spotifyUrl": "https://open.spotify.com/track/2BebPjVK4o2f36Ws4Pnvqj",
+        "spotifyType": "track",
+        "spotifyName": "Yuma Territorial Prison",
+        "spotifyArtist": "Alvin Tostig",
+        "spotifyAlbumName": "Western Reveries"
+      },
+      {
+        "id": "neon-veda",
+        "title": "Neon Veda",
+        "artist": "3 Scouts",
+        "genre": "Electronic",
+        "badge": "Deep",
+        "tags": [
+          "Cassette"
+        ],
+        "locality": "Poland",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273fddae7e5a1463f7a15c0d5df",
+        "spotifyId": "3dQhV8kSI62ZwqcxJEXCSR",
+        "spotifyUri": "spotify:album:3dQhV8kSI62ZwqcxJEXCSR",
+        "spotifyUrl": "https://open.spotify.com/album/3dQhV8kSI62ZwqcxJEXCSR",
+        "spotifyType": "album",
+        "spotifyName": "Neon Scarves",
+        "spotifyArtist": "Maphyagang",
+        "spotifyAlbumName": null
+      },
+      {
+        "id": "orbital-form",
+        "title": "Orbital Form",
+        "artist": "Ultra Obscure",
+        "genre": "Experimental",
+        "badge": "Deep",
+        "tags": [
+          "Ultra obscure",
+          "No label"
+        ],
+        "locality": "Unknown",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273a709518d0416507359677838",
+        "spotifyId": "501jVMrXXI7HRPQeJv55Cr",
+        "spotifyUri": "spotify:track:501jVMrXXI7HRPQeJv55Cr",
+        "spotifyUrl": "https://open.spotify.com/track/501jVMrXXI7HRPQeJv55Cr",
+        "spotifyType": "track",
+        "spotifyName": "Orbital Flow",
+        "spotifyArtist": "Shaping Clouds",
+        "spotifyAlbumName": "Orbital Flow"
+      },
+      {
+        "id": "silver-coast",
+        "title": "Silver Coast",
+        "artist": "Unnamed Project",
+        "genre": "Folk",
+        "badge": "Deep",
+        "tags": [
+          "Demo"
+        ],
+        "locality": "Halifax",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273243ebf6c7d536b963cc8ae6d",
+        "spotifyId": "1h1w1LwlFlNK6A5thffG3i",
+        "spotifyUri": "spotify:track:1h1w1LwlFlNK6A5thffG3i",
+        "spotifyUrl": "https://open.spotify.com/track/1h1w1LwlFlNK6A5thffG3i",
+        "spotifyType": "track",
+        "spotifyName": "Signs",
+        "spotifyArtist": "Cerril",
+        "spotifyAlbumName": "VIRGO"
+      },
+      {
+        "id": "hollow-ritual",
+        "title": "Hollow Ritual",
+        "artist": "Cave Press",
+        "genre": "Drone",
+        "badge": "Deep",
+        "tags": [
+          "Cassette rip"
+        ],
+        "locality": "Romania",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273f8f98e0418da0718a23b669d",
+        "spotifyId": "1J8foL0jLv4KPf4R1J6mtw",
+        "spotifyUri": "spotify:track:1J8foL0jLv4KPf4R1J6mtw",
+        "spotifyUrl": "https://open.spotify.com/track/1J8foL0jLv4KPf4R1J6mtw",
+        "spotifyType": "track",
+        "spotifyName": "Gospel of Dismay",
+        "spotifyArtist": "Dagames",
+        "spotifyAlbumName": "Gospel of Dismay"
+      },
+      {
+        "id": "static-bloom",
+        "title": "Static Bloom",
+        "artist": "Margin Signal",
+        "genre": "Ambient",
+        "badge": "Deep",
+        "tags": [
+          "No label",
+          "Self-released"
+        ],
+        "locality": "Estonia",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2731ce21acf74df525abed6ab21",
+        "spotifyId": "2H3BZ7C47k2oxcXXyFhjvO",
+        "spotifyUri": "spotify:track:2H3BZ7C47k2oxcXXyFhjvO",
+        "spotifyUrl": "https://open.spotify.com/track/2H3BZ7C47k2oxcXXyFhjvO",
+        "spotifyType": "track",
+        "spotifyName": "Gentle Signal",
+        "spotifyArtist": "oceanfinder",
+        "spotifyAlbumName": "Gentle Signal"
+      },
+      {
+        "id": "zero-archive",
+        "title": "Zero Archive",
+        "artist": "Unknown",
+        "genre": "Experimental",
+        "badge": "Deep",
+        "tags": [
+          "Ultra obscure"
+        ],
+        "locality": "Unknown",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2735031375de438fde2939f0c93",
+        "spotifyId": "7eTLTPr4aofYUQ0xA3GX9z",
+        "spotifyUri": "spotify:track:7eTLTPr4aofYUQ0xA3GX9z",
+        "spotifyUrl": "https://open.spotify.com/track/7eTLTPr4aofYUQ0xA3GX9z",
+        "spotifyType": "track",
+        "spotifyName": "Front Row Seat",
+        "spotifyArtist": "AVGUST",
+        "spotifyAlbumName": "Front Row Seat"
+      }
+    ]
+  },
+  "breakingOut": {
+    "items": [
+      {
+        "id": "ember-field",
+        "title": "Ember Field",
+        "artist": "Pale Iris",
+        "genre": "Electronic",
+        "growth": 6,
+        "trend": "surging",
+        "weeklyScouts": 6,
+        "sparksToday": 2,
+        "resonance": 65,
+        "tag": "Surging",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273b7d03cbe4bb310b40c480225",
+        "spotifyId": "5w5xeEa46rM9bNKjJESMzu",
+        "spotifyUri": "spotify:track:5w5xeEa46rM9bNKjJESMzu",
+        "spotifyUrl": "https://open.spotify.com/track/5w5xeEa46rM9bNKjJESMzu",
+        "spotifyType": "track",
+        "spotifyName": "Nu",
+        "spotifyArtist": "Aria Falco",
+        "spotifyAlbumName": "11"
+      },
+      {
+        "id": "low-orbit",
+        "title": "Low Orbit",
+        "artist": "Contour",
+        "genre": "Ambient",
+        "growth": 9,
+        "trend": "surging",
+        "weeklyScouts": 9,
+        "sparksToday": 3,
+        "resonance": 82,
+        "tag": "Breakthrough",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273235a27d44a47829266829578",
+        "spotifyId": "0dZuSYijwX1tdzMVpH4kF0",
+        "spotifyUri": "spotify:track:0dZuSYijwX1tdzMVpH4kF0",
+        "spotifyUrl": "https://open.spotify.com/track/0dZuSYijwX1tdzMVpH4kF0",
+        "spotifyType": "track",
+        "spotifyName": "Energy",
+        "spotifyArtist": "Tinie Tempah",
+        "spotifyAlbumName": "Energy"
+      },
+      {
+        "id": "mirror-static",
+        "title": "Mirror Static",
+        "artist": "Pale Signal",
+        "genre": "Drone",
+        "growth": 3,
+        "trend": "rising",
+        "weeklyScouts": 3,
+        "sparksToday": 1,
+        "resonance": 38,
+        "cover": "https://i.scdn.co/image/ab67616d0000b2735f44e6d44d464fca882e4fe8",
+        "spotifyId": "0pjZFtdG8OqxWZ8kwrn5ki",
+        "spotifyUri": "spotify:track:0pjZFtdG8OqxWZ8kwrn5ki",
+        "spotifyUrl": "https://open.spotify.com/track/0pjZFtdG8OqxWZ8kwrn5ki",
+        "spotifyType": "track",
+        "spotifyName": "Passive Mood",
+        "spotifyArtist": "Static 99",
+        "spotifyAlbumName": "Passive Mood"
+      },
+      {
+        "id": "pale-cathedral",
+        "title": "Pale Cathedral",
+        "artist": "Herd of Birds",
+        "genre": "Experimental",
+        "growth": 7,
+        "trend": "surging",
+        "weeklyScouts": 7,
+        "sparksToday": 2,
+        "resonance": 72,
+        "tag": "Surging",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2737d0cffb2dfed92e2f49959c3",
+        "spotifyId": "7shm7RS7EMWuiDExew1qWl",
+        "spotifyUri": "spotify:track:7shm7RS7EMWuiDExew1qWl",
+        "spotifyUrl": "https://open.spotify.com/track/7shm7RS7EMWuiDExew1qWl",
+        "spotifyType": "track",
+        "spotifyName": "Journey to the Centre of the Earth (Live)",
+        "spotifyArtist": "Rick Wakeman",
+        "spotifyAlbumName": "Live Journey"
+      },
+      {
+        "id": "ground-hum",
+        "title": "Ground Hum",
+        "artist": "Vessel",
+        "genre": "Electronic",
+        "growth": 2,
+        "trend": "rising",
+        "weeklyScouts": 2,
+        "sparksToday": 1,
+        "resonance": 28,
+        "tag": "Rising",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273b7996d51d7c9e0789fe9d64e",
+        "spotifyId": "6AYFKOPbmd12rUP5DalRwB",
+        "spotifyUri": "spotify:track:6AYFKOPbmd12rUP5DalRwB",
+        "spotifyUrl": "https://open.spotify.com/track/6AYFKOPbmd12rUP5DalRwB",
+        "spotifyType": "track",
+        "spotifyName": "3 Rounds and a Sound",
+        "spotifyArtist": "Blind Pilot",
+        "spotifyAlbumName": "3 Rounds and a Sound"
+      }
+    ]
+  },
+  "humanSignals": {
+    "tracks": [
+      {
+        "id": "cinder-plain",
+        "title": "Cinder Plain",
+        "artist": "Hoarfrost",
+        "genre": "Ambient",
+        "userContext": "Dan amplified this"
+      },
+      {
+        "id": "open-window",
+        "title": "Open Window",
+        "artist": "Still Life",
+        "genre": "Folk",
+        "userContext": "Alice discovered this"
+      },
+      {
+        "id": "radio-silt",
+        "title": "Radio Silt",
+        "artist": "Current Source",
+        "genre": "Electronic",
+        "userContext": "Marco is early on this scene"
+      },
+      {
+        "id": "burial-light",
+        "title": "Burial Light",
+        "artist": "Three Thousand",
+        "genre": "Experimental",
+        "userContext": "Yuki found this last week"
+      }
+    ],
+    "scouts": [
+      {
+        "id": "dan",
+        "name": "Dan",
+        "tasteProfile": "Obscure prog · dark folk · lost tapes"
+      },
+      {
+        "id": "alice",
+        "name": "Alice",
+        "tasteProfile": "Brazilian psych · strange collage · obscure finds"
+      },
+      {
+        "id": "marco",
+        "name": "Marco",
+        "tasteProfile": "Ambient · ritual · sonic geography"
+      },
+      {
+        "id": "yuki",
+        "name": "Yuki",
+        "tasteProfile": "Early experimental · field recordings · micro-scenes"
+      }
+    ]
+  },
+  "outsideTheBubble": {
+    "featured": {
+      "id": "brass-weather",
+      "title": "Brass Weather",
+      "artist": "South Facing",
+      "genre": "Jazz",
+      "type": "Album",
+      "badge": "Unexpected",
+      "featured": true,
+      "whyHere": "Picked up by scouts you trust — far outside your usual taste",
+      "cover": "https://i.scdn.co/image/ab67616d0000b273c615faacf054835fd0d0a02c",
+      "spotifyId": "0aK3f57xowNLxnNpPnSvP0",
+      "spotifyUri": "spotify:album:0aK3f57xowNLxnNpPnSvP0",
+      "spotifyUrl": "https://open.spotify.com/album/0aK3f57xowNLxnNpPnSvP0",
+      "spotifyType": "album",
+      "spotifyName": "Brass Frame",
+      "spotifyArtist": "No Flat Grooves",
+      "spotifyAlbumName": null
+    },
+    "sideItems": [
+      {
+        "id": "loud-harbour",
+        "title": "Loud Harbour",
+        "artist": "Dock Street",
+        "genre": "Post-Punk",
+        "badge": "Unexpected",
+        "whyHere": "Breaking through via listeners who usually live in drone and minimalism.",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27396cce216c1a3e71ede2e3b75",
+        "spotifyId": "4KwT40XFlrwRlOIpc1ivQQ",
+        "spotifyUri": "spotify:track:4KwT40XFlrwRlOIpc1ivQQ",
+        "spotifyUrl": "https://open.spotify.com/track/4KwT40XFlrwRlOIpc1ivQQ",
+        "spotifyType": "track",
+        "spotifyName": "Pearl Harbor Bar",
+        "spotifyArtist": "Lounge Dreams",
+        "spotifyAlbumName": "Pearl Harbor Bar"
+      },
+      {
+        "id": "red-satellite",
+        "title": "Red Satellite",
+        "artist": "Power Station",
+        "genre": "Industrial",
+        "badge": "Unexpected",
+        "whyHere": "Found by a trusted curator far outside your usual orbit.",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27303dbe93f40c47186cafb7be2",
+        "spotifyId": "4O9hYZGNSrj1oQpV8ZUrTi",
+        "spotifyUri": "spotify:track:4O9hYZGNSrj1oQpV8ZUrTi",
+        "spotifyUrl": "https://open.spotify.com/track/4O9hYZGNSrj1oQpV8ZUrTi",
+        "spotifyType": "track",
+        "spotifyName": "Posse",
+        "spotifyArtist": "Kartell'em",
+        "spotifyAlbumName": "Tell'em Once"
+      },
+      {
+        "id": "paper-engine",
+        "title": "Paper Engine",
+        "artist": "The Office Club",
+        "genre": "R&B",
+        "badge": "Unexpected",
+        "whyHere": "Surfaced by curators with overlapping taste",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273e77aece1352dcc4f4cfd097f",
+        "spotifyId": "7FOXrArO9CU6xVZotChlD8",
+        "spotifyUri": "spotify:track:7FOXrArO9CU6xVZotChlD8",
+        "spotifyUrl": "https://open.spotify.com/track/7FOXrArO9CU6xVZotChlD8",
+        "spotifyType": "track",
+        "spotifyName": "Troublemaker",
+        "spotifyArtist": "Akon",
+        "spotifyAlbumName": "Freedom"
+      },
+      {
+        "id": "signal-green",
+        "title": "Signal Green",
+        "artist": "Grasslands",
+        "genre": "Country",
+        "badge": "Unexpected",
+        "whyHere": "Shared listeners found this across genre lines",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2731ce21acf74df525abed6ab21",
+        "spotifyId": "2H3BZ7C47k2oxcXXyFhjvO",
+        "spotifyUri": "spotify:track:2H3BZ7C47k2oxcXXyFhjvO",
+        "spotifyUrl": "https://open.spotify.com/track/2H3BZ7C47k2oxcXXyFhjvO",
+        "spotifyType": "track",
+        "spotifyName": "Gentle Signal",
+        "spotifyArtist": "oceanfinder",
+        "spotifyAlbumName": "Gentle Signal"
+      }
+    ]
+  },
+  "originStories": {
+    "items": [
+      {
+        "id": "forest-mouth",
+        "title": "Forest Mouth",
+        "artist": "Haul",
+        "genre": "Experimental",
+        "reachedScouts": 18,
+        "discoveries": 3,
+        "branch": "Branch growing from Łódź",
+        "headline": "Three scouts found this independently before it spread",
+        "seedLocation": "Łódź, Poland",
+        "graphType": "converging"
+      },
+      {
+        "id": "iron-coast",
+        "title": "Iron Coast",
+        "artist": "The Meridian",
+        "genre": "Drone",
+        "reachedScouts": 12,
+        "discoveries": 2,
+        "branch": "Spreading from Halifax, NS",
+        "headline": "Two separate paths reached the same signal from different scenes",
+        "seedLocation": "Halifax, NS",
+        "graphType": "parallel"
+      },
+      {
+        "id": "weight-of-cloud",
+        "title": "Weight of Cloud",
+        "artist": "Six Months",
+        "genre": "Ambient",
+        "reachedScouts": 31,
+        "discoveries": 6,
+        "branch": "Started in Copenhagen",
+        "headline": "From one spark in Copenhagen to 31 scouts across six branches",
+        "seedLocation": "Copenhagen",
+        "graphType": "spreading"
+      }
+    ]
+  },
+  "drift": {
+    "stream": [
+      {
+        "id": "pale-verge",
+        "title": "Pale Verge",
+        "artist": "The Outline",
+        "genre": "Ambient",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27311db5c0adf8b90e0c5138336",
+        "spotifyId": "3aeIeSpxvODmUthmSmkFDF",
+        "spotifyUri": "spotify:track:3aeIeSpxvODmUthmSmkFDF",
+        "spotifyUrl": "https://open.spotify.com/track/3aeIeSpxvODmUthmSmkFDF",
+        "spotifyType": "track",
+        "spotifyName": "Vertigine",
+        "spotifyArtist": "Juli",
+        "spotifyAlbumName": "SOLITO CINEMA"
+      },
+      {
+        "id": "hollow-coast",
+        "title": "Hollow Coast",
+        "artist": "Shore Signal",
+        "genre": "Drone",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273b9fa6615c284d27d1081522f",
+        "spotifyId": "0FWy6BjKI42kg8hu92suz0",
+        "spotifyUri": "spotify:track:0FWy6BjKI42kg8hu92suz0",
+        "spotifyUrl": "https://open.spotify.com/track/0FWy6BjKI42kg8hu92suz0",
+        "spotifyType": "track",
+        "spotifyName": "Heart of Dark",
+        "spotifyArtist": "GIVER",
+        "spotifyAlbumName": "Heart of Dark"
+      },
+      {
+        "id": "tape-weather",
+        "title": "Tape Weather",
+        "artist": "Archive Unit",
+        "genre": "Electronic",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273a2f2b3fc3578fbeaa1b149ce",
+        "spotifyId": "4X9E4Bmbv5qT76ur8ikJOj",
+        "spotifyUri": "spotify:track:4X9E4Bmbv5qT76ur8ikJOj",
+        "spotifyUrl": "https://open.spotify.com/track/4X9E4Bmbv5qT76ur8ikJOj",
+        "spotifyType": "track",
+        "spotifyName": "MKUltra: The File Went Black",
+        "spotifyArtist": "Mark LaHive",
+        "spotifyAlbumName": "MKUltra: The File Went Black"
+      },
+      {
+        "id": "still-margin",
+        "title": "Still Margin",
+        "artist": "Null Point",
+        "genre": "Experimental",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2739fcab2c7169079ac7adf2c5d",
+        "spotifyId": "2WvoFtmQszPBhWIYSn6s5v",
+        "spotifyUri": "spotify:track:2WvoFtmQszPBhWIYSn6s5v",
+        "spotifyUrl": "https://open.spotify.com/track/2WvoFtmQszPBhWIYSn6s5v",
+        "spotifyType": "track",
+        "spotifyName": "Chapter & Chain",
+        "spotifyArtist": "Cyndr",
+        "spotifyAlbumName": "Chapters Unread"
+      },
+      {
+        "id": "soft-border",
+        "title": "Soft Border",
+        "artist": "Liminal State",
+        "genre": "Folk",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2732b5abbb8ec7d07735440b78d",
+        "spotifyId": "0JmjvfCukkjhgQCq7aXwdi",
+        "spotifyUri": "spotify:track:0JmjvfCukkjhgQCq7aXwdi",
+        "spotifyUrl": "https://open.spotify.com/track/0JmjvfCukkjhgQCq7aXwdi",
+        "spotifyType": "track",
+        "spotifyName": "Soft Gravity",
+        "spotifyArtist": "Calmly",
+        "spotifyAlbumName": "Float Away"
+      },
+      {
+        "id": "cold-dispatch",
+        "title": "Cold Dispatch",
+        "artist": "Wire Theory",
+        "genre": "Post-Punk",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2736ce3d128f0fb2668bf9ac549",
+        "spotifyId": "5BTZgRlydPDOnnTgbzeILw",
+        "spotifyUri": "spotify:track:5BTZgRlydPDOnnTgbzeILw",
+        "spotifyUrl": "https://open.spotify.com/track/5BTZgRlydPDOnnTgbzeILw",
+        "spotifyType": "track",
+        "spotifyName": "Black Ops the Musical",
+        "spotifyArtist": "Logan Hugueny-Clark",
+        "spotifyAlbumName": "Black Ops the Musical"
+      }
+    ]
+  }
+}
