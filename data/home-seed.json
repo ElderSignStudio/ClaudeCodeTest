@@ -159,10 +159,26 @@
 
   "humanSignals": {
     "tracks": [
-      { "id": "cinder-plain", "title": "Cinder Plain", "artist": "Hoarfrost",      "genre": "Ambient",      "userContext": "Dan amplified this" },
-      { "id": "open-window",  "title": "Open Window",  "artist": "Still Life",     "genre": "Folk",         "userContext": "Alice discovered this" },
-      { "id": "radio-silt",   "title": "Radio Silt",   "artist": "Current Source", "genre": "Electronic",   "userContext": "Marco is early on this scene" },
-      { "id": "burial-light", "title": "Burial Light", "artist": "Three Thousand", "genre": "Experimental", "userContext": "Yuki found this last week" }
+      {
+        "id": "cinder-plain", "title": "Cinder Plain", "artist": "Hoarfrost",      "genre": "Ambient",      "userContext": "Dan amplified this",
+        "cover": null, "spotifyId": null, "spotifyUri": null, "spotifyUrl": null,
+        "spotifyType": null, "spotifyName": null, "spotifyArtist": null, "spotifyAlbumName": null
+      },
+      {
+        "id": "open-window",  "title": "Open Window",  "artist": "Still Life",     "genre": "Folk",         "userContext": "Alice discovered this",
+        "cover": null, "spotifyId": null, "spotifyUri": null, "spotifyUrl": null,
+        "spotifyType": null, "spotifyName": null, "spotifyArtist": null, "spotifyAlbumName": null
+      },
+      {
+        "id": "radio-silt",   "title": "Radio Silt",   "artist": "Current Source", "genre": "Electronic",   "userContext": "Marco is early on this scene",
+        "cover": null, "spotifyId": null, "spotifyUri": null, "spotifyUrl": null,
+        "spotifyType": null, "spotifyName": null, "spotifyArtist": null, "spotifyAlbumName": null
+      },
+      {
+        "id": "burial-light", "title": "Burial Light", "artist": "Three Thousand", "genre": "Experimental", "userContext": "Yuki found this last week",
+        "cover": null, "spotifyId": null, "spotifyUri": null, "spotifyUrl": null,
+        "spotifyType": null, "spotifyName": null, "spotifyArtist": null, "spotifyAlbumName": null
+      }
     ],
     "scouts": [
       { "id": "dan",   "name": "Dan",   "tasteProfile": "Obscure prog · dark folk · lost tapes" },
@@ -220,7 +236,9 @@
         "branch": "Branch growing from Łódź",
         "headline": "Three scouts found this independently before it spread",
         "seedLocation": "Łódź, Poland",
-        "graphType": "converging"
+        "graphType": "converging",
+        "cover": null, "spotifyId": null, "spotifyUri": null, "spotifyUrl": null,
+        "spotifyType": null, "spotifyName": null, "spotifyArtist": null, "spotifyAlbumName": null
       },
       {
         "id": "iron-coast", "title": "Iron Coast", "artist": "The Meridian", "genre": "Drone",
@@ -228,7 +246,9 @@
         "branch": "Spreading from Halifax, NS",
         "headline": "Two separate paths reached the same signal from different scenes",
         "seedLocation": "Halifax, NS",
-        "graphType": "parallel"
+        "graphType": "parallel",
+        "cover": null, "spotifyId": null, "spotifyUri": null, "spotifyUrl": null,
+        "spotifyType": null, "spotifyName": null, "spotifyArtist": null, "spotifyAlbumName": null
       },
       {
         "id": "weight-of-cloud", "title": "Weight of Cloud", "artist": "Six Months", "genre": "Ambient",
@@ -236,7 +256,9 @@
         "branch": "Started in Copenhagen",
         "headline": "From one spark in Copenhagen to 31 scouts across six branches",
         "seedLocation": "Copenhagen",
-        "graphType": "spreading"
+        "graphType": "spreading",
+        "cover": null, "spotifyId": null, "spotifyUri": null, "spotifyUrl": null,
+        "spotifyType": null, "spotifyName": null, "spotifyArtist": null, "spotifyAlbumName": null
       }
     ]
   },

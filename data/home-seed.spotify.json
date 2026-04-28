@@ -104,14 +104,14 @@
         "genre": "Drone",
         "badge": "Adjacent",
         "adjacencyReason": "Crossed over from drone listeners",
-        "cover": "https://i.scdn.co/image/ab67616d0000b273cbf27ba8bde5589140cbba03",
-        "spotifyId": "2r5grlr8yKXrY3xpJe1sIq",
-        "spotifyUri": "spotify:track:2r5grlr8yKXrY3xpJe1sIq",
-        "spotifyUrl": "https://open.spotify.com/track/2r5grlr8yKXrY3xpJe1sIq",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273d2a3c90353ee5685eb482762",
+        "spotifyId": "1W99AiKrG7uscyoViFDcPe",
+        "spotifyUri": "spotify:track:1W99AiKrG7uscyoViFDcPe",
+        "spotifyUrl": "https://open.spotify.com/track/1W99AiKrG7uscyoViFDcPe",
         "spotifyType": "track",
-        "spotifyName": "294 Moons",
-        "spotifyArtist": "STRsd",
-        "spotifyAlbumName": "Phases of The Moon"
+        "spotifyName": "Beyond Good and Thunder (Nietzsche)",
+        "spotifyArtist": "Kevin Korpi",
+        "spotifyAlbumName": "Existential"
       },
       {
         "id": "soft-collapse",
@@ -120,14 +120,14 @@
         "genre": "Electronic",
         "badge": "Adjacent",
         "adjacencyReason": "From scouts with overlapping taste",
-        "cover": "https://i.scdn.co/image/ab67616d0000b27354f6ac0335b7ecd797c80802",
-        "spotifyId": "4ROAaD0tqLfpc209CurenH",
-        "spotifyUri": "spotify:track:4ROAaD0tqLfpc209CurenH",
-        "spotifyUrl": "https://open.spotify.com/track/4ROAaD0tqLfpc209CurenH",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2732b5abbb8ec7d07735440b78d",
+        "spotifyId": "0JmjvfCukkjhgQCq7aXwdi",
+        "spotifyUri": "spotify:track:0JmjvfCukkjhgQCq7aXwdi",
+        "spotifyUrl": "https://open.spotify.com/track/0JmjvfCukkjhgQCq7aXwdi",
         "spotifyType": "track",
-        "spotifyName": "Soft Collapse",
-        "spotifyArtist": "Palmscape",
-        "spotifyAlbumName": "Soft Collapse"
+        "spotifyName": "Soft Gravity",
+        "spotifyArtist": "Calmly",
+        "spotifyAlbumName": "Float Away"
       },
       {
         "id": "slow-satellite",
@@ -429,28 +429,60 @@
         "title": "Cinder Plain",
         "artist": "Hoarfrost",
         "genre": "Ambient",
-        "userContext": "Dan amplified this"
+        "userContext": "Dan amplified this",
+        "cover": "https://i.scdn.co/image/ab67616d0000b2739d58f825eb10be7b3725f368",
+        "spotifyId": "0Nfm57wS7BV1Cq10B1logP",
+        "spotifyUri": "spotify:track:0Nfm57wS7BV1Cq10B1logP",
+        "spotifyUrl": "https://open.spotify.com/track/0Nfm57wS7BV1Cq10B1logP",
+        "spotifyType": "track",
+        "spotifyName": "Rest in Peace",
+        "spotifyArtist": "Taylor Austin Dye",
+        "spotifyAlbumName": "Out of These Hills"
       },
       {
         "id": "open-window",
         "title": "Open Window",
         "artist": "Still Life",
         "genre": "Folk",
-        "userContext": "Alice discovered this"
+        "userContext": "Alice discovered this",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273b69a07a584dfe05cb4144e0c",
+        "spotifyId": "17fOtOXRhNMzRYTZBotVoI",
+        "spotifyUri": "spotify:track:17fOtOXRhNMzRYTZBotVoI",
+        "spotifyUrl": "https://open.spotify.com/track/17fOtOXRhNMzRYTZBotVoI",
+        "spotifyType": "track",
+        "spotifyName": "Still life with an open window",
+        "spotifyArtist": "Luke K Lewis",
+        "spotifyAlbumName": "Sketches"
       },
       {
         "id": "radio-silt",
         "title": "Radio Silt",
         "artist": "Current Source",
         "genre": "Electronic",
-        "userContext": "Marco is early on this scene"
+        "userContext": "Marco is early on this scene",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273cee3bf15d55fee0cc6353695",
+        "spotifyId": "5JqHs08jNLXuxDUztZh3vX",
+        "spotifyUri": "spotify:track:5JqHs08jNLXuxDUztZh3vX",
+        "spotifyUrl": "https://open.spotify.com/track/5JqHs08jNLXuxDUztZh3vX",
+        "spotifyType": "track",
+        "spotifyName": "Daybreaker (Radio Edit)",
+        "spotifyArtist": "Silt",
+        "spotifyAlbumName": "Daybreaker"
       },
       {
         "id": "burial-light",
         "title": "Burial Light",
         "artist": "Three Thousand",
         "genre": "Experimental",
-        "userContext": "Yuki found this last week"
+        "userContext": "Yuki found this last week",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27326cc3037de434f6c1a62824f",
+        "spotifyId": "6B2FtBtIds4rqeLPTW0D76",
+        "spotifyUri": "spotify:track:6B2FtBtIds4rqeLPTW0D76",
+        "spotifyUrl": "https://open.spotify.com/track/6B2FtBtIds4rqeLPTW0D76",
+        "spotifyType": "track",
+        "spotifyName": "Outfit (with 21 Savage)",
+        "spotifyArtist": "Lil Baby",
+        "spotifyAlbumName": "WHAM (Extended Version)"
       }
     ],
     "scouts": [
@@ -486,13 +518,13 @@
       "badge": "Unexpected",
       "featured": true,
       "whyHere": "Picked up by scouts you trust — far outside your usual taste",
-      "cover": "https://i.scdn.co/image/ab67616d0000b273c615faacf054835fd0d0a02c",
-      "spotifyId": "0aK3f57xowNLxnNpPnSvP0",
-      "spotifyUri": "spotify:album:0aK3f57xowNLxnNpPnSvP0",
-      "spotifyUrl": "https://open.spotify.com/album/0aK3f57xowNLxnNpPnSvP0",
+      "cover": "https://i.scdn.co/image/ab67616d0000b2739e174ae5fcef22ae227ffb1c",
+      "spotifyId": "6Ww5GYuDOPNqIyB9ickqU2",
+      "spotifyUri": "spotify:album:6Ww5GYuDOPNqIyB9ickqU2",
+      "spotifyUrl": "https://open.spotify.com/album/6Ww5GYuDOPNqIyB9ickqU2",
       "spotifyType": "album",
-      "spotifyName": "Brass Frame",
-      "spotifyArtist": "No Flat Grooves",
+      "spotifyName": "Brass Parade",
+      "spotifyArtist": "The Bitter Groove",
       "spotifyAlbumName": null
     },
     "sideItems": [
@@ -503,14 +535,14 @@
         "genre": "Post-Punk",
         "badge": "Unexpected",
         "whyHere": "Breaking through via listeners who usually live in drone and minimalism.",
-        "cover": "https://i.scdn.co/image/ab67616d0000b27396cce216c1a3e71ede2e3b75",
-        "spotifyId": "4KwT40XFlrwRlOIpc1ivQQ",
-        "spotifyUri": "spotify:track:4KwT40XFlrwRlOIpc1ivQQ",
-        "spotifyUrl": "https://open.spotify.com/track/4KwT40XFlrwRlOIpc1ivQQ",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273088f10626ed0592f4a4a9b72",
+        "spotifyId": "2O0UWIMFeMtFR0LJMuIPjJ",
+        "spotifyUri": "spotify:track:2O0UWIMFeMtFR0LJMuIPjJ",
+        "spotifyUrl": "https://open.spotify.com/track/2O0UWIMFeMtFR0LJMuIPjJ",
         "spotifyType": "track",
-        "spotifyName": "Pearl Harbor Bar",
-        "spotifyArtist": "Lounge Dreams",
-        "spotifyAlbumName": "Pearl Harbor Bar"
+        "spotifyName": "Tennessee",
+        "spotifyArtist": "Hans Zimmer",
+        "spotifyAlbumName": "Pearl Harbor - Original Motion Picture Soundtrack"
       },
       {
         "id": "red-satellite",
@@ -574,7 +606,15 @@
         "branch": "Branch growing from Łódź",
         "headline": "Three scouts found this independently before it spread",
         "seedLocation": "Łódź, Poland",
-        "graphType": "converging"
+        "graphType": "converging",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273bb8345f50ceb95dda74b1a3e",
+        "spotifyId": "1RXuTujPDeyzsbVwDYcXBx",
+        "spotifyUri": "spotify:track:1RXuTujPDeyzsbVwDYcXBx",
+        "spotifyUrl": "https://open.spotify.com/track/1RXuTujPDeyzsbVwDYcXBx",
+        "spotifyType": "track",
+        "spotifyName": "Forest Exhale",
+        "spotifyArtist": "Nature Yami",
+        "spotifyAlbumName": "Forest Exhale"
       },
       {
         "id": "iron-coast",
@@ -586,7 +626,15 @@
         "branch": "Spreading from Halifax, NS",
         "headline": "Two separate paths reached the same signal from different scenes",
         "seedLocation": "Halifax, NS",
-        "graphType": "parallel"
+        "graphType": "parallel",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273a2bbcc3a214e3bf1e2a130cc",
+        "spotifyId": "7AooP6MplcgFyNEV2eHvpi",
+        "spotifyUri": "spotify:track:7AooP6MplcgFyNEV2eHvpi",
+        "spotifyUrl": "https://open.spotify.com/track/7AooP6MplcgFyNEV2eHvpi",
+        "spotifyType": "track",
+        "spotifyName": "Meridian",
+        "spotifyArtist": "Ziraphine",
+        "spotifyAlbumName": "Meridian"
       },
       {
         "id": "weight-of-cloud",
@@ -598,7 +646,15 @@
         "branch": "Started in Copenhagen",
         "headline": "From one spark in Copenhagen to 31 scouts across six branches",
         "seedLocation": "Copenhagen",
-        "graphType": "spreading"
+        "graphType": "spreading",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273d72fb5571087bca0a2fed008",
+        "spotifyId": "7qfoq1JFKBUEIvhqOHzuqX",
+        "spotifyUri": "spotify:track:7qfoq1JFKBUEIvhqOHzuqX",
+        "spotifyUrl": "https://open.spotify.com/track/7qfoq1JFKBUEIvhqOHzuqX",
+        "spotifyType": "track",
+        "spotifyName": "Non-Stop",
+        "spotifyArtist": "Leslie Odom Jr.",
+        "spotifyAlbumName": "Hamilton (Original Broadway Cast Recording)"
       }
     ]
   },
@@ -609,28 +665,28 @@
         "title": "Pale Verge",
         "artist": "The Outline",
         "genre": "Ambient",
-        "cover": "https://i.scdn.co/image/ab67616d0000b27311db5c0adf8b90e0c5138336",
-        "spotifyId": "3aeIeSpxvODmUthmSmkFDF",
-        "spotifyUri": "spotify:track:3aeIeSpxvODmUthmSmkFDF",
-        "spotifyUrl": "https://open.spotify.com/track/3aeIeSpxvODmUthmSmkFDF",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27368c7ab2773cd4b9f793ef112",
+        "spotifyId": "3eCGiJNqqCQkR2Ni7PTqxh",
+        "spotifyUri": "spotify:track:3eCGiJNqqCQkR2Ni7PTqxh",
+        "spotifyUrl": "https://open.spotify.com/track/3eCGiJNqqCQkR2Ni7PTqxh",
         "spotifyType": "track",
-        "spotifyName": "Vertigine",
-        "spotifyArtist": "Juli",
-        "spotifyAlbumName": "SOLITO CINEMA"
+        "spotifyName": "Losing Haringey",
+        "spotifyArtist": "The Clientele",
+        "spotifyAlbumName": "Strange Geometry"
       },
       {
         "id": "hollow-coast",
         "title": "Hollow Coast",
         "artist": "Shore Signal",
         "genre": "Drone",
-        "cover": "https://i.scdn.co/image/ab67616d0000b273b9fa6615c284d27d1081522f",
-        "spotifyId": "0FWy6BjKI42kg8hu92suz0",
-        "spotifyUri": "spotify:track:0FWy6BjKI42kg8hu92suz0",
-        "spotifyUrl": "https://open.spotify.com/track/0FWy6BjKI42kg8hu92suz0",
+        "cover": "https://i.scdn.co/image/ab67616d0000b27384d66fbfd62b578485144007",
+        "spotifyId": "1mfN6J2uOAWkfsAb69kk4W",
+        "spotifyUri": "spotify:track:1mfN6J2uOAWkfsAb69kk4W",
+        "spotifyUrl": "https://open.spotify.com/track/1mfN6J2uOAWkfsAb69kk4W",
         "spotifyType": "track",
-        "spotifyName": "Heart of Dark",
-        "spotifyArtist": "GIVER",
-        "spotifyAlbumName": "Heart of Dark"
+        "spotifyName": "Deniable Sign",
+        "spotifyArtist": "Welter Choir",
+        "spotifyAlbumName": "Constant Bearing"
       },
       {
         "id": "tape-weather",
@@ -679,14 +735,14 @@
         "title": "Cold Dispatch",
         "artist": "Wire Theory",
         "genre": "Post-Punk",
-        "cover": "https://i.scdn.co/image/ab67616d0000b2736ce3d128f0fb2668bf9ac549",
-        "spotifyId": "5BTZgRlydPDOnnTgbzeILw",
-        "spotifyUri": "spotify:track:5BTZgRlydPDOnnTgbzeILw",
-        "spotifyUrl": "https://open.spotify.com/track/5BTZgRlydPDOnnTgbzeILw",
+        "cover": "https://i.scdn.co/image/ab67616d0000b273578e020d808daa98120c8573",
+        "spotifyId": "2VxK2V4f1xkw0eqEbiu9to",
+        "spotifyUri": "spotify:track:2VxK2V4f1xkw0eqEbiu9to",
+        "spotifyUrl": "https://open.spotify.com/track/2VxK2V4f1xkw0eqEbiu9to",
         "spotifyType": "track",
-        "spotifyName": "Black Ops the Musical",
-        "spotifyArtist": "Logan Hugueny-Clark",
-        "spotifyAlbumName": "Black Ops the Musical"
+        "spotifyName": "Rhodes After Midnight",
+        "spotifyArtist": "After Midnight Deep",
+        "spotifyAlbumName": "Low Light Theory"
       }
     ]
   }

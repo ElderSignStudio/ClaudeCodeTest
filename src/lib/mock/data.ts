@@ -5,7 +5,6 @@
 	can replace these imports directly when a backend is added.
 
 	Images: Spotify artwork from data/home-seed.spotify.json.
-	        Falls back to picsum.photos for items not in the enriched set.
 */
 
 import spotifyData from '../../../data/home-seed.spotify.json';
@@ -66,11 +65,6 @@ export type OriginItem = {
 	graphType: 'converging' | 'parallel' | 'spreading';
 };
 
-// Helper: consistent picsum URL from an id string (fallback / unenriched items)
-function img(seed: string, w = 600, h = 600): string {
-	return `https://picsum.photos/seed/${seed}/${w}/${h}`;
-}
-
 // Build a lookup of Spotify cover URLs keyed by item id
 const _spotifyCovers = new Map<string, string>(
 	[
@@ -82,6 +76,8 @@ const _spotifyCovers = new Map<string, string>(
 		spotifyData.outsideTheBubble.featured,
 		...spotifyData.outsideTheBubble.sideItems,
 		...spotifyData.drift.stream,
+		...spotifyData.humanSignals.tracks,
+		...spotifyData.originStories.items,
 	]
 		.filter((item): item is NonNullable<typeof item> & { cover: string } =>
 			item !== null && typeof item.cover === 'string'
@@ -89,9 +85,8 @@ const _spotifyCovers = new Map<string, string>(
 		.map(item => [item.id, item.cover])
 );
 
-// Returns the Spotify cover for an item, or picsum as fallback
 function coverOf(id: string): string {
-	return _spotifyCovers.get(id) ?? img(id);
+	return _spotifyCovers.get(id) ?? '';
 }
 
 // 1. For You — personalized signals based on user taste
@@ -135,10 +130,10 @@ export const breakingOutItems: GainingItem[] = [
 
 // 5. Human Signals — discovery driven by real people
 export const humanSignalItems: HumanSignalItem[] = [
-	{ id: 'cinder-plain', title: 'Cinder Plain', artist: 'Hoarfrost',      scouts: 4, genre: 'Ambient',      image: img('cinder-plain', 80, 80), userContext: 'Dan amplified this'           },
-	{ id: 'open-window',  title: 'Open Window',  artist: 'Still Life',     scouts: 2, genre: 'Folk',         image: img('open-window',  80, 80), userContext: 'Alice discovered this'        },
-	{ id: 'radio-silt',   title: 'Radio Silt',   artist: 'Current Source', scouts: 7, genre: 'Electronic',   image: img('radio-silt',   80, 80), userContext: 'Marco is early on this scene' },
-	{ id: 'burial-light', title: 'Burial Light', artist: 'Three Thousand', scouts: 1, genre: 'Experimental', image: img('burial-light', 80, 80), userContext: 'Yuki found this last week'    },
+	{ id: 'cinder-plain', title: 'Cinder Plain', artist: 'Hoarfrost',      scouts: 4, genre: 'Ambient',      image: coverOf('cinder-plain'), userContext: 'Dan amplified this'           },
+	{ id: 'open-window',  title: 'Open Window',  artist: 'Still Life',     scouts: 2, genre: 'Folk',         image: coverOf('open-window'),  userContext: 'Alice discovered this'        },
+	{ id: 'radio-silt',   title: 'Radio Silt',   artist: 'Current Source', scouts: 7, genre: 'Electronic',   image: coverOf('radio-silt'),   userContext: 'Marco is early on this scene' },
+	{ id: 'burial-light', title: 'Burial Light', artist: 'Three Thousand', scouts: 1, genre: 'Experimental', image: coverOf('burial-light'), userContext: 'Yuki found this last week'    },
 ];
 
 // Scout: a person-card type for the Human Signals lane.
@@ -153,7 +148,7 @@ export type Scout = {
 	hitRate: number;        // percentage of early picks that later gained traction
 	activityLabel?: 'Similar Taste' | 'High Hit Rate' | 'Early Picks';
 	following: boolean;     // whether the current user follows this scout
-	recentSignals: string[]; // small picsum image URLs for the thumbnail strip
+	recentSignals: string[]; // Spotify cover URLs for the thumbnail strip
 };
 
 function avatar(seed: string): string {
@@ -171,7 +166,7 @@ export const scoutItems: Scout[] = [
 		hitRate:       72,
 		activityLabel: 'Early Picks',
 		following:     true,
-		recentSignals: [img('dust-choir', 80, 80), img('forest-mouth', 80, 80), img('pale-static', 80, 80)],
+		recentSignals: [coverOf('dust-choir'), coverOf('forest-mouth'), coverOf('pale-static')],
 	},
 	{
 		id:            'alice',
@@ -183,7 +178,7 @@ export const scoutItems: Scout[] = [
 		hitRate:       68,
 		activityLabel: 'Similar Taste',
 		following:     true,
-		recentSignals: [img('ember-field', 80, 80), img('open-window', 80, 80), img('iron-coast', 80, 80)],
+		recentSignals: [coverOf('ember-field'), coverOf('open-window'), coverOf('iron-coast')],
 	},
 	{
 		id:           'marco',
@@ -194,7 +189,7 @@ export const scoutItems: Scout[] = [
 		reach:        134,
 		hitRate:      70,
 		following:    false,
-		recentSignals: [img('low-orbit', 80, 80), img('cinder-plain', 80, 80), img('weight-cloud', 80, 80)],
+		recentSignals: [coverOf('low-orbit'), coverOf('cinder-plain'), coverOf('weight-of-cloud')],
 	},
 	{
 		id:            'yuki',
@@ -206,7 +201,7 @@ export const scoutItems: Scout[] = [
 		hitRate:       58,
 		activityLabel: 'High Hit Rate',
 		following:     false,
-		recentSignals: [img('burial-light', 80, 80), img('orbital-form', 80, 80), img('zero-archive', 80, 80)],
+		recentSignals: [coverOf('burial-light'), coverOf('orbital-form'), coverOf('zero-archive')],
 	},
 ];
 
@@ -223,7 +218,7 @@ export const outsideBubbleItems: Item[] = [
 export const originItems: OriginItem[] = [
 	{
 		id: 'forest-mouth',    title: 'Forest Mouth',    artist: 'Haul',            genre: 'Experimental',
-		image: img('forest-mouth',  120, 120), reachedScouts: 18, discoveries: 3,
+		image: coverOf('forest-mouth'), reachedScouts: 18, discoveries: 3,
 		branch:       'Branch growing from Łódź',
 		headline:     'Three scouts found this independently before it spread',
 		seedLocation: 'Łódź, Poland',
@@ -231,7 +226,7 @@ export const originItems: OriginItem[] = [
 	},
 	{
 		id: 'iron-coast',      title: 'Iron Coast',      artist: 'The Meridian',    genre: 'Drone',
-		image: img('iron-coast',    120, 120), reachedScouts: 12, discoveries: 2,
+		image: coverOf('iron-coast'), reachedScouts: 12, discoveries: 2,
 		branch:       'Spreading from Halifax, NS',
 		headline:     'Two separate paths reached the same signal from different scenes',
 		seedLocation: 'Halifax, NS',
@@ -239,7 +234,7 @@ export const originItems: OriginItem[] = [
 	},
 	{
 		id: 'weight-of-cloud', title: 'Weight of Cloud', artist: 'Six Months',      genre: 'Ambient',
-		image: img('weight-cloud',  120, 120), reachedScouts: 31, discoveries: 6,
+		image: coverOf('weight-of-cloud'), reachedScouts: 31, discoveries: 6,
 		branch:       'Started in Copenhagen',
 		headline:     'From one spark in Copenhagen to 31 scouts across six branches',
 		seedLocation: 'Copenhagen',

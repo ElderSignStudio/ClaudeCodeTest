@@ -153,7 +153,9 @@ function collectSignals(seed) {
   signals.push(...(seed.breakingOut?.items        ?? []));
   if (seed.outsideTheBubble?.featured)   signals.push(seed.outsideTheBubble.featured);
   signals.push(...(seed.outsideTheBubble?.sideItems ?? []));
-  signals.push(...(seed.drift?.stream   ?? []));
+  signals.push(...(seed.drift?.stream               ?? []));
+  signals.push(...(seed.humanSignals?.tracks        ?? []));
+  signals.push(...(seed.originStories?.items        ?? []));
   return signals;
 }
 
@@ -177,8 +179,9 @@ function applyEnriched(seed, enrichedMap) {
       featured:  seed.outsideTheBubble?.featured ? e(seed.outsideTheBubble.featured) : null,
       sideItems: (seed.outsideTheBubble?.sideItems ?? []).map(e),
     },
-    drift: { ...seed.drift, stream: (seed.drift?.stream ?? []).map(e) },
-    // humanSignals and originStories pass through unchanged
+    drift:        { ...seed.drift,        stream: (seed.drift?.stream        ?? []).map(e) },
+    humanSignals: { ...seed.humanSignals, tracks: (seed.humanSignals?.tracks ?? []).map(e) },
+    originStories:{ ...seed.originStories,items:  (seed.originStories?.items ?? []).map(e) },
   };
 }
 

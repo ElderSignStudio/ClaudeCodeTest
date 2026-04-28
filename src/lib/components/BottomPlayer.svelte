@@ -14,13 +14,8 @@
 	<div class="os-surface-raised rounded-none border-0 h-17">
 		<div class="max-w-5xl mx-auto h-full flex items-center gap-4 px-5 md:pl-61">
 
-			<!-- Album art: real image when playing, placeholder when idle -->
-			<div class="w-10 h-10 rounded-lg border border-white/8 shrink-0 overflow-hidden">
-				<img
-					src="https://picsum.photos/seed/bottom-player/80/80"
-					alt=""
-					class="w-full h-full object-cover opacity-40"
-				/>
+			<!-- Album art: placeholder until a track is selected -->
+			<div class="w-10 h-10 rounded-lg border border-white/8 shrink-0 overflow-hidden bg-white/5">
 			</div>
 
 			<!-- Track info -->
