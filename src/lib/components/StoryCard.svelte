@@ -29,7 +29,18 @@
 			{item.headline}
 		</p>
 
-		<!-- Mini graph -->
+		<!-- Mini graph
+			Coordinate system — viewBox "0 0 180 44":
+			  x: origin ≈ 12–18 (left), midpoints ≈ 52–140, endpoint = 155 (right)
+			  y: center axis = 22 (44÷2), upper branch ≈ 6–14, lower branch ≈ 30–38
+
+			Visual rules:
+			  - Main / dominant path: opacity 0.26, stroke-width 1.5
+			  - Secondary paths: opacity 0.09–0.15, stroke-width 1
+			  - All paths: dashed (stroke-dasharray "2 3")
+			  - Endpoint / origin: three concentric circles (glow halo → ring → bright dot)
+			  - Secondary nodes: small circles at branch junctions, dimmed (opacity ≈ 0.30–0.50)
+		-->
 		<div class="mb-4" aria-hidden="true">
 			{#if item.graphType === 'converging'}
 				<!--

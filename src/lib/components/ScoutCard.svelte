@@ -54,8 +54,7 @@
 		<div class="mb-3 h-5 flex items-center">
 			{#if scout.activityLabel}
 				<span
-					class="inline-block text-[10px] font-medium rounded-full px-2 py-0.5 leading-none"
-					style="color: oklch(0.72 0.16 220 / 0.82); border: 1px solid oklch(0.72 0.16 220 / 0.25); background: oklch(0.72 0.16 220 / 0.08);"
+					class="inline-block text-[10px] font-medium rounded-full px-2 py-0.5 leading-none text-accent/82 border border-accent/25 bg-accent/8"
 				>
 					{scout.activityLabel}
 				</span>

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { Home, Search, Radio, Users, User } from 'lucide-svelte';
+	import { currentUser } from '$lib/mock/currentUser';
 
 	type NavItem = {
 		href: string;
@@ -46,13 +47,13 @@
 			-->
 			<div class="w-9 h-9 rounded-full border border-primary/28 overflow-hidden shrink-0">
 				<img
-					src="https://api.dicebear.com/9.x/thumbs/svg?seed=DanOuter&backgroundColor=1e1b4b"
-					alt="Dan"
+					src={currentUser.avatarUrl}
+					alt={currentUser.name}
 					class="w-full h-full object-cover"
 				/>
 			</div>
 			<div class="min-w-0">
-				<p class="text-[13px] font-semibold text-base-content/88 truncate leading-snug">Dan</p>
+				<p class="text-[13px] font-semibold text-base-content/88 truncate leading-snug">{currentUser.name}</p>
 				<p class="text-[10px] text-base-content/38 leading-snug">Scout Sore: 4</p>
 			</div>
 		</div>

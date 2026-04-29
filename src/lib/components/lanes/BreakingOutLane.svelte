@@ -54,11 +54,16 @@ import { breakingOutItems } from '$lib/mock/data';
 						</p>
 					{/if}
 					{#if item.resonance !== undefined}
-						<div class="mt-2 h-px rounded-full bg-white/8 overflow-hidden">
+						<div class="mt-2 h-0.5 rounded-full bg-white/10 overflow-hidden">
 							<div
-								class="h-full rounded-full bg-linear-to-r from-success/38 to-accent/28"
+								class="relative h-full rounded-full bg-linear-to-r from-success/65 to-accent/50 overflow-hidden"
 								style="width: {item.resonance}%;"
-							></div>
+							>
+								<div
+									class="os-bar-shimmer absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/30 to-transparent"
+									aria-hidden="true"
+								></div>
+							</div>
 						</div>
 					{/if}
 				</div>

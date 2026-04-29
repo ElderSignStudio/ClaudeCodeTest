@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Bell } from 'lucide-svelte';
+	import { currentUser } from '$lib/mock/currentUser';
 </script>
 
 <header class="os-surface-raised fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/6" style="background-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none;">
@@ -37,8 +38,8 @@
 				aria-label="User profile"
 			>
 				<img
-					src="https://api.dicebear.com/9.x/thumbs/svg?seed=DanOuter&backgroundColor=1e1b4b"
-					alt="Dan"
+					src={currentUser.avatarUrl}
+					alt={currentUser.name}
 					class="w-full h-full object-cover"
 				/>
 			</div>

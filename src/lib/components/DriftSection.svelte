@@ -3,6 +3,7 @@
 	import { driftItems, scoutItems, originItems, breakingOutItems } from '$lib/mock/data';
 	import ScoutCard from '$lib/components/ScoutCard.svelte';
 	import StoryCard from '$lib/components/StoryCard.svelte';
+	import SignalCard from '$lib/components/SignalCard.svelte';
 
 	const d = driftItems;
 	const b = breakingOutItems;
@@ -28,7 +29,7 @@
 	  5. Story          — w-80 wrapper, left-anchored
 	  6. Spacing break
 	  7. Row of 4       — d[4] d[5] b[1] b[2] mixed w-40/w-44
-	  8. Single offset  — b[0] at w-44, left-aligned
+	  8. Single offset  — b[0] at w-44, left-aligned, accent badge variant
 -->
 <section class="pb-8">
 	<div style="max-width: 1200px; margin: 0 auto;">
@@ -69,39 +70,11 @@
 
 	<!-- ── Block 2: Row of 3 standard signal cards (w-40 each) ───── -->
 	<div class="flex gap-3 mb-8">
-
 		{#each [d[1], d[2], d[3]] as item (item.id)}
-			<div class="group shrink-0 w-40 rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow">
-				<div class="relative aspect-square w-full">
-					<img
-						src={item.image}
-						alt={item.title}
-						class="w-full h-full object-cover opacity-68 group-hover:opacity-85 transition-opacity duration-300"
-					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/82 via-black/25 to-transparent"></div>
-					<div
-						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-						style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
-						aria-hidden="true"
-					></div>
-					<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-						<div class="w-8 h-8 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-							<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-								<path d="M3 2l8 4-8 4V2z" />
-							</svg>
-						</div>
-					</div>
-					<div class="absolute bottom-0 left-0 right-0 p-2.5">
-						<p class="text-[13px] font-bold text-white truncate leading-snug">{item.title}</p>
-						<p class="text-[11px] text-white/75 truncate mt-0.5">{item.genre}</p>
-					</div>
-				</div>
-				<div class="px-2.5 py-2 bg-base-200/70">
-					<p class="text-[11px] text-base-content/68 truncate">{item.artist}</p>
-				</div>
+			<div class="w-40 shrink-0">
+				<SignalCard {item} />
 			</div>
 		{/each}
-
 	</div>
 
 	<!-- ── Block 3: Separator ─────────────────────────────────────── -->
@@ -120,190 +93,81 @@
 		<StoryCard item={originItems[2]} />
 	</div>
 
-	<!-- ── Block 7: Row of 4 cards — standard + breaking-out mix ─── -->
-	<!--
-		Standard drift cards at w-40, breaking-out at w-44.
-		Natural widths, no stretching — fills ~664px of the container.
-	-->
+	<!-- ── Block 7: Row of 4 — standard cards + breaking-out mix ─── -->
 	<div class="flex gap-3 mb-6">
 
-		<!-- d[4] Soft Border — standard w-40 -->
-		<div class="group shrink-0 w-40 rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow">
-			<div class="relative aspect-square w-full">
-				<img
-					src={d[4].image}
-					alt={d[4].title}
-					class="w-full h-full object-cover opacity-68 group-hover:opacity-85 transition-opacity duration-300"
-				/>
-				<div class="absolute inset-0 bg-linear-to-t from-black/82 via-black/25 to-transparent"></div>
-				<div
-					class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-					style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
-					aria-hidden="true"
-				></div>
-				<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-					<div class="w-8 h-8 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-						<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-							<path d="M3 2l8 4-8 4V2z" />
-						</svg>
-					</div>
-				</div>
-				<div class="absolute bottom-0 left-0 right-0 p-2.5">
-					<p class="text-[13px] font-bold text-white truncate leading-snug">{d[4].title}</p>
-					<p class="text-[11px] text-white/75 truncate mt-0.5">{d[4].genre}</p>
-				</div>
+		<!-- Standard drift cards at w-40 -->
+		{#each [d[4], d[5]] as item (item.id)}
+			<div class="w-40 shrink-0">
+				<SignalCard {item} />
 			</div>
-			<div class="px-2.5 py-2 bg-base-200/70">
-				<p class="text-[11px] text-base-content/68 truncate">{d[4].artist}</p>
-			</div>
-		</div>
+		{/each}
 
-		<!-- d[5] Cold Dispatch — standard w-40 -->
-		<div class="group shrink-0 w-40 rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow">
-			<div class="relative aspect-square w-full">
-				<img
-					src={d[5].image}
-					alt={d[5].title}
-					class="w-full h-full object-cover opacity-68 group-hover:opacity-85 transition-opacity duration-300"
-				/>
-				<div class="absolute inset-0 bg-linear-to-t from-black/82 via-black/25 to-transparent"></div>
-				<div
-					class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-					style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
-					aria-hidden="true"
-				></div>
-				<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-					<div class="w-8 h-8 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-						<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-							<path d="M3 2l8 4-8 4V2z" />
-						</svg>
-					</div>
-				</div>
-				<div class="absolute bottom-0 left-0 right-0 p-2.5">
-					<p class="text-[13px] font-bold text-white truncate leading-snug">{d[5].title}</p>
-					<p class="text-[11px] text-white/75 truncate mt-0.5">{d[5].genre}</p>
-				</div>
-			</div>
-			<div class="px-2.5 py-2 bg-base-200/70">
-				<p class="text-[11px] text-base-content/68 truncate">{d[5].artist}</p>
-			</div>
-		</div>
-
-		<!-- b[1] Low Orbit — breaking-out w-44, carries its lane identity -->
-		<div class="group shrink-0 w-44 rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-success/30 transition-all duration-200 os-card-breaking">
-			<div class="relative aspect-square w-full">
-				<img
-					src={b[1].image}
-					alt={b[1].title}
-					class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
-				/>
-				<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
-				<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
-				<div
-					class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-					style="background: radial-gradient(circle at 50% 50%, oklch(0.74 0.17 158 / 0.12) 0%, transparent 65%);"
-					aria-hidden="true"
-				></div>
-				<div class="absolute top-2 left-2">
-					<span
-						class="inline-flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
-						style="color: var(--color-success); border-color: oklch(0.74 0.17 158 / 0.45); box-shadow: var(--glow-l3-success);"
-					>
-						<ArrowUpRight size={8} />
-						Surging
-					</span>
-				</div>
-				<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-					<div class="w-8 h-8 rounded-full bg-white/22 border border-white/38 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-						<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-							<path d="M3 2l8 4-8 4V2z" />
-						</svg>
-					</div>
-				</div>
-			</div>
-			<div class="p-2.5 bg-base-200/70">
-				<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{b[1].title}</p>
-				<p class="text-[11px] text-base-content/68 truncate mt-0.5">{b[1].artist} · {b[1].genre}</p>
-				{#if b[1].weeklyScouts !== undefined}
-					<p class="text-[11px] font-medium mt-1.5 truncate" style="color: oklch(0.74 0.17 158 / 0.80);">
-						+{b[1].weeklyScouts} scouts this week
-					</p>
-				{/if}
-				{#if b[1].resonance !== undefined}
-					<div class="mt-2 h-0.5 rounded-full bg-white/10 overflow-hidden">
-						<div
-							class="relative h-full rounded-full bg-linear-to-r from-success/65 to-accent/50 overflow-hidden"
-							style="width: {b[1].resonance}%;"
+		<!-- Breaking-out cards at w-44, success-colored badge -->
+		{#each [b[1], b[2]] as item (item.id)}
+			<div class="group shrink-0 w-44 rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-success/30 transition-all duration-200 os-card-breaking">
+				<div class="relative aspect-square w-full">
+					<img
+						src={item.image}
+						alt={item.title}
+						class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+					/>
+					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
+					<div
+						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
+						style="background: radial-gradient(circle at 50% 50%, oklch(0.74 0.17 158 / 0.12) 0%, transparent 65%);"
+						aria-hidden="true"
+					></div>
+					<div class="absolute top-2 left-2">
+						<span
+							class="inline-flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
+							style="color: var(--color-success); border-color: oklch(0.74 0.17 158 / 0.45); box-shadow: var(--glow-l3-success);"
 						>
-							<div
-								class="os-bar-shimmer absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/30 to-transparent"
-								aria-hidden="true"
-							></div>
+							<ArrowUpRight size={8} />
+							{item.trend === 'surging' ? 'Surging' : 'Rising'}
+						</span>
+					</div>
+					<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+						<div class="w-8 h-8 rounded-full bg-white/22 border border-white/38 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
+							<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
+								<path d="M3 2l8 4-8 4V2z" />
+							</svg>
 						</div>
 					</div>
-				{/if}
-			</div>
-		</div>
-
-		<!-- b[2] Pale Cathedral — breaking-out w-44 -->
-		<div class="group shrink-0 w-44 rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-success/30 transition-all duration-200 os-card-breaking">
-			<div class="relative aspect-square w-full">
-				<img
-					src={b[2].image}
-					alt={b[2].title}
-					class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
-				/>
-				<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
-				<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
-				<div
-					class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
-					style="background: radial-gradient(circle at 50% 50%, oklch(0.74 0.17 158 / 0.12) 0%, transparent 65%);"
-					aria-hidden="true"
-				></div>
-				<div class="absolute top-2 left-2">
-					<span
-						class="inline-flex items-center gap-0.5 text-[10px] font-bold rounded-full px-1.5 py-0.5 border backdrop-blur-sm bg-black/55"
-						style="color: var(--color-success); border-color: oklch(0.74 0.17 158 / 0.45); box-shadow: var(--glow-l3-success);"
-					>
-						<ArrowUpRight size={8} />
-						{b[2].trend === 'surging' ? 'Surging' : 'Rising'}
-					</span>
 				</div>
-				<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-					<div class="w-8 h-8 rounded-full bg-white/22 border border-white/38 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-						<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-							<path d="M3 2l8 4-8 4V2z" />
-						</svg>
-					</div>
-				</div>
-			</div>
-			<div class="p-2.5 bg-base-200/70">
-				<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{b[2].title}</p>
-				<p class="text-[11px] text-base-content/68 truncate mt-0.5">{b[2].artist} · {b[2].genre}</p>
-				{#if b[2].weeklyScouts !== undefined}
-					<p class="text-[11px] font-medium mt-1.5 truncate" style="color: oklch(0.74 0.17 158 / 0.80);">
-						+{b[2].weeklyScouts} scouts this week
-					</p>
-				{/if}
-				{#if b[2].resonance !== undefined}
-					<div class="mt-2 h-0.5 rounded-full bg-white/10 overflow-hidden">
-						<div
-							class="relative h-full rounded-full bg-linear-to-r from-success/65 to-accent/50 overflow-hidden"
-							style="width: {b[2].resonance}%;"
-						>
+				<div class="p-2.5 bg-base-200/70">
+					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
+					<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist} · {item.genre}</p>
+					{#if item.weeklyScouts !== undefined}
+						<p class="text-[11px] font-medium mt-1.5 truncate" style="color: oklch(0.74 0.17 158 / 0.80);">
+							+{item.weeklyScouts} scouts this week
+						</p>
+					{/if}
+					{#if item.resonance !== undefined}
+						<div class="mt-2 h-0.5 rounded-full bg-white/10 overflow-hidden">
 							<div
-								class="os-bar-shimmer absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/30 to-transparent"
-								aria-hidden="true"
-							></div>
+								class="relative h-full rounded-full bg-linear-to-r from-success/65 to-accent/50 overflow-hidden"
+								style="width: {item.resonance}%;"
+							>
+								<div
+									class="os-bar-shimmer absolute inset-y-0 left-0 w-1/2 bg-linear-to-r from-transparent via-white/30 to-transparent"
+									aria-hidden="true"
+								></div>
+							</div>
 						</div>
-					</div>
-				{/if}
+					{/if}
+				</div>
 			</div>
-		</div>
+		{/each}
 
 	</div>
 
 	<!-- ── Block 8: Single offset card (w-44, left-aligned) ──────── -->
+	<!--
+		Uses accent (blue) instead of success (green) — visually distinguishes
+		this lone card from the surging pair in the row above.
+	-->
 	<div class="shrink-0 w-44">
 		<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-success/28 transition-all duration-200 os-card-breaking">
 			<div class="relative aspect-square w-full">
