@@ -21,6 +21,7 @@ export type Item = {
 	badge?: string;
 	adjacencyReason?: string;
 	lifeLabel?: 'Early' | 'Emerging' | 'Quiet' | 'Spreading'; // signal momentum label for One Step Away lane
+	whisperHint?: string; // editorial hint for Deep Underground lane — one of a fixed allowed set
 	sparks?: number;
 	tags?: string[];
 	locality?: string;
@@ -111,13 +112,13 @@ export const oneStepAwayItems: Item[] = [
 
 // 3. Deep Underground — very obscure, barely discovered
 export const deepUndergroundItems: Item[] = [
-	{ id: 'dust-choir',    title: 'Dust Choir',    artist: 'Mare Internum',   scouts: 1, sparks: 0, genre: 'Ambient',      image: coverOf('dust-choir'),    badge: 'Deep', tags: ['Field recording', 'Self-released'], locality: 'Slovenia'  },
-	{ id: 'neon-veda',     title: 'Neon Veda',     artist: '3 Scouts',        scouts: 3, sparks: 1, genre: 'Electronic',   image: coverOf('neon-veda'),     badge: 'Deep', tags: ['Cassette'],                         locality: 'Poland'    },
-	{ id: 'orbital-form',  title: 'Orbital Form',  artist: 'Ultra Obscure',   scouts: 0, sparks: 0, genre: 'Experimental', image: coverOf('orbital-form'),  badge: 'Deep', tags: ['Ultra obscure', 'No label'],        locality: 'Unknown'   },
-	{ id: 'silver-coast',  title: 'Silver Coast',  artist: 'Unnamed Project', scouts: 1, sparks: 0, genre: 'Folk',         image: coverOf('silver-coast'),  badge: 'Deep', tags: ['Demo'],                              locality: 'Halifax'   },
-	{ id: 'hollow-ritual', title: 'Hollow Ritual', artist: 'Cave Press',      scouts: 2, sparks: 1, genre: 'Drone',        image: coverOf('hollow-ritual'), badge: 'Deep', tags: ['Cassette rip'],                     locality: 'Romania'   },
-	{ id: 'static-bloom',  title: 'Static Bloom',  artist: 'Margin Signal',   scouts: 1, sparks: 0, genre: 'Ambient',      image: coverOf('static-bloom'),  badge: 'Deep', tags: ['No label', 'Self-released'],        locality: 'Estonia'   },
-	{ id: 'zero-archive',  title: 'Zero Archive',  artist: 'Unknown',         scouts: 0, sparks: 0, genre: 'Experimental', image: coverOf('zero-archive'),  badge: 'Deep', tags: ['Ultra obscure'],                    locality: 'Unknown'   },
+	{ id: 'dust-choir',    title: 'Dust Choir',    artist: 'Mare Internum',   scouts: 1, sparks: 0, genre: 'Ambient',      image: coverOf('dust-choir'),    badge: 'Deep', tags: ['Field recording', 'Self-released'], locality: 'Slovenia', whisperHint: 'Barely surfaced'                      },
+	{ id: 'neon-veda',     title: 'Neon Veda',     artist: '3 Scouts',        scouts: 3, sparks: 1, genre: 'Electronic',   image: coverOf('neon-veda'),     badge: 'Deep', tags: ['Cassette'],                         locality: 'Poland',   whisperHint: 'Circulating quietly in small circles' },
+	{ id: 'orbital-form',  title: 'Orbital Form',  artist: 'Ultra Obscure',   scouts: 0, sparks: 0, genre: 'Experimental', image: coverOf('orbital-form'),  badge: 'Deep', tags: ['Ultra obscure', 'No label'],        locality: 'Unknown',  whisperHint: 'No clear origin yet'                  },
+	{ id: 'silver-coast',  title: 'Silver Coast',  artist: 'Unnamed Project', scouts: 1, sparks: 0, genre: 'Folk',         image: coverOf('silver-coast'),  badge: 'Deep', tags: ['Demo'],                             locality: 'Halifax',  whisperHint: 'Found in isolation, off the grid'     },
+	{ id: 'hollow-ritual', title: 'Hollow Ritual', artist: 'Cave Press',      scouts: 2, sparks: 1, genre: 'Drone',        image: coverOf('hollow-ritual'), badge: 'Deep', tags: ['Cassette rip'],                     locality: 'Romania',  whisperHint: 'One scout found it before anyone else' },
+	{ id: 'static-bloom',  title: 'Static Bloom',  artist: 'Margin Signal',   scouts: 1, sparks: 0, genre: 'Ambient',      image: coverOf('static-bloom'),  badge: 'Deep', tags: ['No label', 'Self-released'],        locality: 'Estonia',  whisperHint: 'Found at the edge of the map'         },
+	{ id: 'zero-archive',  title: 'Zero Archive',  artist: 'Unknown',         scouts: 0, sparks: 0, genre: 'Experimental', image: coverOf('zero-archive'),  badge: 'Deep', tags: ['Ultra obscure'],                    locality: 'Unknown',  whisperHint: 'Untracked signal'                     },
 ];
 
 // 4. Breaking Out — signals gaining traction fast

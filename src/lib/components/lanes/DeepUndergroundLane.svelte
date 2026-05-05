@@ -1,5 +1,16 @@
 <script lang="ts">
+	import { Radio } from 'lucide-svelte';
 	import { deepUndergroundItems } from '$lib/mock/data';
+
+	// Capped scout count: minimum 1 (never show 0), maximum 3
+	function capped(scouts: number): number {
+		return Math.min(Math.max(scouts, 1), 3);
+	}
+
+	function presenceLabel(scouts: number): string {
+		const n = capped(scouts);
+		return `${n} scout${n === 1 ? '' : 's'}`;
+	}
 </script>
 
 <section>
@@ -18,14 +29,16 @@
 
 	<div class="mt-5 grid gap-3 pb-2 w-full" style="grid-template-columns: repeat(7, minmax(130px, 1fr));">
 		{#each deepUndergroundItems as item (item.id)}
-			<div class="group rounded-lg overflow-hidden border border-white/6 hover:border-white/14 cursor-pointer transition-colors duration-300">
+			<div class="group relative rounded-lg overflow-hidden border border-white/5 hover:border-white/10 cursor-pointer transition-colors duration-300">
+
 				<div class="relative w-full aspect-square">
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+						class="w-full h-full object-cover opacity-40 group-hover:opacity-58 transition-opacity duration-500"
 					/>
 					<div class="absolute inset-0 bg-linear-to-t from-black/88 via-black/25 to-black/20"></div>
+					<div class="absolute inset-0 bg-black/15"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.75 0.04 265 / 0.07) 0%, transparent 60%);"
@@ -38,15 +51,39 @@
 							</svg>
 						</div>
 					</div>
+					<!--
+						Presence pulse — last child inside the image section so DOM order
+						places it above all overlays without needing z-index.
+						Animation is driven by CSS class (not inline style) to avoid the
+						SvelteKit + Tailwind v4 issue where dynamic animation: values in
+						inline style attributes fail silently.
+					-->
+					<div
+						class="deep-pulse deep-pulse-scout-{capped(item.scouts)} absolute inset-0 pointer-events-none"
+						aria-hidden="true"
+					></div>
 				</div>
+
 				<div class="p-2 bg-base-300/70">
-					<p class="text-[11px] font-semibold text-base-content/88 truncate leading-snug">{item.title}</p>
-					<p class="text-[10px] text-base-content/60 truncate mt-0.5">{item.artist}</p>
-					<p class="text-[9px] text-base-content/48 mt-1.5">{item.scouts} scout{item.scouts === 1 ? '' : 's'}</p>
-					{#if item.tags && item.tags.length > 0}
-						<span class="inline-block text-[8px] font-medium px-1 py-0.5 rounded border border-white/10 text-base-content/45 leading-none mt-1.5">{item.tags[0]}</span>
-					{/if}
+					<p class="text-[11px] font-semibold text-base-content/75 truncate leading-snug">{item.title}</p>
+					<p class="text-[10px] text-base-content/50 truncate mt-0.5">{item.artist}</p>
+					<!-- Presence first (factual anchor), origin second (flavor) -->
+					<div class="mt-2 space-y-0.5">
+						<p class="text-sm font-medium text-zinc-400/80 truncate">{presenceLabel(item.scouts)}</p>
+						<p class="text-xs text-zinc-500/70 truncate">{item.whisperHint ?? 'Barely surfaced'}</p>
+					</div>
+					<!-- Amplify — quiet but clearly available: opacity-75 at rest, 90 on hover -->
+					<div class="flex justify-end mt-2">
+						<button
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-medium text-zinc-300 border border-white/20 hover:border-white/35 hover:text-white transition-all opacity-75 hover:opacity-90"
+							aria-label="Amplify this signal"
+						>
+							<Radio size={8} />
+							Amplify
+						</button>
+					</div>
 				</div>
+
 			</div>
 		{/each}
 	</div>
