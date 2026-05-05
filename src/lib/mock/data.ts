@@ -20,6 +20,7 @@ export type Item = {
 	featured?: boolean;
 	badge?: string;
 	adjacencyReason?: string;
+	lifeLabel?: 'Early' | 'Emerging' | 'Quiet' | 'Spreading'; // signal momentum label for One Step Away lane
 	sparks?: number;
 	tags?: string[];
 	locality?: string;
@@ -100,12 +101,12 @@ export const forYouItems: Item[] = [
 
 // 2. One Step Away — adjacent discovery, related but not obvious
 export const oneStepAwayItems: Item[] = [
-	{ id: 'edge-of-field',  title: 'Edge of Field',  artist: 'Dusk Bureau',  scouts: 6,  genre: 'Ambient',      image: coverOf('edge-of-field'),  badge: 'Adjacent', adjacencyReason: 'From scouts who explore ambient'     },
-	{ id: 'iron-weather',   title: 'Iron Weather',   artist: 'Pale Motion',  scouts: 9,  genre: 'Drone',        image: coverOf('iron-weather'),   badge: 'Adjacent', adjacencyReason: 'Crossed over from drone listeners'         },
-	{ id: 'soft-collapse',  title: 'Soft Collapse',  artist: 'Terrain',      scouts: 3,  genre: 'Electronic',   image: coverOf('soft-collapse'),  badge: 'Adjacent', adjacencyReason: 'From scouts with overlapping taste'                },
-	{ id: 'slow-satellite', title: 'Slow Satellite', artist: 'White Canvas', scouts: 11, genre: 'Experimental', image: coverOf('slow-satellite'), badge: 'Adjacent', adjacencyReason: 'Close to your orbit'                   },
-	{ id: 'minor-current',  title: 'Minor Current',  artist: 'Field Notes',  scouts: 2,  genre: 'Folk',         image: coverOf('minor-current'),  badge: 'Adjacent', adjacencyReason: 'From scouts with overlapping taste'             },
-	{ id: 'glass-signal',   title: 'Glass Signal',   artist: 'Pale Archive', scouts: 5,  genre: 'Post-Rock',    image: coverOf('glass-signal'),   badge: 'Adjacent', adjacencyReason: 'Crossed over from ambient black metal' },
+	{ id: 'edge-of-field',  title: 'Edge of Field',  artist: 'Dusk Bureau',  scouts: 6,  genre: 'Ambient',      image: coverOf('edge-of-field'),  badge: 'Adjacent', adjacencyReason: 'From scouts who explore ambient',              lifeLabel: 'Emerging'  },
+	{ id: 'iron-weather',   title: 'Iron Weather',   artist: 'Pale Motion',  scouts: 9,  genre: 'Drone',        image: coverOf('iron-weather'),   badge: 'Adjacent', adjacencyReason: 'From scouts exploring adjacent genres',         lifeLabel: 'Spreading' },
+	{ id: 'soft-collapse',  title: 'Soft Collapse',  artist: 'Terrain',      scouts: 3,  genre: 'Electronic',   image: coverOf('soft-collapse'),  badge: 'Adjacent', adjacencyReason: 'From scouts with similar taste',                lifeLabel: 'Early'     },
+	{ id: 'slow-satellite', title: 'Slow Satellite', artist: 'White Canvas', scouts: 11, genre: 'Experimental', image: coverOf('slow-satellite'), badge: 'Adjacent', adjacencyReason: 'From listeners close to your orbit',            lifeLabel: 'Spreading' },
+	{ id: 'minor-current',  title: 'Minor Current',  artist: 'Field Notes',  scouts: 2,  genre: 'Folk',         image: coverOf('minor-current'),  badge: 'Adjacent', adjacencyReason: 'From nearby listening circles',                 lifeLabel: 'Quiet'     },
+	{ id: 'glass-signal',   title: 'Glass Signal',   artist: 'Pale Archive', scouts: 5,  genre: 'Post-Rock',    image: coverOf('glass-signal'),   badge: 'Adjacent', adjacencyReason: 'From scouts exploring outside your usual taste', lifeLabel: 'Emerging'  },
 ];
 
 // 3. Deep Underground — very obscure, barely discovered
