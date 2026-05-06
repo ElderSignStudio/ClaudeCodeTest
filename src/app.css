@@ -215,6 +215,39 @@
   .bo-spike-breakthrough { animation: none !important; }
 }
 
+/* ─── Origin Stories — diagram node pulse ───────────────── */
+
+/*
+  Opacity-only pulse for SVG nodes inside propagation diagrams.
+  --os-base and --os-peak are set per node via inline style so each
+  node type (origin, branch, discovery, convergence) has its own range.
+  animation-delay is also set per node via inline style (longhand only).
+*/
+@keyframes os-node-pulse {
+  0%, 100% { opacity: var(--os-base, 0.38); }
+  50%      { opacity: var(--os-peak, 0.78); }
+}
+
+.os-pulse-origin      { animation-name: os-node-pulse; animation-duration: 5.5s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.os-pulse-branch      { animation-name: os-node-pulse; animation-duration: 4.5s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.os-pulse-discovery   { animation-name: os-node-pulse; animation-duration: 3.8s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.os-pulse-convergence { animation-name: os-node-pulse; animation-duration: 6.2s; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+
+/*
+  os-pulse-node: duration-free variant — each node sets animation-duration
+  via inline style longhand, enabling per-node irregular timing without
+  additional CSS classes. animation-delay is also set inline (longhand only).
+*/
+.os-pulse-node { animation-name: os-node-pulse; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .os-pulse-origin,
+  .os-pulse-branch,
+  .os-pulse-discovery,
+  .os-pulse-convergence,
+  .os-pulse-node { animation: none !important; }
+}
+
 /* ─── Base ───────────────────────────────────────────────── */
 
 body {

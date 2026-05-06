@@ -55,6 +55,15 @@ export type HumanSignalItem = {
 	userContext: string; // e.g. "Dan amplified this"
 };
 
+export type StoryType =
+	| 'independent-discovery'
+	| 'bridge-crossing'
+	| 'slow-burn'
+	| 'sudden-bloom'
+	| 'convergent-paths'
+	| 'isolated-artifact'
+	| 'origin-hub';
+
 export type OriginItem = {
 	id: string;
 	title: string;
@@ -63,10 +72,10 @@ export type OriginItem = {
 	image: string;
 	reachedScouts: number;
 	discoveries: number;
-	branch: string;       // sub-headline, e.g. "Branch growing from Rome"
-	headline: string;     // narrative sentence for the Story Card
-	seedLocation: string; // where the signal originated
-	graphType: 'converging' | 'parallel' | 'spreading';
+	branch: string;         // sub-headline, e.g. "Branch growing from Łódź"
+	headline: string;       // narrative sentence for the Story Card
+	seedLocation: string;   // where the signal originated
+	storyType: StoryType;   // determines the symbolic diagram grammar
 };
 
 // Build a lookup of Spotify cover URLs keyed by item id
@@ -231,16 +240,16 @@ export const originItems: OriginItem[] = [
 		image: coverOf('forest-mouth'), reachedScouts: 18, discoveries: 3,
 		branch:       'Branch growing from Łódź',
 		headline:     'Three scouts found this independently before it spread',
-		seedLocation: 'Łódź, Poland',
-		graphType:    'converging',
+		seedLocation: 'Łódź',
+		storyType:    'independent-discovery',
 	},
 	{
 		id: 'iron-coast',      title: 'Iron Coast',      artist: 'The Meridian',    genre: 'Drone',
 		image: coverOf('iron-coast'), reachedScouts: 12, discoveries: 2,
-		branch:       'Spreading from Halifax, NS',
+		branch:       'Spreading from Halifax',
 		headline:     'Two separate paths reached the same signal from different scenes',
-		seedLocation: 'Halifax, NS',
-		graphType:    'parallel',
+		seedLocation: 'Halifax',
+		storyType:    'convergent-paths',
 	},
 	{
 		id: 'weight-of-cloud', title: 'Weight of Cloud', artist: 'Six Months',      genre: 'Ambient',
@@ -248,7 +257,7 @@ export const originItems: OriginItem[] = [
 		branch:       'Started in Copenhagen',
 		headline:     'From one spark in Copenhagen to 31 scouts across six branches',
 		seedLocation: 'Copenhagen',
-		graphType:    'spreading',
+		storyType:    'origin-hub',
 	},
 ];
 
