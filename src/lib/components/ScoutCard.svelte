@@ -7,17 +7,17 @@
 
 <div
 	class={[
-		'group rounded-xl border cursor-pointer w-full',
+		'group rounded-xl border cursor-pointer w-full h-full flex flex-col',
 		'transition-all duration-250 hover:-translate-y-px',
 		scout.following
 			? 'bg-base-200/62 border-primary/18 hover:border-primary/30'
 			: 'bg-base-200/45 border-white/8 hover:border-white/16 hover:bg-base-200/60',
 	]}
 >
-	<div class="p-3.5">
+	<div class="p-3.5 flex flex-col flex-1">
 
-		<!-- ── Avatar + name + taste profile ── -->
-		<div class="flex items-start gap-3 mb-3">
+		<!-- ── Avatar + name ── -->
+		<div class="flex items-center gap-3 mb-2.5">
 			<div class="relative shrink-0">
 				<div
 					class={[
@@ -27,10 +27,6 @@
 				>
 					<img src={scout.avatar} alt={scout.name} class="w-full h-full object-cover" />
 				</div>
-				<!--
-					Activity dot: accent-colored pip on the avatar corner.
-					Only shown when activityLabel is set — communicates "this scout is active".
-				-->
 				{#if scout.activityLabel}
 					<span
 						class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-base-200"
@@ -38,28 +34,38 @@
 					></span>
 				{/if}
 			</div>
-
-			<div class="flex-1 min-w-0 pt-0.5">
-				<div class="flex items-center">
-					<p class="text-[14px] font-bold text-base-content/95 leading-snug truncate">{scout.name}</p>
-				</div>
-				<p class="text-[11px] text-base-content/55 mt-0.5 leading-snug">{scout.tasteProfile}</p>
-			</div>
+			<p class="flex-1 min-w-0 text-[14px] font-bold text-base-content/95 leading-snug truncate">{scout.name}</p>
 		</div>
 
 		<!--
-			Activity label container always renders at h-5 (20px) to equalise card heights.
-			Cards without an activityLabel have an empty but identically-sized gap here.
+			Fixed-height text block: reserves space for up to 2 lines of taste + 2 lines of
+			context regardless of actual wrapping. This keeps the activity pill on a consistent
+			baseline across all cards.
+			72px ≈ (text-xs × 2 lines) + gap + (text-[11px] × 2 lines) at leading-snug.
 		-->
-		<div class="mb-3 h-5 flex items-center">
+		<div class="min-h-18 mb-3 flex flex-col justify-start">
+			<p class="text-xs text-base-content/55 leading-snug line-clamp-2">{scout.tasteProfile}</p>
+			{#if scout.contextLine}
+				<p class="text-[11px] text-base-content/40 mt-1.5 leading-snug line-clamp-2">{scout.contextLine}</p>
+			{/if}
+		</div>
+
+		<!-- ── Activity pill — always on the same baseline ── -->
+		<div class="mb-3.5 min-h-5 flex items-center">
 			{#if scout.activityLabel}
 				<span
-					class="inline-block text-[10px] font-medium rounded-full px-2 py-0.5 leading-none text-accent/82 border border-accent/25 bg-accent/8"
+					class="inline-block text-[11px] font-medium rounded-full px-2 py-0.5 leading-none text-accent/75 border border-accent/22 bg-accent/7 truncate max-w-full"
 				>
 					{scout.activityLabel}
 				</span>
 			{/if}
 		</div>
+
+		<!--
+			Spacer: absorbs any residual height variation so stats + button stay
+			pinned to the same vertical position in every card.
+		-->
+		<div class="flex-1"></div>
 
 		<!-- ── Stats row ── -->
 		<div class="flex items-center justify-between mb-3.5">
@@ -80,11 +86,6 @@
 		</div>
 
 		<!-- ── Follow button ── -->
-		<!--
-			Full-width, rounded-full — matches existing system button style.
-			Following: primary-tinted fill (bg-primary/18).
-			Not following: ghost border.
-		-->
 		<button
 			class={[
 				'w-full flex items-center justify-center gap-1.5 h-7 rounded-full text-[11px] font-semibold transition-all duration-150',

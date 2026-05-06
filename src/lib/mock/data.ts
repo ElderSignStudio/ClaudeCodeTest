@@ -146,10 +146,11 @@ export type Scout = {
 	name: string;
 	avatar: string;         // DiceBear URL
 	tasteProfile: string;   // e.g. "Obscure prog · dark folk · lost tapes"
+	contextLine?: string;   // how this scout relates to the listener or network
 	sparks: number;         // total signals they've sparked
 	reach: number;          // total scouts reached by their signals
 	hitRate: number;        // percentage of early picks that later gained traction
-	activityLabel?: 'Similar Taste' | 'High Hit Rate' | 'Early Picks';
+	activityLabel?: string; // short editorial phrase describing scout behavior
 	following: boolean;     // whether the current user follows this scout
 	recentSignals: string[]; // Spotify cover URLs for the thumbnail strip
 };
@@ -164,10 +165,11 @@ export const scoutItems: Scout[] = [
 		name:          'Dan',
 		avatar:        avatar('DanOuter'),
 		tasteProfile:  'Obscure prog · dark folk · lost tapes',
+		contextLine:   'Closely aligned with your late-night listening',
 		sparks:        8,
 		reach:         41,
 		hitRate:       72,
-		activityLabel: 'Early Picks',
+		activityLabel: 'Early signal hunter',
 		following:     true,
 		recentSignals: [coverOf('dust-choir'), coverOf('forest-mouth'), coverOf('pale-static')],
 	},
@@ -176,10 +178,11 @@ export const scoutItems: Scout[] = [
 		name:          'Alice',
 		avatar:        avatar('AliceSignal'),
 		tasteProfile:  'Brazilian psych · strange collage · obscure finds',
+		contextLine:   'Found through your ambient overlap',
 		sparks:        14,
 		reach:         88,
 		hitRate:       68,
-		activityLabel: 'Similar Taste',
+		activityLabel: 'Deep scene explorer',
 		following:     true,
 		recentSignals: [coverOf('ember-field'), coverOf('open-window'), coverOf('iron-coast')],
 	},
@@ -188,9 +191,11 @@ export const scoutItems: Scout[] = [
 		name:         'Marco',
 		avatar:       avatar('MarcoAmb'),
 		tasteProfile: 'Ambient · ritual · sonic geography',
+		contextLine:  'Bridges ritual music and field recordings',
 		sparks:       22,
 		reach:        134,
 		hitRate:      70,
+		activityLabel: 'Underground connector',
 		following:    false,
 		recentSignals: [coverOf('low-orbit'), coverOf('cinder-plain'), coverOf('weight-of-cloud')],
 	},
@@ -199,10 +204,11 @@ export const scoutItems: Scout[] = [
 		name:          'Yuki',
 		avatar:        avatar('YukiDeep'),
 		tasteProfile:  'Early experimental · field recordings · micro-scenes',
+		contextLine:   'Often surfaces signals before breakout',
 		sparks:        6,
 		reach:         29,
 		hitRate:       58,
-		activityLabel: 'High Hit Rate',
+		activityLabel: 'Quiet but precise',
 		following:     false,
 		recentSignals: [coverOf('burial-light'), coverOf('orbital-form'), coverOf('zero-archive')],
 	},
