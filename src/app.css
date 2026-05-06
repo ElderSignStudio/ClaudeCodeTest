@@ -78,11 +78,10 @@
     0 0 5px -1px oklch(0.72 0.16 220 / 0.50);
 }
 
-/* ─── Breaking Out — resonance bar shimmer ──────────────── */
+/* ─── Resonance bar shimmer (used by DriftSection) ──────── */
 
 /*
-  Slow sweep across the resonance bar fill: 3s, ease-in-out so it
-  accelerates through the middle and fades at each edge.
+  Slow sweep across a resonance bar fill: 3s, ease-in-out.
   Defined outside @layer utilities because @keyframes are always global.
 */
 @keyframes os-shimmer {
@@ -127,6 +126,93 @@
 
 @media (prefers-reduced-motion: reduce) {
   .deep-pulse { animation: none !important; }
+}
+
+/* ─── Breaking Out — heat pill shimmer + spike ───────────── */
+
+/*
+  Shimmer: left-to-right sweep. Width/skew from per-card CSS variables;
+  delay via animation-delay inline style (longhand only to preserve it).
+
+  Tier peaks:
+    Rising       → 0.32  (calm, detectable)
+    Surging      → 0.72  (clearly active)
+    Breakthrough → 1.00  (peak, premium)
+*/
+@keyframes bo-heat-shimmer {
+  0%   { transform: translateX(-140%) skewX(var(--bo-shimmer-skew, -10deg)); opacity: 0; }
+  25%  { opacity: calc(var(--bo-shimmer-peak, 0.72) * 0.50); }
+  50%  { opacity: var(--bo-shimmer-peak, 0.72);               }
+  75%  { opacity: calc(var(--bo-shimmer-peak, 0.72) * 0.50); }
+  100% { transform: translateX(260%)  skewX(var(--bo-shimmer-skew, -10deg)); opacity: 0; }
+}
+
+.bo-heat-shimmer {
+  width: var(--bo-shimmer-width, 45%);
+  animation-name: bo-heat-shimmer;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.bo-heat-rising       { animation-duration: 14s;  --bo-shimmer-peak: 0.32; }
+.bo-heat-surging      { animation-duration: 10s;  --bo-shimmer-peak: 0.72; }
+.bo-heat-breakthrough { animation-duration: 8.5s; --bo-shimmer-peak: 1.00; }
+
+/*
+  Surging icon pulse: rare subtle brightness lift on the icon only.
+  Opacity only — no scale, no translate.
+  Fires once per 18s loop; 600ms active window.
+*/
+@keyframes bo-icon-pulse-surging {
+  0%, 100% { opacity: 0.90; }
+  44%      { opacity: 0.90; }
+  47%      { opacity: 1;    }
+  50%      { opacity: 0.90; }
+}
+
+.bo-icon-pulse-surging {
+  animation-name: bo-icon-pulse-surging;
+  animation-duration: 18s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+/*
+  Spike: centered radial brightness overlay inside pill. Opacity only.
+  Surging and Breakthrough only — Rising has no spike.
+  Breakthrough gets a wider blur radius (filter: blur) for a softer, richer look.
+*/
+@keyframes bo-spike-surging {
+  0%, 100% { opacity: 0;    }
+  48%      { opacity: 0;    }
+  50%      { opacity: 0.20; }
+  52%      { opacity: 0;    }
+}
+@keyframes bo-spike-breakthrough {
+  0%, 100% { opacity: 0;    }
+  48%      { opacity: 0;    }
+  50%      { opacity: 0.35; }
+  53%      { opacity: 0;    }
+}
+
+.bo-spike-surging {
+  animation-name: bo-spike-surging;
+  animation-duration: 14s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+.bo-spike-breakthrough {
+  filter: blur(2px);
+  animation-name: bo-spike-breakthrough;
+  animation-duration: 10s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bo-heat-shimmer,
+  .bo-icon-pulse-surging,
+  .bo-spike-surging,
+  .bo-spike-breakthrough { animation: none !important; }
 }
 
 /* ─── Base ───────────────────────────────────────────────── */
