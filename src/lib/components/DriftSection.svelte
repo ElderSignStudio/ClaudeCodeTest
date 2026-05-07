@@ -37,7 +37,7 @@
 	<!-- Section header -->
 	<div class="w-0.75 h-3.5 rounded-full bg-primary/55" aria-hidden="true"></div>
 	<p class="ml-3.5 mt-1.5 text-sm font-bold uppercase tracking-widest leading-tight text-base-content/88">Drift</p>
-	<p class="ml-3.5 mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Keep exploring — there's always more</p>
+	<p class="ml-3.5 mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Keep exploring — there's always more</p>
 
 	<!-- ── Block 1: Hero (full-width intentional anchor) ─────────── -->
 	<div class="mt-5 group rounded-xl overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow mb-3">
@@ -45,10 +45,10 @@
 			<img
 				src={d[0].image}
 				alt={d[0].title}
-				class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+				class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
 			/>
 			<div class="absolute inset-0 bg-linear-to-br from-primary/22 to-transparent mix-blend-color"></div>
-			<div class="absolute inset-0 bg-linear-to-t from-black/82 via-black/20 to-transparent"></div>
+			<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 			<div
 				class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
 				style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
@@ -63,7 +63,7 @@
 			</div>
 			<div class="absolute bottom-0 left-0 right-0 p-4">
 				<p class="text-[18px] font-bold text-white leading-snug">{d[0].title}</p>
-				<p class="text-[12px] text-white/65 mt-0.5">{d[0].genre} · {d[0].artist}</p>
+				<p class="text-[13px] text-white/78 mt-0.5">{d[0].genre} · {d[0].artist}</p>
 			</div>
 		</div>
 	</div>
@@ -79,8 +79,8 @@
 
 	<!-- ── Block 3: Separator ─────────────────────────────────────── -->
 	<div class="flex items-center gap-3 mb-5" aria-hidden="true">
-		<span class="text-[10px] text-base-content/30 font-medium tracking-wide">Because you explore ambient</span>
-		<div class="flex-1 h-px bg-white/5"></div>
+		<span class="text-[11px] text-base-content/42 font-medium tracking-wide">Because you explore ambient</span>
+		<div class="flex-1 h-px bg-white/7"></div>
 	</div>
 
 	<!-- ── Block 4: Scout standalone (w-56, left-anchored) ────────── -->
@@ -110,9 +110,9 @@
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
 					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
@@ -138,7 +138,7 @@
 				</div>
 				<div class="p-2.5 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-					<p class="text-[11px] text-base-content/68 truncate mt-0.5">{item.artist} · {item.genre}</p>
+					<p class="text-[12px] text-base-content/68 truncate mt-0.5">{item.artist} · {item.genre}</p>
 					{#if item.weeklyScouts !== undefined}
 						<p class="text-[11px] font-medium mt-1.5 truncate" style="color: oklch(0.74 0.17 158 / 0.80);">
 							+{item.weeklyScouts} scouts this week
@@ -174,9 +174,9 @@
 				<img
 					src={b[0].image}
 					alt={b[0].title}
-					class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+					class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
 				/>
-				<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
+				<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 				<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
 				<div
 					class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
@@ -202,7 +202,7 @@
 			</div>
 			<div class="p-2.5 bg-base-200/70">
 				<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{b[0].title}</p>
-				<p class="text-[11px] text-base-content/68 truncate mt-0.5">{b[0].artist} · {b[0].genre}</p>
+				<p class="text-[12px] text-base-content/68 truncate mt-0.5">{b[0].artist} · {b[0].genre}</p>
 			</div>
 		</div>
 	</div>

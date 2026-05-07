@@ -24,18 +24,18 @@
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-accent shrink-0" aria-hidden="true"></div>
 			<div>
 				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">One Step Away</p>
-				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals discovered by scouts just outside your taste orbit</p>
+				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals discovered by scouts just outside your taste orbit</p>
 			</div>
 		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/75 hover:text-base-content/90 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			Refresh
-			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
+			<RefreshCw size={11} class="opacity-90 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
 	</div>
 
 	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(6, minmax(150px, 1fr));">
 		{#each oneStepAwayItems as item (item.id)}
-			<div class="group relative rounded-lg overflow-hidden border border-white/8 hover:border-accent/28 cursor-pointer transition-all duration-200 os-card-glow">
+			<div class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-accent/40 cursor-pointer transition-all duration-200 os-card-glow">
 				<div
 					class="absolute left-0 top-0 bottom-0 w-0.75 bg-accent/30 group-hover:bg-accent/55 transition-colors duration-200 z-10"
 					aria-hidden="true"
@@ -44,9 +44,10 @@
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-65 group-hover:opacity-82 transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-68 group-hover:opacity-84 transition-opacity duration-300"
+						style="filter: brightness(1.03) contrast(1.04) saturate(1.02);"
 					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/78 via-black/18 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/73 via-black/14 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-accent/10 to-transparent mix-blend-color"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
@@ -56,7 +57,7 @@
 					<!-- Life badge — opacity reflects momentum state -->
 					<div class="absolute top-2 right-2 z-10">
 						<span
-							class="text-[9px] font-semibold px-1.5 py-0.5 rounded border border-accent/25 text-accent/70 leading-none backdrop-blur-sm"
+							class="text-[10px] font-semibold px-1.5 py-0.5 rounded border border-accent/28 text-accent/78 leading-none backdrop-blur-sm"
 							style="background: rgba(0,0,0,0.38); opacity: {badgeOpacity[item.lifeLabel ?? 'Emerging'] ?? 0.80};"
 						>
 							{item.lifeLabel ?? 'Emerging'}
@@ -74,22 +75,22 @@
 					<!-- 1. Title -->
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
 					<!-- 2. Artist · Genre -->
-					<p class="text-[11px] text-base-content/68 truncate mt-1">{item.artist} · {item.genre}</p>
+					<p class="text-[12px] text-base-content/68 truncate mt-1">{item.artist} · {item.genre}</p>
 					<!-- 3+4. Origin + Network — grouped, origin primary, network secondary -->
 					<div class="mt-2 space-y-1">
 						{#if item.adjacencyReason}
-							<p class="text-[10px] font-medium leading-snug truncate text-cyan-300/90">
+							<p class="text-[11px] font-medium leading-snug truncate text-cyan-300/92">
 								<span style="font-size: 8px; opacity: 0.40; margin-right: 2px;">↗</span>{item.adjacencyReason}
 							</p>
 						{/if}
-						<p class="text-[10px] font-normal truncate text-cyan-300/70">
+						<p class="text-[11px] font-normal truncate text-cyan-300/78">
 							{networkLabel(item.scouts)}
 						</p>
 					</div>
 					<!-- 5. Amplify -->
 					<div class="flex justify-end mt-2">
 						<button
-							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/75 border border-accent/28 hover:bg-accent/12 hover:border-accent/50 hover:text-accent transition-all"
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/90 border border-accent/40 hover:bg-accent/16 hover:border-accent/62 hover:text-accent transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={8} />

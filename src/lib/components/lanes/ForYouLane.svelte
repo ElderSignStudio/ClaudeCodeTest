@@ -19,12 +19,12 @@
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-primary shrink-0" aria-hidden="true"></div>
 			<div>
 				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Best picks for you</p>
-				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals resonating closest to your orbit</p>
+				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals resonating closest to your orbit</p>
 			</div>
 		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/75 hover:text-base-content/90 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			Refresh
-			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
+			<RefreshCw size={11} class="opacity-90 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
 	</div>
 
@@ -40,7 +40,7 @@
 			feathered gradient show through it, so the artwork bleeds seamlessly into the
 			content area. No hard edge; no panel.
 		-->
-		<div class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/30 os-hero-card flex flex-col min-h-72">
+		<div class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/36 os-hero-card flex flex-col min-h-72">
 
 			<!--
 				Image covers the ENTIRE card (spacer + text zone) via absolute inset-0
@@ -50,7 +50,8 @@
 			<img
 				src={featuredItem.image}
 				alt={featuredItem.title}
-				class="absolute inset-0 w-full h-full object-cover opacity-92 transition-transform duration-700 group-hover:scale-105"
+				class="absolute inset-0 w-full h-full object-cover opacity-96 transition-transform duration-700 group-hover:scale-105"
+				style="filter: brightness(1.03) contrast(1.04);"
 			/>
 			<!-- Tonal colour wash — full card -->
 			<div class="absolute inset-0 bg-linear-to-br from-primary/28 via-transparent to-secondary/14"></div>
@@ -59,9 +60,9 @@
 				Transparent near the top third, soft mid-transition at ~65%, settles at
 				black/82 at the very bottom. Creates cinematic depth without segmentation.
 			-->
-			<div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(0,0,0,0) 32%, rgba(0,0,0,0.52) 64%, rgba(0,0,0,0.82) 100%);" aria-hidden="true"></div>
-			<!-- Edge darkening — unchanged -->
-			<div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.18) 100%);" aria-hidden="true"></div>
+			<div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(0,0,0,0) 38%, rgba(0,0,0,0.37) 66%, rgba(0,0,0,0.74) 100%);" aria-hidden="true"></div>
+			<!-- Edge darkening -->
+			<div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.12) 100%);" aria-hidden="true"></div>
 			<!-- Ambient glow breath (17s cycle, opacity-only) -->
 			<div
 				class="bp-hero-ambient absolute inset-0 pointer-events-none"
@@ -105,7 +106,7 @@
 			<div class="relative flex-1 min-h-44">
 				<!-- Orbit state pill -->
 				<div class="absolute top-3 right-3">
-					<span class="text-[10px] font-medium tracking-wide text-primary/72 border border-primary/13 rounded-full px-2.5 py-1 bg-primary/7 backdrop-blur-sm">
+					<span class="text-[11px] font-medium tracking-wide text-primary/85 border border-primary/20 rounded-full px-2.5 py-1 bg-primary/7 backdrop-blur-sm">
 						{featuredItem.orbitState ?? 'Closely Orbiting'}
 					</span>
 				</div>
@@ -131,18 +132,18 @@
 					style="text-shadow: 0 1px 12px rgba(0,0,0,0.80), 0 2px 4px rgba(0,0,0,0.50);"
 				>{featuredItem.title}</p>
 				<p
-					class="text-[12px] font-light text-white/78 tracking-tight truncate mt-2.5"
+					class="text-[13px] font-normal text-white/90 truncate mt-2.5"
 					style="text-shadow: 0 1px 8px rgba(0,0,0,0.75);"
 				>{featuredItem.artist}</p>
 				{#if featuredItem.resonanceContext}
 					<p
-						class="text-[11px] text-white/65 leading-loose mt-3.5 line-clamp-2 max-w-[88%]"
+						class="text-[12px] text-white/78 leading-loose mt-3.5 line-clamp-2 max-w-[88%]"
 						style="text-shadow: 0 1px 8px rgba(0,0,0,0.70);"
 					>{featuredItem.resonanceContext}</p>
 				{/if}
 				<div class="flex justify-end mt-4">
 					<button
-						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent/58 border border-accent/22 bg-black/22 hover:bg-accent/12 hover:border-accent/45 hover:text-accent/85 transition-all backdrop-blur-sm"
+						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent/72 border border-accent/32 bg-black/22 hover:bg-accent/12 hover:border-accent/50 hover:text-accent/92 transition-all backdrop-blur-sm"
 						aria-label="Amplify this signal"
 					>
 						<Radio size={10} />
@@ -154,15 +155,16 @@
 
 		<!-- Standard cards -->
 		{#each regularItems as item, i (item.id)}
-			<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow">
+			<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/20 transition-all duration-250 os-card-refined">
 				<div class="relative aspect-square w-full">
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-68 group-hover:opacity-85 transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-73 group-hover:opacity-88 transition-opacity duration-300"
+						style="filter: brightness(1.025) contrast(1.03);"
 					/>
 					<div class={`absolute inset-0 bg-linear-to-br ${cardTints[i % cardTints.length]} mix-blend-color`}></div>
-					<div class="absolute inset-0 bg-linear-to-t from-black/82 via-black/25 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/72 via-black/20 to-transparent"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
@@ -182,14 +184,14 @@
 						Artist · genre type on a single line — calmer than stacked metadata.
 						Lowercase type ("album", "song") keeps the tone soft, not categorical.
 					-->
-					<p class="text-[12px] font-normal text-base-content/52 truncate mt-1">{item.artist}{item.type ? ` · ${item.genre} ${item.type.toLowerCase()}` : ` · ${item.genre}`}</p>
+					<p class="text-[13px] font-normal text-base-content/68 truncate mt-1">{item.artist}{item.type ? ` · ${item.genre} ${item.type.toLowerCase()}` : ` · ${item.genre}`}</p>
 					<!--
 						Resonance context — a whisper, not a reason.
 						Reduced to /44 opacity and wider leading so it drifts rather than explains.
 						line-clamp-2 preserves equal card heights.
 					-->
 					{#if item.resonanceContext}
-						<p class="text-[11px] text-base-content/44 leading-relaxed mt-2.5 line-clamp-2">{item.resonanceContext}</p>
+						<p class="text-[12px] text-base-content/58 leading-relaxed mt-2.5 line-clamp-2">{item.resonanceContext}</p>
 					{/if}
 					<!--
 						Amplify — present but not calling for attention.
@@ -197,7 +199,7 @@
 					-->
 					<div class="flex justify-end mt-3">
 						<button
-							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/55 border border-accent/18 hover:bg-accent/10 hover:border-accent/38 hover:text-accent/80 transition-all"
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/68 border border-accent/25 hover:bg-accent/10 hover:border-accent/42 hover:text-accent/88 transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={8} />

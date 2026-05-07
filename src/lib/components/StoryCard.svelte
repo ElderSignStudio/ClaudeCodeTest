@@ -31,8 +31,8 @@
 -->
 
 <div
-	class="group h-full rounded-xl border border-white/8 bg-base-200/40 cursor-pointer transition-all duration-250 hover:border-secondary/20 hover:bg-base-200/55 flex flex-col"
-	style="box-shadow: 0 2px 16px -4px oklch(0 0 0 / 0.35);"
+	class="group h-full rounded-xl border border-white/6 bg-base-200/40 cursor-pointer transition-all duration-250 hover:border-secondary/18 hover:bg-base-200/55 flex flex-col"
+	style="box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 14px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.025);"
 >
 	<div class="p-4 flex-1 flex flex-col">
 
@@ -46,8 +46,8 @@
 				/>
 			</div>
 			<div class="flex-1 min-w-0 pt-0.5">
-				<p class="text-[11px] font-semibold text-base-content/60 truncate">{item.title} · {item.artist}</p>
-				<p class="text-[10px] text-base-content/38 truncate mt-0.5">{item.genre}</p>
+				<p class="text-[12px] font-semibold text-base-content/72 truncate">{item.title} · {item.artist}</p>
+				<p class="text-[11px] text-base-content/50 truncate mt-0.5">{item.genre}</p>
 			</div>
 		</div>
 
@@ -61,7 +61,7 @@
 			viewBox "0 0 180 44" — consistent coordinate space across all types.
 			overflow-visible allows halos and blur filters to render outside the SVG box.
 		-->
-		<div class="mb-4" aria-hidden="true">
+		<div class="mb-4" aria-hidden="true" style="filter: brightness(1.08);">
 
 			{#if item.storyType === 'independent-discovery'}
 				<!--
@@ -364,13 +364,13 @@
 			Location on line 1; discoveries + scouts on line 2.
 		-->
 		<div class="mb-3">
-			<p class="text-[10px] text-base-content/40 leading-snug">First surfaced: {item.seedLocation}</p>
-			<p class="text-[10px] text-base-content/35 leading-snug mt-0.5">{item.discoveries} {item.discoveries === 1 ? 'discovery' : 'discoveries'} · {item.reachedScouts} scouts reached</p>
+			<p class="text-[11px] text-base-content/52 leading-normal">First surfaced: {item.seedLocation}</p>
+			<p class="text-[11px] text-base-content/45 leading-normal mt-0.5">{item.discoveries} {item.discoveries === 1 ? 'discovery' : 'discoveries'} · {item.reachedScouts} scouts reached</p>
 		</div>
 
 		<!-- Trace Signal CTA -->
 		<button
-			class="w-full flex items-center justify-center h-7 rounded-full text-[11px] font-semibold border border-white/15 text-base-content/62 hover:text-secondary hover:border-secondary/32 hover:bg-white/4 transition-all duration-150"
+			class="w-full flex items-center justify-center h-7 rounded-full text-[12px] font-semibold border border-white/28 text-base-content/82 hover:text-secondary hover:border-secondary/46 hover:bg-white/6 transition-all duration-150"
 		>
 			Trace Signal →
 		</button>

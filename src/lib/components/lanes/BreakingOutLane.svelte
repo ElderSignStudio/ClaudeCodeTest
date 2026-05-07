@@ -61,10 +61,10 @@
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-success shrink-0" aria-hidden="true"></div>
 			<div>
 				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Breaking Out</p>
-				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals gaining momentum — help them spread</p>
+				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals gaining momentum — help them spread</p>
 			</div>
 		</div>
-		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-success/80 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="text-[13px] text-base-content/75 hover:text-success/88 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			See all →
 		</a>
 	</div>
@@ -75,14 +75,15 @@
 			{@const vars = cardVars[i] ?? cardVars[0]}
 			{@const spike = spikeClass(item.tag)}
 			<!-- Card: clean, dark, no tier-based halo -->
-			<div class="group rounded-lg overflow-hidden border border-white/8 hover:border-success/30 cursor-pointer transition-all duration-200 os-card-breaking">
+			<div class="group rounded-lg overflow-hidden border border-white/10 hover:border-success/40 cursor-pointer transition-all duration-200 os-card-breaking">
 				<div class="relative w-full aspect-square">
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
+					style="filter: saturate(1.05);"
 					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
@@ -108,7 +109,7 @@
 
 				<div class="p-2.5 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-					<p class="text-[11px] text-base-content/68 truncate mt-1">{item.artist} · {item.genre}</p>
+					<p class="text-[12px] text-base-content/68 truncate mt-1">{item.artist} · {item.genre}</p>
 
 					{#if item.weeklyScouts !== undefined}
 						<div class="mt-2 space-y-1">
@@ -163,7 +164,7 @@
 								No truncation — truncate class removed.
 							-->
 							{#if item.spreadReason}
-								<p class="text-[13px] text-zinc-400/75 leading-snug line-clamp-2">{item.spreadReason}</p>
+								<p class="text-[13px] text-zinc-300/82 leading-normal line-clamp-2">{item.spreadReason}</p>
 							{/if}
 						</div>
 					{/if}
@@ -171,7 +172,7 @@
 					<!-- Amplify -->
 					<div class="flex justify-end mt-2">
 						<button
-							class="flex items-center gap-1.5 h-6 px-3 rounded-full text-[11px] font-semibold text-emerald-300/90 border border-success/35 hover:bg-success/12 hover:border-success/55 hover:text-emerald-200 transition-all"
+							class="flex items-center gap-1.5 h-6 px-3 rounded-full text-[11px] font-semibold text-emerald-300 border border-success/52 hover:bg-success/16 hover:border-success/68 hover:text-emerald-100 transition-all"
 							title="Help it spread"
 							aria-label="Amplify this signal"
 						>

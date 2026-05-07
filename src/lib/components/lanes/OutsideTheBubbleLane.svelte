@@ -13,12 +13,12 @@
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-cyan-400/55 shrink-0" aria-hidden="true"></div>
 			<div>
 				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/95">Outside the Bubble</p>
-				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals that crossed into your branch from distant scenes</p>
+				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals that crossed into your branch from distant scenes</p>
 			</div>
 		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/75 hover:text-base-content/90 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			Refresh
-			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
+			<RefreshCw size={11} class="opacity-90 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
 	</div>
 
@@ -26,18 +26,18 @@
 
 		<!-- ── Hero card (left) ── -->
 		<div
-			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/12 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
-			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.08), 0 6px 32px -6px oklch(0 0 0 / 0.62);"
+			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/22 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
+			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.10), 0 14px 40px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.22);"
 		>
 			<img
 				src={bubbleFeatured.image}
 				alt={bubbleFeatured.title}
-				class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-72 transition-opacity duration-500"
+				class="absolute inset-0 w-full h-full object-cover opacity-63 group-hover:opacity-75 transition-opacity duration-500"
 			/>
 			<!-- Cold tint overlay — cyan instead of warm yellow -->
 			<div class="absolute inset-0 bg-linear-to-br from-cyan-400/6 to-transparent mix-blend-color"></div>
 			<!-- Slightly darker bottom gradient for colder, more distant feel -->
-			<div class="absolute inset-0 bg-linear-to-b from-black/38 via-transparent to-black/94"></div>
+			<div class="absolute inset-0 bg-linear-to-b from-black/32 via-transparent to-black/89"></div>
 			<!-- Hover radial — cold cyan, not warm -->
 			<div
 				class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
@@ -45,9 +45,16 @@
 				aria-hidden="true"
 			></div>
 
+			<!-- Corner vignette — darkens card edges slightly, increases hero isolation -->
+			<div
+				class="absolute inset-0 pointer-events-none"
+				style="background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.10) 100%);"
+				aria-hidden="true"
+			></div>
+
 			<!-- Genre chip — muted, signal-metadata feel -->
 			<div class="absolute top-3.5 left-3.5">
-				<span class="text-[10px] font-medium text-white/50 border border-white/12 rounded-full px-2 py-0.5 bg-black/52 backdrop-blur-sm tracking-wide">
+				<span class="text-[11px] font-medium text-white/64 border border-white/16 rounded-full px-2 py-0.5 bg-black/52 backdrop-blur-sm tracking-wide">
 					{bubbleFeatured.genre}
 				</span>
 			</div>
@@ -64,14 +71,14 @@
 			<!-- Bottom text block -->
 			<div class="absolute bottom-0 left-0 right-0 px-4 pb-3.5 pt-10">
 				<p class="text-[22px] font-extrabold text-white leading-tight tracking-tight mb-1">{bubbleFeatured.title}</p>
-				<p class="text-[11px] text-white/38 mb-2">{bubbleFeatured.artist}</p>
+				<p class="text-[12px] text-white/58 mb-2">{bubbleFeatured.artist}</p>
 
 				<!--
 					Scene-crossing metadata — monospace so it reads like routing information
 					rather than editorial copy. Very dim: a technical signal, not a headline.
 				-->
 				{#if bubbleFeatured.crossingPath}
-					<p class="font-mono text-[10px] text-cyan-300/45 mb-3.5 tracking-wide">{bubbleFeatured.crossingPath}</p>
+					<p class="font-mono text-[11px] text-cyan-300/58 mb-3.5 tracking-wide">{bubbleFeatured.crossingPath}</p>
 				{/if}
 
 				<!--
@@ -80,13 +87,13 @@
 				-->
 				{#if bubbleFeatured.whyHere}
 					<div class="mb-4">
-						<p class="text-[9px] font-semibold uppercase tracking-widest mb-1.5 text-cyan-300/40">Crossing paths</p>
-						<p class="text-xs leading-snug text-white/65">{bubbleFeatured.whyHere}</p>
+						<p class="text-[10px] font-semibold uppercase tracking-widest mb-1.5 text-cyan-300/52">Crossing paths</p>
+						<p class="text-xs leading-relaxed text-white/78">{bubbleFeatured.whyHere}</p>
 					</div>
 				{/if}
 
 				<button
-					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/38 bg-black/40 hover:bg-accent/16 hover:border-accent/55 transition-all backdrop-blur-sm"
+					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/46 bg-black/40 hover:bg-accent/22 hover:border-accent/65 transition-all backdrop-blur-sm"
 					aria-label="Amplify this signal"
 				>
 					<Radio size={10} />
@@ -103,14 +110,14 @@
 					Hover adds a faint cyan border ring — "nearby anomaly" feel.
 					-mx-1.5 + px-1.5 so the ring extends slightly beyond the text column.
 				-->
-				<div class="group flex gap-3 cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 border border-transparent hover:bg-cyan-400/4 hover:border-cyan-300/12 transition-all duration-250">
+				<div class="group flex gap-3 cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 border border-transparent hover:bg-cyan-400/4 hover:border-cyan-300/8 transition-all duration-250">
 
 					<!-- Thumbnail — slightly taller than before (h-16 vs h-14) -->
 					<div class="relative w-20 h-16 rounded-md overflow-hidden shrink-0">
 						<img
 							src={item.image}
 							alt={item.title}
-							class="absolute inset-0 w-full h-full object-cover opacity-55 group-hover:opacity-78 transition-opacity duration-300"
+							class="absolute inset-0 w-full h-full object-cover opacity-58 group-hover:opacity-80 transition-opacity duration-300"
 						/>
 						<div class="absolute inset-0 bg-linear-to-br from-cyan-400/6 to-transparent mix-blend-color"></div>
 						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -131,15 +138,15 @@
 							More prominent than artist name; less prominent than title.
 						-->
 						{#if item.crossingPath}
-							<p class="font-mono text-[10px] text-cyan-300/42 mt-0.5 tracking-wide">{item.crossingPath}</p>
+							<p class="font-mono text-[11px] text-cyan-300/55 mt-0.5 tracking-wide">{item.crossingPath}</p>
 						{/if}
 
 						{#if item.whyHere}
-							<p class="text-[11px] leading-snug text-base-content/58 mt-1.5 mb-2 line-clamp-2">{item.whyHere}</p>
+							<p class="text-[12px] leading-normal text-base-content/68 mt-1.5 mb-2 line-clamp-2">{item.whyHere}</p>
 						{/if}
 
 						<button
-							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/62 border border-accent/20 hover:bg-accent/12 hover:border-accent/38 hover:text-accent transition-all"
+							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/82 border border-accent/36 hover:bg-accent/16 hover:border-accent/54 hover:text-accent transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={7} />

@@ -28,7 +28,7 @@
 </script>
 
 <aside
-	class="fixed top-14 left-0 bottom-0 w-56 z-40 hidden md:flex flex-col border-r border-white/6 overflow-hidden"
+	class="fixed top-14 left-0 bottom-0 w-56 z-40 hidden md:flex flex-col border-r border-white/8 overflow-hidden"
 	style="background-color: transparent;"
 >
 	<!-- Atmospheric bloom at bottom-left -->
@@ -54,12 +54,12 @@
 			</div>
 			<div class="min-w-0">
 				<p class="text-[13px] font-semibold text-base-content/88 truncate leading-snug">{currentUser.name}</p>
-				<p class="text-[10px] text-base-content/38 leading-snug">Scout Sore: 4</p>
+				<p class="text-[11px] text-base-content/55 leading-snug">Scout Score: 4</p>
 			</div>
 		</div>
 	</div>
 
-	<div class="shrink-0 h-px bg-white/5 mx-3 mb-1" aria-hidden="true"></div>
+	<div class="shrink-0 h-px bg-white/7 mx-3 mb-1" aria-hidden="true"></div>
 
 	<nav class="flex flex-col px-3 pt-3 flex-1 relative overflow-y-auto" aria-label="Main navigation">
 		{#each navItems as item (item.href)}
@@ -67,7 +67,7 @@
 			{@const Icon = item.icon}
 
 			{#if item.dividerBefore}
-				<div class="h-px bg-white/5 mx-1 my-2" aria-hidden="true"></div>
+				<div class="h-px bg-white/7 mx-1 my-2" aria-hidden="true"></div>
 			{/if}
 
 			{#if item.primary}
@@ -104,13 +104,13 @@
 							'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-base transition-all duration-150 w-full',
 							isActive
 								? 'bg-primary/12 text-base-content/95 font-semibold'
-								: 'text-base-content/82 font-medium hover:text-base-content/95 hover:bg-white/6',
+								: 'text-base-content/90 font-medium hover:text-base-content/95 hover:bg-white/6',
 						]}
 						aria-current={isActive ? 'page' : undefined}
 					>
 						<Icon
 							size={16}
-							class={isActive ? 'text-primary/80' : 'text-base-content/68'}
+							class={isActive ? 'text-primary/80' : 'text-base-content/80'}
 						/>
 						{item.label}
 					</a>

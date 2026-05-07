@@ -9,10 +9,10 @@
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-secondary shrink-0" aria-hidden="true"></div>
 			<div>
 				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/95">Origin Stories</p>
-				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">How signals spread through the network</p>
+				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">How signals spread through the network</p>
 			</div>
 		</div>
-		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-secondary/80 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="text-[13px] text-base-content/75 hover:text-secondary/88 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			See all →
 		</a>
 	</div>

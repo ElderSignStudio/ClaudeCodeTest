@@ -3,7 +3,7 @@
 	import { currentUser } from '$lib/mock/currentUser';
 </script>
 
-<header class="os-surface-raised fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/6" style="background-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none;">
+<header class="os-surface-raised fixed top-0 left-0 right-0 z-50 h-14 border-b border-white/8" style="background-color: transparent; backdrop-filter: none; -webkit-backdrop-filter: none; box-shadow: none;">
 	<div class="h-full flex items-center justify-between pl-4 pr-5">
 
 		<!-- Logo -->
@@ -19,7 +19,7 @@
 		<!-- Right: notification bell + avatar -->
 		<div class="flex items-center gap-2">
 			<button
-				class="relative w-8 h-8 flex items-center justify-center rounded-lg text-base-content/42 hover:text-base-content/80 hover:bg-white/5 transition-all"
+				class="relative w-8 h-8 flex items-center justify-center rounded-lg text-base-content/63 hover:text-base-content/90 hover:bg-white/5 transition-all"
 				aria-label="Notifications"
 			>
 				<Bell size={15} />
@@ -32,7 +32,7 @@
 				The border + bg remain visible either way.
 			-->
 			<div
-				class="w-7 h-7 rounded-full border border-primary/30 overflow-hidden cursor-pointer hover:border-primary/52 transition-colors shrink-0"
+				class="w-7 h-7 rounded-full border border-primary/38 overflow-hidden cursor-pointer hover:border-primary/58 transition-colors shrink-0"
 				role="button"
 				tabindex="0"
 				aria-label="User profile"
