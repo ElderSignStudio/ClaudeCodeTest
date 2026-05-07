@@ -22,7 +22,7 @@
 				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals barely discovered anywhere — find them first</p>
 			</div>
 		</div>
-		<a href="/discover" class="text-[13px] text-base-content/65 hover:text-base-content/80 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="text-[13px] text-base-content/75 hover:text-base-content/88 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			See all →
 		</a>
 	</div>

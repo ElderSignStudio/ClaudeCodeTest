@@ -7,7 +7,7 @@
 <div class="fixed bottom-0 left-0 right-0 z-50">
 
 	<!-- Progress bar: brighter primary fill -->
-	<div class="h-0.75 bg-white/5">
+	<div class="h-0.75 bg-white/7">
 		<div class="h-full w-0 bg-primary rounded-r-full transition-all duration-300 shadow-[0_0_6px_0_var(--color-primary)]"></div>
 	</div>
 
@@ -20,10 +20,10 @@
 
 			<!-- Track info -->
 			<div class="flex-1 min-w-0">
-				<p class="text-[13px] font-semibold truncate text-base-content/88 leading-snug">
+				<p class="text-[13px] font-semibold truncate text-base-content/94 leading-snug">
 					Nothing playing
 				</p>
-				<p class="text-[12px] text-base-content/55 truncate mt-px leading-snug">
+				<p class="text-[12px] text-base-content/63 truncate mt-px leading-snug">
 					Select a signal to begin
 				</p>
 			</div>
@@ -32,7 +32,7 @@
 			<div class="flex items-center gap-1 shrink-0">
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/55 hover:text-base-content/85 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/63 hover:text-base-content/90 hover:bg-white/5 transition-all"
 					aria-label="Previous"
 				>
 					<SkipBack size={14} />
@@ -56,7 +56,7 @@
 				</button>
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/55 hover:text-base-content/85 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/63 hover:text-base-content/90 hover:bg-white/5 transition-all"
 					aria-label="Next"
 				>
 					<SkipForward size={14} />
@@ -65,7 +65,7 @@
 			</div>
 
 			<!-- Right: Amplify + Volume — hidden on mobile -->
-			<div class="hidden sm:flex items-center gap-2 shrink-0 pl-3 border-l border-white/6">
+			<div class="hidden sm:flex items-center gap-2 shrink-0 pl-3 border-l border-white/8">
 
 				<button
 					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/45 bg-accent/8 hover:bg-accent/16 hover:border-accent/62 transition-all os-glow-interactive-accent"
@@ -81,7 +81,7 @@
 				</button>
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/55 hover:text-base-content/85 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/63 hover:text-base-content/90 hover:bg-white/5 transition-all"
 					aria-label="Volume"
 				>
 					<Volume2 size={14} />

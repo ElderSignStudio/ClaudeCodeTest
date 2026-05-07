@@ -80,7 +80,7 @@
 	<!-- ── Block 3: Separator ─────────────────────────────────────── -->
 	<div class="flex items-center gap-3 mb-5" aria-hidden="true">
 		<span class="text-[11px] text-base-content/42 font-medium tracking-wide">Because you explore ambient</span>
-		<div class="flex-1 h-px bg-white/5"></div>
+		<div class="flex-1 h-px bg-white/7"></div>
 	</div>
 
 	<!-- ── Block 4: Scout standalone (w-56, left-anchored) ────────── -->

@@ -16,9 +16,9 @@
 				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals that crossed into your branch from distant scenes</p>
 			</div>
 		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/65 hover:text-base-content/82 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/75 hover:text-base-content/90 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			Refresh
-			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
+			<RefreshCw size={11} class="opacity-90 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
 	</div>
 

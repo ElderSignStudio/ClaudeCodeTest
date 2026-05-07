@@ -108,8 +108,8 @@
 
 	<!-- ── Recent signal thumbnails ── -->
 	{#if scout.recentSignals.length > 0}
-		<div class="border-t border-white/5 px-3.5 pt-2 pb-3">
-			<p class="text-[10px] font-semibold uppercase tracking-wider text-base-content/42 mb-1.5">Recent signals</p>
+		<div class="border-t border-white/7 px-3.5 pt-2 pb-3">
+			<p class="text-[10px] font-semibold uppercase tracking-wider text-base-content/50 mb-1.5">Recent signals</p>
 			<div class="grid grid-cols-3 gap-1.5">
 				{#each scout.recentSignals.slice(0, 3) as src, i (i)}
 					<div class="aspect-square rounded overflow-hidden border border-white/8">

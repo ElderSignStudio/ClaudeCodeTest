@@ -50,7 +50,7 @@
 	     noticed but gives the eye a foreground/background anchor. -->
 	<div
 		class="fixed inset-0 pointer-events-none"
-		style="z-index: -9; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.06) 55%, rgba(0,0,0,0.12) 100%);"
+		style="z-index: -9; background: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.045) 55%, rgba(0,0,0,0.09) 100%);"
 		aria-hidden="true"
 	></div>
 
