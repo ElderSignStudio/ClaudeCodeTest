@@ -24,7 +24,7 @@
 	<img
 		src={item.image}
 		alt={item.title}
-		class="w-full h-full object-cover opacity-68 group-hover:opacity-85 transition-opacity duration-300"
+		class="w-full h-full object-cover opacity-73 group-hover:opacity-88 transition-opacity duration-300"
 	/>
 	{#if tint}
 		<div class={`absolute inset-0 bg-linear-to-br ${tint} mix-blend-color`}></div>
@@ -68,7 +68,7 @@
 {:else}
 	<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/22 transition-all duration-250 os-card-glow">
 		<div class="relative aspect-square w-full">
-			{@render imageOverlay('bg-linear-to-t from-black/82 via-black/25 to-transparent', 'w-8 h-8', 'w-3.5 h-3.5')}
+			{@render imageOverlay('bg-linear-to-t from-black/74 via-black/20 to-transparent', 'w-8 h-8', 'w-3.5 h-3.5')}
 			<div class="absolute bottom-0 left-0 right-0 p-2.5">
 				<p class="text-[13px] font-bold text-white truncate leading-snug">{item.title}</p>
 				<p class="text-[12px] text-white/85 truncate mt-0.5">{item.genre}</p>

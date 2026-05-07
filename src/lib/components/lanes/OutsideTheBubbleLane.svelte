@@ -32,12 +32,12 @@
 			<img
 				src={bubbleFeatured.image}
 				alt={bubbleFeatured.title}
-				class="absolute inset-0 w-full h-full object-cover opacity-60 group-hover:opacity-72 transition-opacity duration-500"
+				class="absolute inset-0 w-full h-full object-cover opacity-63 group-hover:opacity-75 transition-opacity duration-500"
 			/>
 			<!-- Cold tint overlay — cyan instead of warm yellow -->
 			<div class="absolute inset-0 bg-linear-to-br from-cyan-400/6 to-transparent mix-blend-color"></div>
 			<!-- Slightly darker bottom gradient for colder, more distant feel -->
-			<div class="absolute inset-0 bg-linear-to-b from-black/38 via-transparent to-black/94"></div>
+			<div class="absolute inset-0 bg-linear-to-b from-black/32 via-transparent to-black/89"></div>
 			<!-- Hover radial — cold cyan, not warm -->
 			<div
 				class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
@@ -110,7 +110,7 @@
 						<img
 							src={item.image}
 							alt={item.title}
-							class="absolute inset-0 w-full h-full object-cover opacity-55 group-hover:opacity-78 transition-opacity duration-300"
+							class="absolute inset-0 w-full h-full object-cover opacity-58 group-hover:opacity-80 transition-opacity duration-300"
 						/>
 						<div class="absolute inset-0 bg-linear-to-br from-cyan-400/6 to-transparent mix-blend-color"></div>
 						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">

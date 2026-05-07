@@ -45,10 +45,10 @@
 			<img
 				src={d[0].image}
 				alt={d[0].title}
-				class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+				class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
 			/>
 			<div class="absolute inset-0 bg-linear-to-br from-primary/22 to-transparent mix-blend-color"></div>
-			<div class="absolute inset-0 bg-linear-to-t from-black/82 via-black/20 to-transparent"></div>
+			<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 			<div
 				class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
 				style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
@@ -110,9 +110,9 @@
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
 					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
@@ -174,9 +174,9 @@
 				<img
 					src={b[0].image}
 					alt={b[0].title}
-					class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+					class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
 				/>
-				<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
+				<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 				<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
 				<div
 					class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"

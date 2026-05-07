@@ -44,9 +44,9 @@
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-65 group-hover:opacity-82 transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-68 group-hover:opacity-84 transition-opacity duration-300"
 					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/78 via-black/18 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/73 via-black/14 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-accent/10 to-transparent mix-blend-color"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"

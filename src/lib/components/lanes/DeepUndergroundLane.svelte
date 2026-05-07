@@ -35,10 +35,10 @@
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-40 group-hover:opacity-58 transition-opacity duration-500"
+						class="w-full h-full object-cover opacity-48 group-hover:opacity-64 transition-opacity duration-500"
 					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/88 via-black/25 to-black/20"></div>
-					<div class="absolute inset-0 bg-black/15"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/18 to-black/12"></div>
+					<div class="absolute inset-0 bg-black/10"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.75 0.04 265 / 0.07) 0%, transparent 60%);"

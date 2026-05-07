@@ -80,9 +80,9 @@
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-72 group-hover:opacity-88 transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
 					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/20 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"

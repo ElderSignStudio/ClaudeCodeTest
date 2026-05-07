@@ -50,7 +50,7 @@
 			<img
 				src={featuredItem.image}
 				alt={featuredItem.title}
-				class="absolute inset-0 w-full h-full object-cover opacity-92 transition-transform duration-700 group-hover:scale-105"
+				class="absolute inset-0 w-full h-full object-cover opacity-96 transition-transform duration-700 group-hover:scale-105"
 			/>
 			<!-- Tonal colour wash — full card -->
 			<div class="absolute inset-0 bg-linear-to-br from-primary/28 via-transparent to-secondary/14"></div>
@@ -59,7 +59,7 @@
 				Transparent near the top third, soft mid-transition at ~65%, settles at
 				black/82 at the very bottom. Creates cinematic depth without segmentation.
 			-->
-			<div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(0,0,0,0) 32%, rgba(0,0,0,0.52) 64%, rgba(0,0,0,0.82) 100%);" aria-hidden="true"></div>
+			<div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(0,0,0,0) 38%, rgba(0,0,0,0.44) 64%, rgba(0,0,0,0.74) 100%);" aria-hidden="true"></div>
 			<!-- Edge darkening — unchanged -->
 			<div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.18) 100%);" aria-hidden="true"></div>
 			<!-- Ambient glow breath (17s cycle, opacity-only) -->
@@ -159,10 +159,10 @@
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-68 group-hover:opacity-85 transition-opacity duration-300"
+						class="w-full h-full object-cover opacity-73 group-hover:opacity-88 transition-opacity duration-300"
 					/>
 					<div class={`absolute inset-0 bg-linear-to-br ${cardTints[i % cardTints.length]} mix-blend-color`}></div>
-					<div class="absolute inset-0 bg-linear-to-t from-black/82 via-black/25 to-transparent"></div>
+					<div class="absolute inset-0 bg-linear-to-t from-black/72 via-black/20 to-transparent"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-250 pointer-events-none"
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
