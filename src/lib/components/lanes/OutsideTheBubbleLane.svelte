@@ -88,7 +88,7 @@
 				{#if bubbleFeatured.whyHere}
 					<div class="mb-4">
 						<p class="text-[10px] font-semibold uppercase tracking-widest mb-1.5 text-cyan-300/52">Crossing paths</p>
-						<p class="text-xs leading-snug text-white/78">{bubbleFeatured.whyHere}</p>
+						<p class="text-xs leading-relaxed text-white/78">{bubbleFeatured.whyHere}</p>
 					</div>
 				{/if}
 
@@ -142,7 +142,7 @@
 						{/if}
 
 						{#if item.whyHere}
-							<p class="text-[12px] leading-snug text-base-content/68 mt-1.5 mb-2 line-clamp-2">{item.whyHere}</p>
+							<p class="text-[12px] leading-normal text-base-content/68 mt-1.5 mb-2 line-clamp-2">{item.whyHere}</p>
 						{/if}
 
 						<button

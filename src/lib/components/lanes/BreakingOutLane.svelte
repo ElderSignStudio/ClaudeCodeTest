@@ -164,7 +164,7 @@
 								No truncation — truncate class removed.
 							-->
 							{#if item.spreadReason}
-								<p class="text-[13px] text-zinc-300/82 leading-snug line-clamp-2">{item.spreadReason}</p>
+								<p class="text-[13px] text-zinc-300/82 leading-normal line-clamp-2">{item.spreadReason}</p>
 							{/if}
 						</div>
 					{/if}

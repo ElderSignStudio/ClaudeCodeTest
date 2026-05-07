@@ -364,8 +364,8 @@
 			Location on line 1; discoveries + scouts on line 2.
 		-->
 		<div class="mb-3">
-			<p class="text-[11px] text-base-content/52 leading-snug">First surfaced: {item.seedLocation}</p>
-			<p class="text-[11px] text-base-content/45 leading-snug mt-0.5">{item.discoveries} {item.discoveries === 1 ? 'discovery' : 'discoveries'} · {item.reachedScouts} scouts reached</p>
+			<p class="text-[11px] text-base-content/52 leading-normal">First surfaced: {item.seedLocation}</p>
+			<p class="text-[11px] text-base-content/45 leading-normal mt-0.5">{item.discoveries} {item.discoveries === 1 ? 'discovery' : 'discoveries'} · {item.reachedScouts} scouts reached</p>
 		</div>
 
 		<!-- Trace Signal CTA -->

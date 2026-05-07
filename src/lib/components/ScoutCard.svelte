@@ -45,9 +45,9 @@
 			72px ≈ (text-xs × 2 lines) + gap + (text-[11px] × 2 lines) at leading-snug.
 		-->
 		<div class="min-h-18 mb-3 flex flex-col justify-start">
-			<p class="text-[13px] text-base-content/68 leading-snug line-clamp-2">{scout.tasteProfile}</p>
+			<p class="text-[13px] text-base-content/68 leading-normal line-clamp-2">{scout.tasteProfile}</p>
 			{#if scout.contextLine}
-				<p class="text-[12px] text-base-content/55 mt-1.5 leading-snug line-clamp-2">{scout.contextLine}</p>
+				<p class="text-[12px] text-base-content/55 mt-1.5 leading-normal line-clamp-2">{scout.contextLine}</p>
 			{/if}
 		</div>
 
