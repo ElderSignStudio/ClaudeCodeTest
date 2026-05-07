@@ -29,7 +29,7 @@
 
 	<div class="mt-5 grid gap-3 pb-2 w-full" style="grid-template-columns: repeat(7, minmax(130px, 1fr));">
 		{#each deepUndergroundItems as item (item.id)}
-			<div class="group relative rounded-lg overflow-hidden border border-white/5 hover:border-white/8 cursor-pointer transition-colors duration-300 os-card-deep">
+			<div class="group relative rounded-lg overflow-hidden border border-white/3 hover:border-white/5 cursor-pointer transition-colors duration-300 os-card-deep">
 
 				<div class="relative w-full aspect-square">
 					<img
@@ -39,6 +39,8 @@
 					/>
 					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/18 to-black/12"></div>
 					<div class="absolute inset-0 bg-black/10"></div>
+					<!-- Archival density — uniform very slight tonal compression, DU only -->
+					<div class="absolute inset-0 bg-black/4 pointer-events-none" aria-hidden="true"></div>
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.75 0.04 265 / 0.07) 0%, transparent 60%);"

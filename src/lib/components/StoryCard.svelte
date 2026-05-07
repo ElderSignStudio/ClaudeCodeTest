@@ -31,8 +31,8 @@
 -->
 
 <div
-	class="group h-full rounded-xl border border-white/8 bg-base-200/40 cursor-pointer transition-all duration-250 hover:border-secondary/20 hover:bg-base-200/55 flex flex-col"
-	style="box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 14px 40px rgba(0,0,0,0.32);"
+	class="group h-full rounded-xl border border-white/6 bg-base-200/40 cursor-pointer transition-all duration-250 hover:border-secondary/18 hover:bg-base-200/55 flex flex-col"
+	style="box-shadow: 0 0 0 1px rgba(255,255,255,0.025), 0 14px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.025);"
 >
 	<div class="p-4 flex-1 flex flex-col">
 
@@ -61,7 +61,7 @@
 			viewBox "0 0 180 44" — consistent coordinate space across all types.
 			overflow-visible allows halos and blur filters to render outside the SVG box.
 		-->
-		<div class="mb-4" aria-hidden="true">
+		<div class="mb-4" aria-hidden="true" style="filter: brightness(1.08);">
 
 			{#if item.storyType === 'independent-discovery'}
 				<!--

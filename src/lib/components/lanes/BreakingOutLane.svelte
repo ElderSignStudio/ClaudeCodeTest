@@ -75,12 +75,13 @@
 			{@const vars = cardVars[i] ?? cardVars[0]}
 			{@const spike = spikeClass(item.tag)}
 			<!-- Card: clean, dark, no tier-based halo -->
-			<div class="group rounded-lg overflow-hidden border border-white/10 hover:border-success/32 cursor-pointer transition-all duration-200 os-card-breaking">
+			<div class="group rounded-lg overflow-hidden border border-white/10 hover:border-success/40 cursor-pointer transition-all duration-200 os-card-breaking">
 				<div class="relative w-full aspect-square">
 					<img
 						src={item.image}
 						alt={item.title}
 						class="w-full h-full object-cover opacity-76 group-hover:opacity-90 transition-opacity duration-300"
+					style="filter: saturate(1.05);"
 					/>
 					<div class="absolute inset-0 bg-linear-to-t from-black/74 via-black/16 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-success/8 to-transparent mix-blend-color"></div>

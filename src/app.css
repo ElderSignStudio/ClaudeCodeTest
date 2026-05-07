@@ -352,7 +352,8 @@ body {
     box-shadow:
       0 0 0 1px oklch(0.68 0.20 265 / 0.16),
       0 8px 40px -6px oklch(0.50 0.18 265 / 0.32),
-      0 2px 8px -2px oklch(0 0 0 / 0.40);
+      0 2px 8px -2px oklch(0 0 0 / 0.40),
+      inset 0 1px 0 rgba(255,255,255,0.035);
     transition: box-shadow 0.40s ease, transform 0.40s ease;
 
     &:hover {
@@ -366,9 +367,9 @@ body {
   }
 
   /*
-    os-card-glow: L3-adjacent card lift. Resting shadow gives cards a subtle
-    elevation even before hover — they no longer sit flush with the background.
-    Hover deepens the shadow and adds a hair of color bloom.
+    os-card-glow: Standard mid-plane card lift (One Step Away, Drift).
+    Resting: very subtle ring + dark shadow detaches card from background.
+    Hover: deepens shadow + faint color bloom.
   */
   .os-card-glow {
     box-shadow:
@@ -386,21 +387,49 @@ body {
   }
 
   /*
+    os-card-refined: Best Picks small cards.
+    Quieter than os-card-glow — softer ring, slightly longer shadow spread,
+    lower hover lift. These cards exist on a more intimate plane than standard
+    cards; they should feel refined rather than assertive.
+  */
+  .os-card-refined {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.015),
+      0 10px 28px rgba(0,0,0,0.20);
+    transition: box-shadow 0.22s ease, transform 0.22s ease;
+
+    &:hover {
+      box-shadow:
+        0 0 0 1px oklch(1 0 0 / 0.10),
+        0 8px 28px -4px oklch(0 0 0 / 0.48),
+        0 0 16px -8px oklch(0.68 0.20 265 / 0.10);
+      transform: translateY(-1px) scale(1.018);
+    }
+  }
+
+  /*
     os-card-deep: Deep Underground lane card.
     Resting: compressed shadow — appears farther away than standard cards.
     Cards in this lane should feel denser/flatter by design.
     Very slight border ring; no color component.
   */
+  /*
+    os-card-deep: Deep Underground lane card.
+    Resting: compressed, flat shadow — appears farther back than all other cards.
+    Minimal ring; very slight lift. Hover barely responds — these cards resist
+    surfacing. The compressed y-offset (3px vs 8-10px elsewhere) is the key
+    signal: shallow depth reads as distant in the z-stack.
+  */
   .os-card-deep {
     box-shadow:
-      0 0 0 1px rgba(255,255,255,0.015),
-      0 4px 16px rgba(0,0,0,0.20);
+      0 0 0 1px rgba(255,255,255,0.012),
+      0 3px 12px rgba(0,0,0,0.18);
     transition: box-shadow 0.22s ease;
 
     &:hover {
       box-shadow:
-        0 0 0 1px rgba(255,255,255,0.04),
-        0 6px 22px rgba(0,0,0,0.32);
+        0 0 0 1px rgba(255,255,255,0.03),
+        0 4px 16px rgba(0,0,0,0.24);
     }
   }
 
@@ -411,17 +440,24 @@ body {
     value to sit further off the background plane.
     Hover: success ring brightens + ambient bloom + stronger elevation.
   */
+  /*
+    os-card-breaking: Breaking Out lane card.
+    Resting: success-tinted ring signals forward momentum. Shadow slightly
+    deeper and wider than standard cards — these exist on the near side of
+    the mid-plane, pushing outward. Hover has stronger border response than
+    any other lane to reinforce the emissive, active identity.
+  */
   .os-card-breaking {
     box-shadow:
       0 0 0 1px oklch(0.74 0.17 158 / 0.12),
-      0 8px 24px rgba(0,0,0,0.22);
+      0 10px 30px rgba(0,0,0,0.24);
     transition: box-shadow 0.22s ease, transform 0.22s ease;
 
     &:hover {
       box-shadow:
-        0 0 0 1px oklch(0.74 0.17 158 / 0.30),
+        0 0 0 1px oklch(0.74 0.17 158 / 0.35),
         0 0 18px -4px oklch(0.74 0.17 158 / 0.22),
-        0 8px 28px -4px oklch(0 0 0 / 0.55);
+        0 10px 32px -4px oklch(0 0 0 / 0.58);
       transform: translateY(-2px) scale(1.015);
     }
   }

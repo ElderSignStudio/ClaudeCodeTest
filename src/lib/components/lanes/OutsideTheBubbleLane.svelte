@@ -26,7 +26,7 @@
 
 		<!-- ── Hero card (left) ── -->
 		<div
-			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/16 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
+			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/22 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
 			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.10), 0 14px 40px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.22);"
 		>
 			<img
@@ -42,6 +42,13 @@
 			<div
 				class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
 				style="background: radial-gradient(ellipse at 50% 60%, oklch(0.72 0.16 220 / 0.07) 0%, transparent 65%);"
+				aria-hidden="true"
+			></div>
+
+			<!-- Corner vignette — darkens card edges slightly, increases hero isolation -->
+			<div
+				class="absolute inset-0 pointer-events-none"
+				style="background: radial-gradient(ellipse at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.10) 100%);"
 				aria-hidden="true"
 			></div>
 
@@ -103,7 +110,7 @@
 					Hover adds a faint cyan border ring — "nearby anomaly" feel.
 					-mx-1.5 + px-1.5 so the ring extends slightly beyond the text column.
 				-->
-				<div class="group flex gap-3 cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 border border-transparent hover:bg-cyan-400/4 hover:border-cyan-300/12 transition-all duration-250">
+				<div class="group flex gap-3 cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 border border-transparent hover:bg-cyan-400/4 hover:border-cyan-300/8 transition-all duration-250">
 
 					<!-- Thumbnail — slightly taller than before (h-16 vs h-14) -->
 					<div class="relative w-20 h-16 rounded-md overflow-hidden shrink-0">
