@@ -77,7 +77,7 @@
 					<!-- Amplify — quiet but clearly available: opacity-75 at rest, 90 on hover -->
 					<div class="flex justify-end mt-2">
 						<button
-							class="flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-medium text-zinc-300/85 border border-white/28 hover:border-white/42 hover:text-white transition-all"
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-medium text-zinc-300/90 border border-white/34 hover:border-white/48 hover:text-white transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={8} />

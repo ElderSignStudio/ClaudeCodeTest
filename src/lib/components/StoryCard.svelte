@@ -370,7 +370,7 @@
 
 		<!-- Trace Signal CTA -->
 		<button
-			class="w-full flex items-center justify-center h-7 rounded-full text-[12px] font-semibold border border-white/20 text-base-content/72 hover:text-secondary hover:border-secondary/38 hover:bg-white/4 transition-all duration-150"
+			class="w-full flex items-center justify-center h-7 rounded-full text-[12px] font-semibold border border-white/28 text-base-content/82 hover:text-secondary hover:border-secondary/46 hover:bg-white/6 transition-all duration-150"
 		>
 			Trace Signal →
 		</button>

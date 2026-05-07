@@ -32,7 +32,7 @@
 			<div class="flex items-center gap-1 shrink-0">
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/63 hover:text-base-content/90 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/72 hover:text-base-content/95 hover:bg-white/7 transition-all"
 					aria-label="Previous"
 				>
 					<SkipBack size={14} />
@@ -42,8 +42,8 @@
 					class={[
 						'w-10 h-10 flex items-center justify-center rounded-full border text-primary transition-all duration-200',
 						isPlaying
-							? 'bg-primary/28 border-primary/58 os-glow-interactive'
-							: 'bg-primary/16 border-primary/38 hover:bg-primary/26 hover:border-primary/55 hover:os-glow-interactive',
+							? 'bg-primary/28 border-primary/65 os-glow-interactive'
+							: 'bg-primary/20 border-primary/46 hover:bg-primary/30 hover:border-primary/62 hover:os-glow-interactive',
 					]}
 					aria-label={isPlaying ? 'Pause' : 'Play'}
 					onclick={() => (isPlaying = !isPlaying)}
@@ -56,7 +56,7 @@
 				</button>
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/63 hover:text-base-content/90 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/72 hover:text-base-content/95 hover:bg-white/7 transition-all"
 					aria-label="Next"
 				>
 					<SkipForward size={14} />
@@ -68,7 +68,7 @@
 			<div class="hidden sm:flex items-center gap-2 shrink-0 pl-3 border-l border-white/8">
 
 				<button
-					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/45 bg-accent/8 hover:bg-accent/16 hover:border-accent/62 transition-all os-glow-interactive-accent"
+					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/54 bg-accent/10 hover:bg-accent/22 hover:border-accent/70 transition-all os-glow-interactive-accent"
 					aria-label="Amplify this signal"
 				>
 					<!--
@@ -81,7 +81,7 @@
 				</button>
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/63 hover:text-base-content/90 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/72 hover:text-base-content/95 hover:bg-white/7 transition-all"
 					aria-label="Volume"
 				>
 					<Volume2 size={14} />

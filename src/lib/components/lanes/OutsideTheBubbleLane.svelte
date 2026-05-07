@@ -93,7 +93,7 @@
 				{/if}
 
 				<button
-					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/38 bg-black/40 hover:bg-accent/16 hover:border-accent/55 transition-all backdrop-blur-sm"
+					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/46 bg-black/40 hover:bg-accent/22 hover:border-accent/65 transition-all backdrop-blur-sm"
 					aria-label="Amplify this signal"
 				>
 					<Radio size={10} />
@@ -146,7 +146,7 @@
 						{/if}
 
 						<button
-							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/72 border border-accent/28 hover:bg-accent/12 hover:border-accent/45 hover:text-accent transition-all"
+							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/82 border border-accent/36 hover:bg-accent/16 hover:border-accent/54 hover:text-accent transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={7} />

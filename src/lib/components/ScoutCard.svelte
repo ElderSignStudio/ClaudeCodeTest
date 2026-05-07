@@ -91,8 +91,8 @@
 			class={[
 				'w-full flex items-center justify-center gap-1.5 h-7 rounded-full text-[11px] font-semibold transition-all duration-150',
 				scout.following
-					? 'bg-primary/18 text-primary border border-primary/38 hover:bg-primary/25'
-					: 'text-base-content/72 border border-white/22 hover:text-base-content/88 hover:border-white/32 hover:bg-white/5',
+					? 'bg-primary/18 text-primary border border-primary/46 hover:bg-primary/30'
+					: 'text-base-content/80 border border-white/28 hover:text-base-content/94 hover:border-white/40 hover:bg-white/7',
 			]}
 		>
 			{#if scout.following}

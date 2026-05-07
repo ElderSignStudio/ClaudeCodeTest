@@ -89,7 +89,7 @@
 					<!-- 5. Amplify -->
 					<div class="flex justify-end mt-2">
 						<button
-							class="flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/82 border border-accent/32 hover:bg-accent/12 hover:border-accent/55 hover:text-accent transition-all"
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/90 border border-accent/40 hover:bg-accent/16 hover:border-accent/62 hover:text-accent transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={8} />

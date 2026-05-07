@@ -172,7 +172,7 @@
 					<!-- Amplify -->
 					<div class="flex justify-end mt-2">
 						<button
-							class="flex items-center gap-1.5 h-6 px-3 rounded-full text-[11px] font-semibold text-emerald-300/92 border border-success/42 hover:bg-success/12 hover:border-success/60 hover:text-emerald-200 transition-all"
+							class="flex items-center gap-1.5 h-6 px-3 rounded-full text-[11px] font-semibold text-emerald-300 border border-success/52 hover:bg-success/16 hover:border-success/68 hover:text-emerald-100 transition-all"
 							title="Help it spread"
 							aria-label="Amplify this signal"
 						>
