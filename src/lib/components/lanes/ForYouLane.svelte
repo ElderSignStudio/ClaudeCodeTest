@@ -40,7 +40,7 @@
 			feathered gradient show through it, so the artwork bleeds seamlessly into the
 			content area. No hard edge; no panel.
 		-->
-		<div class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/30 os-hero-card flex flex-col min-h-72">
+		<div class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/38 os-hero-card flex flex-col min-h-72">
 
 			<!--
 				Image covers the ENTIRE card (spacer + text zone) via absolute inset-0

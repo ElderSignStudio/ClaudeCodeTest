@@ -366,11 +366,14 @@ body {
   }
 
   /*
-    os-card-glow: L3-adjacent card lift. No color component —
-    regular cards should not compete with the hero's color bloom.
-    Just elevation: shadow deepens + 1px lift on hover.
+    os-card-glow: L3-adjacent card lift. Resting shadow gives cards a subtle
+    elevation even before hover — they no longer sit flush with the background.
+    Hover deepens the shadow and adds a hair of color bloom.
   */
   .os-card-glow {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.02),
+      0 8px 24px rgba(0,0,0,0.22);
     transition: box-shadow 0.22s ease, transform 0.22s ease;
 
     &:hover {
@@ -383,17 +386,35 @@ body {
   }
 
   /*
+    os-card-deep: Deep Underground lane card.
+    Resting: compressed shadow — appears farther away than standard cards.
+    Cards in this lane should feel denser/flatter by design.
+    Very slight border ring; no color component.
+  */
+  .os-card-deep {
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.015),
+      0 4px 16px rgba(0,0,0,0.20);
+    transition: box-shadow 0.22s ease;
+
+    &:hover {
+      box-shadow:
+        0 0 0 1px rgba(255,255,255,0.04),
+        0 6px 22px rgba(0,0,0,0.32);
+    }
+  }
+
+  /*
     os-card-breaking: Breaking Out lane card.
-    Resting: faint success-tinted border ring — the card already glows slightly,
-    communicating "this is active". Other lanes have no resting glow.
-    Hover: success ring brightens + ambient bloom + stronger elevation
-    than os-card-glow. Scale(1.015) — slightly less than os-card-glow's 1.02
-    so the extra resting glow reads as the energy source, not the hover.
+    Resting: faint success-tinted border ring + real elevation — the card emits
+    slightly, communicating forward momentum. Shadow component deepened vs old
+    value to sit further off the background plane.
+    Hover: success ring brightens + ambient bloom + stronger elevation.
   */
   .os-card-breaking {
     box-shadow:
       0 0 0 1px oklch(0.74 0.17 158 / 0.12),
-      0 3px 12px -3px oklch(0 0 0 / 0.35);
+      0 8px 24px rgba(0,0,0,0.22);
     transition: box-shadow 0.22s ease, transform 0.22s ease;
 
     &:hover {

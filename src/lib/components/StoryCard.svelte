@@ -32,7 +32,7 @@
 
 <div
 	class="group h-full rounded-xl border border-white/8 bg-base-200/40 cursor-pointer transition-all duration-250 hover:border-secondary/20 hover:bg-base-200/55 flex flex-col"
-	style="box-shadow: 0 2px 16px -4px oklch(0 0 0 / 0.35);"
+	style="box-shadow: 0 0 0 1px rgba(255,255,255,0.03), 0 14px 40px rgba(0,0,0,0.32);"
 >
 	<div class="p-4 flex-1 flex flex-col">
 

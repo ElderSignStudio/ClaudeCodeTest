@@ -29,7 +29,7 @@
 
 	<div class="mt-5 grid gap-3 pb-2 w-full" style="grid-template-columns: repeat(7, minmax(130px, 1fr));">
 		{#each deepUndergroundItems as item (item.id)}
-			<div class="group relative rounded-lg overflow-hidden border border-white/5 hover:border-white/10 cursor-pointer transition-colors duration-300">
+			<div class="group relative rounded-lg overflow-hidden border border-white/5 hover:border-white/8 cursor-pointer transition-colors duration-300 os-card-deep">
 
 				<div class="relative w-full aspect-square">
 					<img

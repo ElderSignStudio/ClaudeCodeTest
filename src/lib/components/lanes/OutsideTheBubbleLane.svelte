@@ -26,8 +26,8 @@
 
 		<!-- ── Hero card (left) ── -->
 		<div
-			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/12 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
-			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.08), 0 6px 32px -6px oklch(0 0 0 / 0.62);"
+			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/16 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
+			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.10), 0 14px 40px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.22);"
 		>
 			<img
 				src={bubbleFeatured.image}
