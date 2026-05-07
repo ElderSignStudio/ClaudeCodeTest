@@ -25,8 +25,10 @@ export type Item = {
 	sparks?: number;
 	tags?: string[];
 	locality?: string;
-	whyHere?: string;      // network-distance explanation for Outside the Bubble lane
-	crossingPath?: string; // scene-crossing metadata, e.g. "ambient → spiritual jazz"
+	whyHere?: string;          // network-distance explanation for Outside the Bubble lane
+	crossingPath?: string;     // scene-crossing metadata, e.g. "ambient → spiritual jazz"
+	orbitState?: string;       // proximity-based pill label for Best Picks lane, e.g. "Closely Orbiting"
+	resonanceContext?: string; // network resonance context line for Best Picks lane
 };
 
 export type GainingItem = {
@@ -104,11 +106,11 @@ function coverOf(id: string): string {
 
 // 1. For You — personalized signals based on user taste
 export const forYouItems: Item[] = [
-	{ id: 'frozen-sun',         title: 'Frozen Sun',         artist: 'Obscure Slovenian Band', scouts: 1,  genre: 'Ambient',      type: 'Song',  image: coverOf('frozen-sun'),         featured: true },
-	{ id: 'night-forest',       title: 'Night Forest',       artist: 'Pale Atelier',           scouts: 53, genre: 'Drone',        type: 'Album', image: coverOf('night-forest')       },
-	{ id: 'wolves-under-glass', title: 'Wolves Under Glass', artist: 'Aesthian Ritual',        scouts: 7,  genre: 'Experimental', type: 'Song',  image: coverOf('wolves-under-glass') },
-	{ id: 'ashes-in-snow',      title: 'Ashes in Snow',      artist: 'Meridian Depth',         scouts: 12, genre: 'Folk',         type: 'Song',  image: coverOf('ashes-in-snow')      },
-	{ id: 'pale-static',        title: 'Pale Static',        artist: 'Meridian Line',          scouts: 4,  genre: 'Electronic',   type: 'Song',  image: coverOf('pale-static')        },
+	{ id: 'frozen-sun',         title: 'Frozen Sun',         artist: 'Obscure Slovenian Band', scouts: 1,  genre: 'Ambient',      type: 'Song',  image: coverOf('frozen-sun'),         featured: true, orbitState: 'Closely Orbiting', resonanceContext: 'Resonating across your late-night ambient branch'      },
+	{ id: 'night-forest',       title: 'Night Forest',       artist: 'Pale Atelier',           scouts: 53, genre: 'Drone',        type: 'Album', image: coverOf('night-forest'),                        orbitState: 'Strong Resonance',  resonanceContext: 'Reappearing among scouts you follow'                    },
+	{ id: 'wolves-under-glass', title: 'Wolves Under Glass', artist: 'Aesthian Ritual',        scouts: 7,  genre: 'Experimental', type: 'Song',  image: coverOf('wolves-under-glass'),                  orbitState: 'Near Your Branch',  resonanceContext: 'Quiet overlap with your drone listening patterns'       },
+	{ id: 'ashes-in-snow',      title: 'Ashes in Snow',      artist: 'Meridian Depth',         scouts: 12, genre: 'Folk',         type: 'Song',  image: coverOf('ashes-in-snow'),                       orbitState: 'Quiet Match',       resonanceContext: 'Surfacing near your experimental folk orbit'            },
+	{ id: 'pale-static',        title: 'Pale Static',        artist: 'Meridian Line',          scouts: 4,  genre: 'Electronic',   type: 'Song',  image: coverOf('pale-static'),                         orbitState: 'Drifting Closer',   resonanceContext: 'Frequently amplified by adjacent ambient scouts'        },
 ];
 
 // 2. One Step Away — adjacent discovery, related but not obvious

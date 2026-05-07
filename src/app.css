@@ -248,6 +248,52 @@
   .os-pulse-node { animation: none !important; }
 }
 
+/* ─── Best Picks — hero card atmospheric motion ─────────── */
+
+/*
+  bp-hero-shimmer: a narrow soft band that crosses the hero card once,
+  then disappears for ~39s before repeating (42s total cycle).
+  The visible sweep phase is ~0–6% of the cycle (~2.5s).
+  Very low peak opacity (0.9 on an element whose gradient is already
+  rgba(255,255,255,0.04)) — makes the shimmer nearly subconscious.
+*/
+@keyframes bp-hero-shimmer {
+  0%   { transform: translateX(-200%) skewX(-10deg); opacity: 0;   }
+  4%   { opacity: 1;   }
+  6%   { transform: translateX(400%)  skewX(-10deg); opacity: 0;   }
+  100% { transform: translateX(400%)  skewX(-10deg); opacity: 0;   }
+}
+
+/*
+  bp-hero-ambient: a slow radial glow pulse on the hero card lower area.
+  Opacity-only, 17s cycle. The element's gradient fill is already very
+  faint (7% primary color), so the breathing effect is barely perceptible.
+*/
+@keyframes bp-hero-ambient {
+  0%, 100% { opacity: 0; }
+  50%      { opacity: 1; }
+}
+
+.bp-hero-shimmer {
+  animation-name: bp-hero-shimmer;
+  animation-duration: 42s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+}
+
+.bp-hero-ambient {
+  animation-name: bp-hero-ambient;
+  animation-duration: 17s;
+  animation-timing-function: ease-in-out;
+  animation-iteration-count: infinite;
+  animation-delay: -4s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-hero-shimmer,
+  .bp-hero-ambient { animation: none !important; }
+}
+
 /* ─── Base ───────────────────────────────────────────────── */
 
 body {
