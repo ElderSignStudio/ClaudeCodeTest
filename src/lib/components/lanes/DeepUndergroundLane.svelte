@@ -18,11 +18,11 @@
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-secondary/60 shrink-0" aria-hidden="true"></div>
 			<div>
-				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/85">Deep Underground</p>
-				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals barely discovered anywhere — find them first</p>
+				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/92">Deep Underground</p>
+				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals barely discovered anywhere — find them first</p>
 			</div>
 		</div>
-		<a href="/discover" class="text-[12px] text-base-content/55 hover:text-base-content/70 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="text-[13px] text-base-content/65 hover:text-base-content/80 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			See all →
 		</a>
 	</div>
@@ -65,17 +65,17 @@
 				</div>
 
 				<div class="p-2 bg-base-300/70">
-					<p class="text-[11px] font-semibold text-base-content/75 truncate leading-snug">{item.title}</p>
-					<p class="text-[10px] text-base-content/50 truncate mt-0.5">{item.artist}</p>
+					<p class="text-[12px] font-semibold text-base-content/82 truncate leading-snug">{item.title}</p>
+					<p class="text-[11px] text-base-content/64 truncate mt-0.5">{item.artist}</p>
 					<!-- Presence first (factual anchor), origin second (flavor) -->
 					<div class="mt-2 space-y-0.5">
-						<p class="text-sm font-medium text-zinc-400/80 truncate">{presenceLabel(item.scouts)}</p>
-						<p class="text-xs text-zinc-500/70 truncate">{item.whisperHint ?? 'Barely surfaced'}</p>
+						<p class="text-sm font-medium text-zinc-400/88 truncate">{presenceLabel(item.scouts)}</p>
+						<p class="text-[13px] text-zinc-400/75 truncate">{item.whisperHint ?? 'Barely surfaced'}</p>
 					</div>
 					<!-- Amplify — quiet but clearly available: opacity-75 at rest, 90 on hover -->
 					<div class="flex justify-end mt-2">
 						<button
-							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-medium text-zinc-300 border border-white/20 hover:border-white/35 hover:text-white transition-all opacity-75 hover:opacity-90"
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-medium text-zinc-300/85 border border-white/28 hover:border-white/42 hover:text-white transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={8} />

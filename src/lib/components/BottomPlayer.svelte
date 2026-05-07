@@ -20,10 +20,10 @@
 
 			<!-- Track info -->
 			<div class="flex-1 min-w-0">
-				<p class="text-[13px] font-semibold truncate text-base-content/80 leading-snug tracking-tight">
+				<p class="text-[13px] font-semibold truncate text-base-content/88 leading-snug">
 					Nothing playing
 				</p>
-				<p class="text-[11px] text-base-content/42 truncate mt-px leading-snug">
+				<p class="text-[12px] text-base-content/55 truncate mt-px leading-snug">
 					Select a signal to begin
 				</p>
 			</div>
@@ -32,7 +32,7 @@
 			<div class="flex items-center gap-1 shrink-0">
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/42 hover:text-base-content/80 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/55 hover:text-base-content/85 hover:bg-white/5 transition-all"
 					aria-label="Previous"
 				>
 					<SkipBack size={14} />
@@ -56,7 +56,7 @@
 				</button>
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/42 hover:text-base-content/80 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/55 hover:text-base-content/85 hover:bg-white/5 transition-all"
 					aria-label="Next"
 				>
 					<SkipForward size={14} />
@@ -68,7 +68,7 @@
 			<div class="hidden sm:flex items-center gap-2 shrink-0 pl-3 border-l border-white/6">
 
 				<button
-					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/38 bg-accent/8 hover:bg-accent/16 hover:border-accent/58 transition-all os-glow-interactive-accent"
+					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/45 bg-accent/8 hover:bg-accent/16 hover:border-accent/62 transition-all os-glow-interactive-accent"
 					aria-label="Amplify this signal"
 				>
 					<!--
@@ -81,7 +81,7 @@
 				</button>
 
 				<button
-					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/42 hover:text-base-content/80 hover:bg-white/5 transition-all"
+					class="w-8 h-8 flex items-center justify-center rounded-lg text-base-content/55 hover:text-base-content/85 hover:bg-white/5 transition-all"
 					aria-label="Volume"
 				>
 					<Volume2 size={14} />

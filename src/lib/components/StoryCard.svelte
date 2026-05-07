@@ -46,8 +46,8 @@
 				/>
 			</div>
 			<div class="flex-1 min-w-0 pt-0.5">
-				<p class="text-[11px] font-semibold text-base-content/60 truncate">{item.title} · {item.artist}</p>
-				<p class="text-[10px] text-base-content/38 truncate mt-0.5">{item.genre}</p>
+				<p class="text-[12px] font-semibold text-base-content/72 truncate">{item.title} · {item.artist}</p>
+				<p class="text-[11px] text-base-content/50 truncate mt-0.5">{item.genre}</p>
 			</div>
 		</div>
 
@@ -364,13 +364,13 @@
 			Location on line 1; discoveries + scouts on line 2.
 		-->
 		<div class="mb-3">
-			<p class="text-[10px] text-base-content/40 leading-snug">First surfaced: {item.seedLocation}</p>
-			<p class="text-[10px] text-base-content/35 leading-snug mt-0.5">{item.discoveries} {item.discoveries === 1 ? 'discovery' : 'discoveries'} · {item.reachedScouts} scouts reached</p>
+			<p class="text-[11px] text-base-content/52 leading-snug">First surfaced: {item.seedLocation}</p>
+			<p class="text-[11px] text-base-content/45 leading-snug mt-0.5">{item.discoveries} {item.discoveries === 1 ? 'discovery' : 'discoveries'} · {item.reachedScouts} scouts reached</p>
 		</div>
 
 		<!-- Trace Signal CTA -->
 		<button
-			class="w-full flex items-center justify-center h-7 rounded-full text-[11px] font-semibold border border-white/15 text-base-content/62 hover:text-secondary hover:border-secondary/32 hover:bg-white/4 transition-all duration-150"
+			class="w-full flex items-center justify-center h-7 rounded-full text-[12px] font-semibold border border-white/20 text-base-content/72 hover:text-secondary hover:border-secondary/38 hover:bg-white/4 transition-all duration-150"
 		>
 			Trace Signal →
 		</button>

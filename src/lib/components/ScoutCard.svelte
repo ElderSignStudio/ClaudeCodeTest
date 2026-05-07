@@ -44,9 +44,9 @@
 			72px ≈ (text-xs × 2 lines) + gap + (text-[11px] × 2 lines) at leading-snug.
 		-->
 		<div class="min-h-18 mb-3 flex flex-col justify-start">
-			<p class="text-xs text-base-content/55 leading-snug line-clamp-2">{scout.tasteProfile}</p>
+			<p class="text-[13px] text-base-content/68 leading-snug line-clamp-2">{scout.tasteProfile}</p>
 			{#if scout.contextLine}
-				<p class="text-[11px] text-base-content/40 mt-1.5 leading-snug line-clamp-2">{scout.contextLine}</p>
+				<p class="text-[12px] text-base-content/55 mt-1.5 leading-snug line-clamp-2">{scout.contextLine}</p>
 			{/if}
 		</div>
 
@@ -54,7 +54,7 @@
 		<div class="mb-3.5 min-h-5 flex items-center">
 			{#if scout.activityLabel}
 				<span
-					class="inline-block text-[11px] font-medium rounded-full px-2 py-0.5 leading-none text-accent/75 border border-accent/22 bg-accent/7 truncate max-w-full"
+					class="inline-block text-[12px] font-medium rounded-full px-2 py-0.5 leading-none text-accent/82 border border-accent/28 bg-accent/7 truncate max-w-full"
 				>
 					{scout.activityLabel}
 				</span>
@@ -70,18 +70,18 @@
 		<!-- ── Stats row ── -->
 		<div class="flex items-center justify-between mb-3.5">
 			<div>
-				<p class="text-[14px] font-extrabold text-base-content/82 leading-none">{scout.sparks}</p>
-				<p class="text-[9px] text-base-content/45 mt-0.5 leading-none">sparks</p>
+				<p class="text-[14px] font-extrabold text-base-content/88 leading-none">{scout.sparks}</p>
+				<p class="text-[10px] text-base-content/55 mt-0.5 leading-none">sparks</p>
 			</div>
 			<div class="w-px h-7 bg-white/8 shrink-0"></div>
 			<div>
-				<p class="text-[14px] font-extrabold text-base-content/82 leading-none">{scout.reach}</p>
-				<p class="text-[9px] text-base-content/45 mt-0.5 leading-none">reach</p>
+				<p class="text-[14px] font-extrabold text-base-content/88 leading-none">{scout.reach}</p>
+				<p class="text-[10px] text-base-content/55 mt-0.5 leading-none">reach</p>
 			</div>
 			<div class="w-px h-7 bg-white/8 shrink-0"></div>
 			<div>
-				<p class="text-[14px] font-extrabold text-base-content/82 leading-none">{scout.hitRate}%</p>
-				<p class="text-[9px] text-base-content/45 mt-0.5 leading-none">hit rate</p>
+				<p class="text-[14px] font-extrabold text-base-content/88 leading-none">{scout.hitRate}%</p>
+				<p class="text-[10px] text-base-content/55 mt-0.5 leading-none">hit rate</p>
 			</div>
 		</div>
 
@@ -91,7 +91,7 @@
 				'w-full flex items-center justify-center gap-1.5 h-7 rounded-full text-[11px] font-semibold transition-all duration-150',
 				scout.following
 					? 'bg-primary/18 text-primary border border-primary/38 hover:bg-primary/25'
-					: 'text-base-content/62 border border-white/15 hover:text-base-content/85 hover:border-white/28 hover:bg-white/5',
+					: 'text-base-content/72 border border-white/22 hover:text-base-content/88 hover:border-white/32 hover:bg-white/5',
 			]}
 		>
 			{#if scout.following}
@@ -108,7 +108,7 @@
 	<!-- ── Recent signal thumbnails ── -->
 	{#if scout.recentSignals.length > 0}
 		<div class="border-t border-white/5 px-3.5 pt-2 pb-3">
-			<p class="text-[9px] font-semibold uppercase tracking-wider text-base-content/30 mb-1.5">Recent signals</p>
+			<p class="text-[10px] font-semibold uppercase tracking-wider text-base-content/42 mb-1.5">Recent signals</p>
 			<div class="grid grid-cols-3 gap-1.5">
 				{#each scout.recentSignals.slice(0, 3) as src, i (i)}
 					<div class="aspect-square rounded overflow-hidden border border-white/8">

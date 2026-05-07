@@ -19,7 +19,7 @@
 		<!-- Right: notification bell + avatar -->
 		<div class="flex items-center gap-2">
 			<button
-				class="relative w-8 h-8 flex items-center justify-center rounded-lg text-base-content/42 hover:text-base-content/80 hover:bg-white/5 transition-all"
+				class="relative w-8 h-8 flex items-center justify-center rounded-lg text-base-content/55 hover:text-base-content/85 hover:bg-white/5 transition-all"
 				aria-label="Notifications"
 			>
 				<Bell size={15} />

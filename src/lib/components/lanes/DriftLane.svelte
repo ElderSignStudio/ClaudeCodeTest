@@ -15,7 +15,7 @@
 			<div class="w-0.75 h-3.5 rounded-full bg-primary/55" aria-hidden="true"></div>
 			<p class="text-sm font-bold uppercase tracking-widest text-base-content/88">Explore / Drift</p>
 		</div>
-		<span class="text-[12px] text-base-content/65">Let the signal find you</span>
+		<span class="text-[13px] text-base-content/72">Let the signal find you</span>
 	</div>
 
 	<div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -43,7 +43,7 @@
 					</div>
 					<div class="absolute bottom-0 left-0 right-0 p-2.5">
 						<p class="text-[13px] font-bold text-white truncate leading-snug">{item.title}</p>
-						<p class="text-[11px] text-white/75 truncate mt-0.5">{item.genre}</p>
+						<p class="text-[12px] text-white/85 truncate mt-0.5">{item.genre}</p>
 					</div>
 				</div>
 			</div>

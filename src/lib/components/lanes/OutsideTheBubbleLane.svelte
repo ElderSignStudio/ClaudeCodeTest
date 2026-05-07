@@ -13,10 +13,10 @@
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-cyan-400/55 shrink-0" aria-hidden="true"></div>
 			<div>
 				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/95">Outside the Bubble</p>
-				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals that crossed into your branch from distant scenes</p>
+				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals that crossed into your branch from distant scenes</p>
 			</div>
 		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/65 hover:text-base-content/82 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			Refresh
 			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
@@ -47,7 +47,7 @@
 
 			<!-- Genre chip — muted, signal-metadata feel -->
 			<div class="absolute top-3.5 left-3.5">
-				<span class="text-[10px] font-medium text-white/50 border border-white/12 rounded-full px-2 py-0.5 bg-black/52 backdrop-blur-sm tracking-wide">
+				<span class="text-[11px] font-medium text-white/64 border border-white/16 rounded-full px-2 py-0.5 bg-black/52 backdrop-blur-sm tracking-wide">
 					{bubbleFeatured.genre}
 				</span>
 			</div>
@@ -64,14 +64,14 @@
 			<!-- Bottom text block -->
 			<div class="absolute bottom-0 left-0 right-0 px-4 pb-3.5 pt-10">
 				<p class="text-[22px] font-extrabold text-white leading-tight tracking-tight mb-1">{bubbleFeatured.title}</p>
-				<p class="text-[11px] text-white/38 mb-2">{bubbleFeatured.artist}</p>
+				<p class="text-[12px] text-white/58 mb-2">{bubbleFeatured.artist}</p>
 
 				<!--
 					Scene-crossing metadata — monospace so it reads like routing information
 					rather than editorial copy. Very dim: a technical signal, not a headline.
 				-->
 				{#if bubbleFeatured.crossingPath}
-					<p class="font-mono text-[10px] text-cyan-300/45 mb-3.5 tracking-wide">{bubbleFeatured.crossingPath}</p>
+					<p class="font-mono text-[11px] text-cyan-300/58 mb-3.5 tracking-wide">{bubbleFeatured.crossingPath}</p>
 				{/if}
 
 				<!--
@@ -80,8 +80,8 @@
 				-->
 				{#if bubbleFeatured.whyHere}
 					<div class="mb-4">
-						<p class="text-[9px] font-semibold uppercase tracking-widest mb-1.5 text-cyan-300/40">Crossing paths</p>
-						<p class="text-xs leading-snug text-white/65">{bubbleFeatured.whyHere}</p>
+						<p class="text-[10px] font-semibold uppercase tracking-widest mb-1.5 text-cyan-300/52">Crossing paths</p>
+						<p class="text-xs leading-snug text-white/78">{bubbleFeatured.whyHere}</p>
 					</div>
 				{/if}
 
@@ -131,15 +131,15 @@
 							More prominent than artist name; less prominent than title.
 						-->
 						{#if item.crossingPath}
-							<p class="font-mono text-[10px] text-cyan-300/42 mt-0.5 tracking-wide">{item.crossingPath}</p>
+							<p class="font-mono text-[11px] text-cyan-300/55 mt-0.5 tracking-wide">{item.crossingPath}</p>
 						{/if}
 
 						{#if item.whyHere}
-							<p class="text-[11px] leading-snug text-base-content/58 mt-1.5 mb-2 line-clamp-2">{item.whyHere}</p>
+							<p class="text-[12px] leading-snug text-base-content/68 mt-1.5 mb-2 line-clamp-2">{item.whyHere}</p>
 						{/if}
 
 						<button
-							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/62 border border-accent/20 hover:bg-accent/12 hover:border-accent/38 hover:text-accent transition-all"
+							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/72 border border-accent/28 hover:bg-accent/12 hover:border-accent/45 hover:text-accent transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={7} />

@@ -54,7 +54,7 @@
 			</div>
 			<div class="min-w-0">
 				<p class="text-[13px] font-semibold text-base-content/88 truncate leading-snug">{currentUser.name}</p>
-				<p class="text-[10px] text-base-content/38 leading-snug">Scout Sore: 4</p>
+				<p class="text-[11px] text-base-content/50 leading-snug">Scout Score: 4</p>
 			</div>
 		</div>
 	</div>
@@ -104,13 +104,13 @@
 							'flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-base transition-all duration-150 w-full',
 							isActive
 								? 'bg-primary/12 text-base-content/95 font-semibold'
-								: 'text-base-content/82 font-medium hover:text-base-content/95 hover:bg-white/6',
+								: 'text-base-content/85 font-medium hover:text-base-content/95 hover:bg-white/6',
 						]}
 						aria-current={isActive ? 'page' : undefined}
 					>
 						<Icon
 							size={16}
-							class={isActive ? 'text-primary/80' : 'text-base-content/68'}
+							class={isActive ? 'text-primary/80' : 'text-base-content/75'}
 						/>
 						{item.label}
 					</a>

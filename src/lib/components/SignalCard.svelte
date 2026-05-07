@@ -54,13 +54,13 @@
 		<div class="flex-1 px-4 py-3 bg-base-200/70 flex flex-col justify-between min-w-0">
 			<div>
 				<p class="text-[15px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
-				<p class="text-[12px] text-base-content/62 truncate mt-1">{item.artist}</p>
+				<p class="text-[13px] text-base-content/72 truncate mt-1">{item.artist}</p>
 			</div>
 			<div class="flex items-center gap-2">
-				<span class="text-[11px] text-base-content/40">{item.genre}</span>
+				<span class="text-[12px] text-base-content/55">{item.genre}</span>
 				{#if item.scouts > 0}
-					<span class="text-[10px] text-base-content/30">·</span>
-					<span class="text-[11px] text-base-content/38">{item.scouts} {item.scouts === 1 ? 'scout' : 'scouts'}</span>
+					<span class="text-[11px] text-base-content/40">·</span>
+					<span class="text-[12px] text-base-content/50">{item.scouts} {item.scouts === 1 ? 'scout' : 'scouts'}</span>
 				{/if}
 			</div>
 		</div>
@@ -71,11 +71,11 @@
 			{@render imageOverlay('bg-linear-to-t from-black/82 via-black/25 to-transparent', 'w-8 h-8', 'w-3.5 h-3.5')}
 			<div class="absolute bottom-0 left-0 right-0 p-2.5">
 				<p class="text-[13px] font-bold text-white truncate leading-snug">{item.title}</p>
-				<p class="text-[11px] text-white/75 truncate mt-0.5">{item.genre}</p>
+				<p class="text-[12px] text-white/85 truncate mt-0.5">{item.genre}</p>
 			</div>
 		</div>
 		<div class="px-2.5 py-2 bg-base-200/70">
-			<p class="text-[11px] text-base-content/68 truncate">{item.artist}</p>
+			<p class="text-[12px] text-base-content/68 truncate">{item.artist}</p>
 		</div>
 	</div>
 {/if}

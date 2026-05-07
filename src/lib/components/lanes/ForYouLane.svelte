@@ -19,10 +19,10 @@
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-primary shrink-0" aria-hidden="true"></div>
 			<div>
 				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Best picks for you</p>
-				<p class="mt-0.5 text-[12px] leading-normal text-base-content/65 max-w-105">Signals resonating closest to your orbit</p>
+				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals resonating closest to your orbit</p>
 			</div>
 		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[12px] text-base-content/55 hover:text-base-content/75 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
+		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/65 hover:text-base-content/82 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
 			Refresh
 			<RefreshCw size={11} class="opacity-80 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
 		</a>
@@ -105,7 +105,7 @@
 			<div class="relative flex-1 min-h-44">
 				<!-- Orbit state pill -->
 				<div class="absolute top-3 right-3">
-					<span class="text-[10px] font-medium tracking-wide text-primary/72 border border-primary/13 rounded-full px-2.5 py-1 bg-primary/7 backdrop-blur-sm">
+					<span class="text-[11px] font-medium tracking-wide text-primary/85 border border-primary/20 rounded-full px-2.5 py-1 bg-primary/7 backdrop-blur-sm">
 						{featuredItem.orbitState ?? 'Closely Orbiting'}
 					</span>
 				</div>
@@ -131,18 +131,18 @@
 					style="text-shadow: 0 1px 12px rgba(0,0,0,0.80), 0 2px 4px rgba(0,0,0,0.50);"
 				>{featuredItem.title}</p>
 				<p
-					class="text-[12px] font-light text-white/78 tracking-tight truncate mt-2.5"
+					class="text-[13px] font-normal text-white/90 truncate mt-2.5"
 					style="text-shadow: 0 1px 8px rgba(0,0,0,0.75);"
 				>{featuredItem.artist}</p>
 				{#if featuredItem.resonanceContext}
 					<p
-						class="text-[11px] text-white/65 leading-loose mt-3.5 line-clamp-2 max-w-[88%]"
+						class="text-[12px] text-white/78 leading-loose mt-3.5 line-clamp-2 max-w-[88%]"
 						style="text-shadow: 0 1px 8px rgba(0,0,0,0.70);"
 					>{featuredItem.resonanceContext}</p>
 				{/if}
 				<div class="flex justify-end mt-4">
 					<button
-						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent/58 border border-accent/22 bg-black/22 hover:bg-accent/12 hover:border-accent/45 hover:text-accent/85 transition-all backdrop-blur-sm"
+						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent/72 border border-accent/32 bg-black/22 hover:bg-accent/12 hover:border-accent/50 hover:text-accent/92 transition-all backdrop-blur-sm"
 						aria-label="Amplify this signal"
 					>
 						<Radio size={10} />
@@ -182,14 +182,14 @@
 						Artist · genre type on a single line — calmer than stacked metadata.
 						Lowercase type ("album", "song") keeps the tone soft, not categorical.
 					-->
-					<p class="text-[12px] font-normal text-base-content/52 truncate mt-1">{item.artist}{item.type ? ` · ${item.genre} ${item.type.toLowerCase()}` : ` · ${item.genre}`}</p>
+					<p class="text-[13px] font-normal text-base-content/68 truncate mt-1">{item.artist}{item.type ? ` · ${item.genre} ${item.type.toLowerCase()}` : ` · ${item.genre}`}</p>
 					<!--
 						Resonance context — a whisper, not a reason.
 						Reduced to /44 opacity and wider leading so it drifts rather than explains.
 						line-clamp-2 preserves equal card heights.
 					-->
 					{#if item.resonanceContext}
-						<p class="text-[11px] text-base-content/44 leading-relaxed mt-2.5 line-clamp-2">{item.resonanceContext}</p>
+						<p class="text-[12px] text-base-content/58 leading-relaxed mt-2.5 line-clamp-2">{item.resonanceContext}</p>
 					{/if}
 					<!--
 						Amplify — present but not calling for attention.
@@ -197,7 +197,7 @@
 					-->
 					<div class="flex justify-end mt-3">
 						<button
-							class="flex items-center gap-1 h-5 px-2 rounded-full text-[10px] font-semibold text-accent/55 border border-accent/18 hover:bg-accent/10 hover:border-accent/38 hover:text-accent/80 transition-all"
+							class="flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/68 border border-accent/25 hover:bg-accent/10 hover:border-accent/42 hover:text-accent/88 transition-all"
 							aria-label="Amplify this signal"
 						>
 							<Radio size={8} />
