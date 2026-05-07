@@ -40,7 +40,7 @@
 			feathered gradient show through it, so the artwork bleeds seamlessly into the
 			content area. No hard edge; no panel.
 		-->
-		<div class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/30 os-hero-card flex flex-col min-h-72">
+		<div class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/36 os-hero-card flex flex-col min-h-72">
 
 			<!--
 				Image covers the ENTIRE card (spacer + text zone) via absolute inset-0
@@ -51,6 +51,7 @@
 				src={featuredItem.image}
 				alt={featuredItem.title}
 				class="absolute inset-0 w-full h-full object-cover opacity-96 transition-transform duration-700 group-hover:scale-105"
+				style="filter: brightness(1.03) contrast(1.04);"
 			/>
 			<!-- Tonal colour wash — full card -->
 			<div class="absolute inset-0 bg-linear-to-br from-primary/28 via-transparent to-secondary/14"></div>
@@ -59,9 +60,9 @@
 				Transparent near the top third, soft mid-transition at ~65%, settles at
 				black/82 at the very bottom. Creates cinematic depth without segmentation.
 			-->
-			<div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(0,0,0,0) 38%, rgba(0,0,0,0.44) 64%, rgba(0,0,0,0.74) 100%);" aria-hidden="true"></div>
-			<!-- Edge darkening — unchanged -->
-			<div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.18) 100%);" aria-hidden="true"></div>
+			<div class="absolute inset-0" style="background: linear-gradient(to bottom, rgba(0,0,0,0) 38%, rgba(0,0,0,0.37) 66%, rgba(0,0,0,0.74) 100%);" aria-hidden="true"></div>
+			<!-- Edge darkening -->
+			<div class="absolute inset-0" style="background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.12) 100%);" aria-hidden="true"></div>
 			<!-- Ambient glow breath (17s cycle, opacity-only) -->
 			<div
 				class="bp-hero-ambient absolute inset-0 pointer-events-none"
@@ -154,12 +155,13 @@
 
 		<!-- Standard cards -->
 		{#each regularItems as item, i (item.id)}
-			<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/6 hover:border-white/18 transition-all duration-250 os-card-refined">
+			<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/20 transition-all duration-250 os-card-refined">
 				<div class="relative aspect-square w-full">
 					<img
 						src={item.image}
 						alt={item.title}
 						class="w-full h-full object-cover opacity-73 group-hover:opacity-88 transition-opacity duration-300"
+						style="filter: brightness(1.025) contrast(1.03);"
 					/>
 					<div class={`absolute inset-0 bg-linear-to-br ${cardTints[i % cardTints.length]} mix-blend-color`}></div>
 					<div class="absolute inset-0 bg-linear-to-t from-black/72 via-black/20 to-transparent"></div>

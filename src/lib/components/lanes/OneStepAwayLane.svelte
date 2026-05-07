@@ -35,7 +35,7 @@
 
 	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(6, minmax(150px, 1fr));">
 		{#each oneStepAwayItems as item (item.id)}
-			<div class="group relative rounded-lg overflow-hidden border border-white/8 hover:border-accent/32 cursor-pointer transition-all duration-200 os-card-glow">
+			<div class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-accent/40 cursor-pointer transition-all duration-200 os-card-glow">
 				<div
 					class="absolute left-0 top-0 bottom-0 w-0.75 bg-accent/30 group-hover:bg-accent/55 transition-colors duration-200 z-10"
 					aria-hidden="true"
@@ -45,6 +45,7 @@
 						src={item.image}
 						alt={item.title}
 						class="w-full h-full object-cover opacity-68 group-hover:opacity-84 transition-opacity duration-300"
+						style="filter: brightness(1.03) contrast(1.04) saturate(1.02);"
 					/>
 					<div class="absolute inset-0 bg-linear-to-t from-black/73 via-black/14 to-transparent"></div>
 					<div class="absolute inset-0 bg-linear-to-br from-accent/10 to-transparent mix-blend-color"></div>

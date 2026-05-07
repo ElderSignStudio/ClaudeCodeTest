@@ -351,7 +351,7 @@ body {
   .os-hero-card {
     box-shadow:
       0 0 0 1px oklch(0.68 0.20 265 / 0.16),
-      0 8px 40px -6px oklch(0.50 0.18 265 / 0.32),
+      0 18px 48px -6px oklch(0.50 0.18 265 / 0.34),
       0 2px 8px -2px oklch(0 0 0 / 0.40),
       inset 0 1px 0 rgba(255,255,255,0.035);
     transition: box-shadow 0.40s ease, transform 0.40s ease;
@@ -374,7 +374,7 @@ body {
   .os-card-glow {
     box-shadow:
       0 0 0 1px rgba(255,255,255,0.02),
-      0 8px 24px rgba(0,0,0,0.22);
+      0 10px 28px rgba(0,0,0,0.25);
     transition: box-shadow 0.22s ease, transform 0.22s ease;
 
     &:hover {
@@ -395,7 +395,7 @@ body {
   .os-card-refined {
     box-shadow:
       0 0 0 1px rgba(255,255,255,0.015),
-      0 10px 28px rgba(0,0,0,0.20);
+      0 12px 32px rgba(0,0,0,0.24);
     transition: box-shadow 0.22s ease, transform 0.22s ease;
 
     &:hover {
