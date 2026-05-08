@@ -470,4 +470,19 @@ body {
   .os-bar-shimmer {
     animation: os-shimmer 3s ease-in-out infinite;
   }
+
+  /*
+    os-film-grain: ultra-subtle global texture overlay.
+    SVG fractalNoise generates a fine grayscale grain that tiles every 160px;
+    soft-light blend lets the noise gently lighten/darken background pixels
+    without becoming visible static. Opacity caps at 0.022 so it stays at the
+    threshold of perception — the goal is to remove the "digital cutout" feel
+    between cards and background, not to add a visible texture.
+  */
+  .os-film-grain {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+    background-size: 160px 160px;
+    mix-blend-mode: soft-light;
+    opacity: 0.022;
+  }
 }
