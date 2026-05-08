@@ -14,6 +14,8 @@
 </script>
 
 <section class="relative">
+	<!-- Dark substrate: full-section wash with asymmetric center; calms local starfield noise -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 90% 110% at 28% 55%,rgba(0,0,0,0.085) 0%,transparent 75%);"></div>
 	<!-- Best Picks atmosphere: faint cool-blue resonance field, left-anchored behind hero -->
 	<div class="absolute pointer-events-none" aria-hidden="true" style="width:860px;height:660px;left:-4%;top:-25%;background:radial-gradient(ellipse at center,rgba(56,118,255,0.100) 0%,transparent 65%);filter:blur(120px);"></div>
 	<div class="absolute pointer-events-none" aria-hidden="true" style="width:560px;height:420px;right:2%;bottom:-18%;background:radial-gradient(ellipse at center,rgba(120,180,255,0.055) 0%,transparent 65%);filter:blur(105px);"></div>

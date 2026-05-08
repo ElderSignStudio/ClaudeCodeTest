@@ -19,6 +19,8 @@
 </script>
 
 <section class="relative">
+	<!-- Dark substrate: broader spread for OSA's wider atmospheric field -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 110% 100% at 22% 60%,rgba(0,0,0,0.085) 0%,transparent 80%);"></div>
 	<!-- One Step Away atmosphere: cyan-blue drift haze spread across the row -->
 	<div class="absolute pointer-events-none" aria-hidden="true" style="width:1060px;height:480px;left:4%;top:-20%;background:radial-gradient(ellipse at center,rgba(40,180,255,0.085) 0%,transparent 65%);filter:blur(130px);"></div>
 	<div class="absolute pointer-events-none" aria-hidden="true" style="width:480px;height:360px;right:6%;bottom:-22%;background:radial-gradient(ellipse at center,rgba(90,220,255,0.055) 0%,transparent 65%);filter:blur(110px);"></div>

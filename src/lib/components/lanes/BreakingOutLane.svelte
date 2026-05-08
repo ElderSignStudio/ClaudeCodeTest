@@ -56,6 +56,8 @@
 </script>
 
 <section class="relative">
+	<!-- Dark substrate: kinetic momentum, slightly sharper environmental definition -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 95% 105% at 25% 55%,rgba(0,0,0,0.080) 0%,transparent 75%);"></div>
 	<!-- Breaking Out atmosphere: restrained emerald resonance haze, left-drifting -->
 	<div class="absolute pointer-events-none" aria-hidden="true" style="width:980px;height:480px;left:0%;top:-28%;background:radial-gradient(ellipse at center,rgba(30,190,140,0.090) 0%,transparent 65%);filter:blur(125px);"></div>
 	<div class="absolute pointer-events-none" aria-hidden="true" style="width:460px;height:360px;right:12%;bottom:-20%;background:radial-gradient(ellipse at center,rgba(0,140,120,0.050) 0%,transparent 65%);filter:blur(110px);"></div>

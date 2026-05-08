@@ -4,6 +4,8 @@
 </script>
 
 <section class="relative pt-6 pb-2">
+	<!-- Dark substrate: deepest pocket — propagation diagrams should feel embedded in atmospheric depth -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 100% 115% at 38% 55%,rgba(0,0,0,0.095) 0%,transparent 75%);"></div>
 	<!-- Origin Stories atmosphere: violet-blue memory haze — most cinematic lane -->
 	<div class="absolute pointer-events-none" aria-hidden="true" style="width:960px;height:580px;left:10%;top:-38%;background:radial-gradient(ellipse at center,rgba(120,90,220,0.105) 0%,transparent 65%);filter:blur(130px);"></div>
 	<div class="absolute pointer-events-none" aria-hidden="true" style="width:560px;height:380px;left:-4%;bottom:-22%;background:radial-gradient(ellipse at center,rgba(80,120,255,0.058) 0%,transparent 65%);filter:blur(115px);"></div>
