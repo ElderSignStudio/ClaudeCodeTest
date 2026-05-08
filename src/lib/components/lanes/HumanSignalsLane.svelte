@@ -4,11 +4,9 @@
 </script>
 
 <section class="relative pt-6 pb-2">
-	<!-- Dark substrate: comfortable reading pocket, less cold than surrounding lanes -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 100% 110% at 24% 55%,rgba(0,0,0,0.080) 0%,transparent 75%);"></div>
-	<!-- Human Signals atmosphere: warm-cool mixed field, warmth nearly imperceptible -->
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:880px;height:580px;left:-6%;top:-32%;background:radial-gradient(ellipse at center,rgba(100,160,255,0.062) 0%,transparent 65%);filter:blur(120px);"></div>
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:360px;height:280px;right:6%;top:20%;background:radial-gradient(ellipse at center,rgba(255,180,120,0.030) 0%,transparent 65%);filter:blur(105px);"></div>
+	<!-- Human Signals (SECONDARY) — slightly warmer blue, "inhabited" reading zone.
+	     R-channel lifted from 95 to 110 for a subtle warmer cast (not orange — just less cold). -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 85% 55% at 50% 55%,rgba(110,135,180,0.16) 0%,rgba(110,135,180,0.08) 40%,rgba(110,135,180,0.03) 65%,transparent 85%);"></div>
 
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">

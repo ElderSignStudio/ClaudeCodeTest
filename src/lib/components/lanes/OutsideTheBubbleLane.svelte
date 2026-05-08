@@ -7,10 +7,9 @@
 </script>
 
 <section class="relative pt-6 pb-2">
-	<!-- Dark substrate: sparse single-source pocket, right-anchored, isolated -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 90% 105% at 75% 50%,rgba(0,0,0,0.070) 0%,transparent 75%);"></div>
-	<!-- Outside the Bubble atmosphere: cold distant vacuum light, sparse and isolated -->
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:680px;height:440px;right:-2%;top:-38%;background:radial-gradient(ellipse at center,rgba(90,130,170,0.058) 0%,transparent 65%);filter:blur(140px);"></div>
+	<!-- Outside the Bubble (SECONDARY) — present but calmer. Tighter horizontal extent
+	     (82% vs 85%) reinforces the lane's "isolated cold pocket" identity. -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 82% 52% at 50% 55%,rgba(70,100,145,0.14) 0%,rgba(70,100,145,0.07) 40%,rgba(70,100,145,0.025) 65%,transparent 85%);"></div>
 
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">

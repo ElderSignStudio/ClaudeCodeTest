@@ -19,11 +19,9 @@
 </script>
 
 <section class="relative">
-	<!-- Dark substrate: broader spread for OSA's wider atmospheric field -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 110% 100% at 22% 60%,rgba(0,0,0,0.085) 0%,transparent 80%);"></div>
-	<!-- One Step Away atmosphere: cyan-blue drift haze spread across the row -->
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:1060px;height:480px;left:4%;top:-20%;background:radial-gradient(ellipse at center,rgba(40,180,255,0.085) 0%,transparent 65%);filter:blur(130px);"></div>
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:480px;height:360px;right:6%;bottom:-22%;background:radial-gradient(ellipse at center,rgba(90,220,255,0.055) 0%,transparent 65%);filter:blur(110px);"></div>
+	<!-- One Step Away (TERTIARY) — quiet, restrained. Pulled down to create scrolling rhythm
+	     between the loud primary lanes (BP, BO, OS) and the dense card row here. -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 85% 50% at 50% 55%,rgba(40,130,175,0.13) 0%,rgba(40,130,175,0.06) 40%,rgba(40,130,175,0.02) 65%,transparent 85%);"></div>
 
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">

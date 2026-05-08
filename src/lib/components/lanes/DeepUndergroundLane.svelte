@@ -14,10 +14,9 @@
 </script>
 
 <section class="relative">
-	<!-- Dark substrate: lightest of all lanes — DU should remain darkest/sparsest -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 95% 105% at 35% 60%,rgba(0,0,0,0.052) 0%,transparent 75%);"></div>
-	<!-- Deep Underground atmosphere: minimal cold void light, nearly imperceptible -->
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:680px;height:380px;left:22%;top:-45%;background:radial-gradient(ellipse at center,rgba(40,70,120,0.046) 0%,transparent 65%);filter:blur(140px);"></div>
+	<!-- Deep Underground (TERTIARY) — intentionally faint. Tighter vertical, lowest opacity.
+	     Pulled even quieter than OSA so the section feels like a true atmospheric trough. -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 80% 45% at 50% 55%,rgba(35,55,95,0.08) 0%,rgba(35,55,95,0.04) 45%,transparent 85%);"></div>
 
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">

@@ -56,11 +56,11 @@
 </script>
 
 <section class="relative">
-	<!-- Dark substrate: kinetic momentum, slightly sharper environmental definition -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 95% 105% at 25% 55%,rgba(0,0,0,0.080) 0%,transparent 75%);"></div>
-	<!-- Breaking Out atmosphere: restrained emerald resonance haze, left-drifting -->
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:980px;height:480px;left:0%;top:-28%;background:radial-gradient(ellipse at center,rgba(30,190,140,0.090) 0%,transparent 65%);filter:blur(125px);"></div>
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:460px;height:360px;right:12%;bottom:-20%;background:radial-gradient(ellipse at center,rgba(0,140,120,0.050) 0%,transparent 65%);filter:blur(110px);"></div>
+	<!-- Breaking Out atmospheric anchor (PRIMARY) — kinetic, energized.
+	     Two layers: outer wash + inner glow. Inner glow uses slightly lifted teal for kinetic feel
+	     without crossing into saturated cyberpunk territory. -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 90% 62% at 50% 55%,rgba(40,125,105,0.16) 0%,rgba(40,125,105,0.08) 40%,rgba(40,125,105,0.03) 65%,transparent 87%);"></div>
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 68% 48% at 50% 60%,rgba(50,140,115,0.18) 0%,rgba(50,140,115,0.09) 45%,transparent 72%);"></div>
 
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">

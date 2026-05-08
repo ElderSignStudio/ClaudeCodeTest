@@ -4,11 +4,12 @@
 </script>
 
 <section class="relative pt-6 pb-2">
-	<!-- Dark substrate: deepest pocket — propagation diagrams should feel embedded in atmospheric depth -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 100% 115% at 38% 55%,rgba(0,0,0,0.095) 0%,transparent 75%);"></div>
-	<!-- Origin Stories atmosphere: violet-blue memory haze — most cinematic lane -->
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:960px;height:580px;left:10%;top:-38%;background:radial-gradient(ellipse at center,rgba(120,90,220,0.105) 0%,transparent 65%);filter:blur(130px);"></div>
-	<div class="absolute pointer-events-none" aria-hidden="true" style="width:560px;height:380px;left:-4%;bottom:-22%;background:radial-gradient(ellipse at center,rgba(80,120,255,0.058) 0%,transparent 65%);filter:blur(115px);"></div>
+	<!-- Origin Stories atmospheric anchor (PRIMARY benchmark) — most cinematic lane.
+	     Two layers: outer atmospheric wash spans the widest vertical (70% height) +
+	     inner glow that the propagation diagrams sit inside. The result is the
+	     "memory density" the lane is named for — depth, not just color. -->
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 92% 70% at 50% 55%,rgba(115,75,200,0.20) 0%,rgba(115,75,200,0.11) 40%,rgba(115,75,200,0.04) 65%,transparent 90%);"></div>
+	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 70% 50% at 50% 58%,rgba(130,90,215,0.18) 0%,rgba(130,90,215,0.09) 45%,transparent 72%);"></div>
 
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
