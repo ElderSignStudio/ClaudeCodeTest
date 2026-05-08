@@ -85,6 +85,45 @@ All data should be easily replaceable later by a real backend.
 - Design should feel lightweight and fluid
 - Prioritize clarity of user actions (e.g. amplify, save)
 
+### Visual Tone
+
+Information density should feel intentional and curated.
+
+Outer Signal should feel:
+
+- atmospheric
+- exploratory
+- spatial
+- calm
+- intelligent
+- subtle
+- slightly mysterious
+
+Avoid:
+- overly corporate UI
+- loud gradients
+- excessive glow
+- gamified feeling
+- visual clutter
+- oversized typography
+- excessive animation
+- excessively sparse "landing page" aesthetics
+- oversized cards
+- giant typography
+- excessive whitespace that reduces discovery density
+
+Prefer:
+- restrained motion
+- layered depth
+- soft contrast
+- compact but readable information density
+- elegant spacing
+- subtle visual hierarchy
+- compact layouts with breathing room
+- layered information hierarchy
+- subtle metadata
+- interfaces that reward exploration
+
 ---
 
 ## Learning Mode (CRITICAL)
@@ -108,6 +147,13 @@ WHEN RELEVANT:
 
 ## Workflow Rules
 
+Prefer iterative refinement over large rewrites unless explicitly requested.
+
+When improving UI:
+- preserve existing structure when possible
+- refine incrementally
+- avoid replacing working systems unnecessarily
+
 For each task:
 
 ### Before coding
@@ -119,6 +165,90 @@ For each task:
 - Explain what you implemented
 - Explain why you structured it this way
 - Point out anything that deserves attention or review
+- If UI was changed, mention whether Playwright/browser verification was performed
+
+---
+
+## Playwright Browser Verification
+
+Playwright is installed primarily to help Claude Code inspect and verify the rendered UI in a real browser.
+
+The current goal is NOT to build a large formal test suite yet.
+
+Use Playwright mainly for:
+
+- visual verification after UI changes
+- checking layout, spacing, typography, and responsiveness
+- checking hover states, buttons, modals, navigation, and scroll behavior
+- detecting obvious runtime/browser issues
+- checking console errors when relevant
+
+### When to use Playwright
+
+After making meaningful UI changes, use Playwright to inspect the affected screen before finishing.
+
+Especially use Playwright when changing:
+
+- layout
+- responsive behavior
+- navigation
+- cards
+- lanes
+- modals
+- hover/focus states
+- animations/transitions
+- visual hierarchy
+- Tailwind/daisyUI styling
+
+### How to use it
+
+The project is configured with Playwright.
+
+Use:
+
+```bash
+npx playwright test
+```
+
+to run the basic smoke tests.
+
+Use:
+
+```bash
+npx playwright test --ui
+```
+
+for interactive inspection/debugging when useful.
+
+Use Playwright browser interaction to:
+- open the local app
+- inspect the rendered UI
+- verify layout and responsiveness
+- check interactions and runtime behavior
+
+### Testing philosophy for now
+
+Keep tests minimal.
+
+Prefer:
+- lightweight smoke tests
+- targeted interaction checks
+- visual verification
+
+Avoid:
+- large formal E2E suites
+- excessive test architecture
+- overengineering test coverage
+
+The main value right now is giving Claude Code browser visibility during frontend iteration.
+
+### Reporting back
+
+After using Playwright, briefly mention:
+- what was checked
+- whether it worked
+- any issue noticed
+- any remaining uncertainty
 
 ---
 
