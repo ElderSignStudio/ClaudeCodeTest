@@ -55,7 +55,11 @@
 	}
 </script>
 
-<section>
+<section class="relative">
+	<!-- Breaking Out atmosphere: restrained emerald resonance haze, left-drifting -->
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:980px;height:480px;left:0%;top:-28%;background:radial-gradient(ellipse at center,rgba(30,190,140,0.090) 0%,transparent 65%);filter:blur(125px);"></div>
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:460px;height:360px;right:12%;bottom:-20%;background:radial-gradient(ellipse at center,rgba(0,140,120,0.050) 0%,transparent 65%);filter:blur(110px);"></div>
+
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-success shrink-0" aria-hidden="true"></div>

@@ -13,7 +13,10 @@
 	}
 </script>
 
-<section>
+<section class="relative">
+	<!-- Deep Underground atmosphere: minimal cold void light, nearly imperceptible -->
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:680px;height:380px;left:22%;top:-45%;background:radial-gradient(ellipse at center,rgba(40,70,120,0.046) 0%,transparent 65%);filter:blur(140px);"></div>
+
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-secondary/60 shrink-0" aria-hidden="true"></div>

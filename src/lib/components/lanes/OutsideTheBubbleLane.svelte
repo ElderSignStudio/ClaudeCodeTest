@@ -6,7 +6,10 @@
 	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
 </script>
 
-<section class="pt-6 pb-2">
+<section class="relative pt-6 pb-2">
+	<!-- Outside the Bubble atmosphere: cold distant vacuum light, sparse and isolated -->
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:680px;height:440px;right:-2%;top:-38%;background:radial-gradient(ellipse at center,rgba(90,130,170,0.058) 0%,transparent 65%);filter:blur(140px);"></div>
+
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<!-- Cyan section mark — this lane is cold, not warm like Breaking Out -->

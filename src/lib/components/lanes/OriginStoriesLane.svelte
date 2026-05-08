@@ -3,7 +3,11 @@
 	import StoryCard from '$lib/components/StoryCard.svelte';
 </script>
 
-<section class="pt-6 pb-2">
+<section class="relative pt-6 pb-2">
+	<!-- Origin Stories atmosphere: violet-blue memory haze — most cinematic lane -->
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:960px;height:580px;left:10%;top:-38%;background:radial-gradient(ellipse at center,rgba(120,90,220,0.105) 0%,transparent 65%);filter:blur(130px);"></div>
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:560px;height:380px;left:-4%;bottom:-22%;background:radial-gradient(ellipse at center,rgba(80,120,255,0.058) 0%,transparent 65%);filter:blur(115px);"></div>
+
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-secondary shrink-0" aria-hidden="true"></div>

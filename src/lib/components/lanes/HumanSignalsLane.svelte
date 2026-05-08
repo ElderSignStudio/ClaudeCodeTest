@@ -3,7 +3,11 @@
 	import ScoutCard from '$lib/components/ScoutCard.svelte';
 </script>
 
-<section class="pt-6 pb-2">
+<section class="relative pt-6 pb-2">
+	<!-- Human Signals atmosphere: warm-cool mixed field, warmth nearly imperceptible -->
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:880px;height:580px;left:-6%;top:-32%;background:radial-gradient(ellipse at center,rgba(100,160,255,0.062) 0%,transparent 65%);filter:blur(120px);"></div>
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:360px;height:280px;right:6%;top:20%;background:radial-gradient(ellipse at center,rgba(255,180,120,0.030) 0%,transparent 65%);filter:blur(105px);"></div>
+
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-accent/65 shrink-0" aria-hidden="true"></div>

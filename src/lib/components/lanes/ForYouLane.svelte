@@ -13,7 +13,11 @@
 	];
 </script>
 
-<section>
+<section class="relative">
+	<!-- Best Picks atmosphere: faint cool-blue resonance field, left-anchored behind hero -->
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:860px;height:660px;left:-4%;top:-25%;background:radial-gradient(ellipse at center,rgba(56,118,255,0.100) 0%,transparent 65%);filter:blur(120px);"></div>
+	<div class="absolute pointer-events-none" aria-hidden="true" style="width:560px;height:420px;right:2%;bottom:-18%;background:radial-gradient(ellipse at center,rgba(120,180,255,0.055) 0%,transparent 65%);filter:blur(105px);"></div>
+
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-primary shrink-0" aria-hidden="true"></div>
