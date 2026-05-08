@@ -54,6 +54,24 @@
 		aria-hidden="true"
 	></div>
 
+	<!-- Left nebula edge softening — calms the visible boundary between the left
+	     blue nebula and the central dark void so it stops reading as image edge. -->
+	<div
+		class="fixed inset-0 pointer-events-none"
+		style="z-index: -9; background: radial-gradient(ellipse 38% 75% at 8% 48%, rgba(3, 8, 18, 0.12) 0%, rgba(3, 8, 18, 0.06) 42%, rgba(3, 8, 18, 0.00) 78%);"
+		aria-hidden="true"
+	></div>
+
+	<!-- Lower-right purple cloud calming — knocks 10–15% off the visible nebula intensity. -->
+	<div
+		class="fixed inset-0 pointer-events-none"
+		style="z-index: -9; background: radial-gradient(ellipse 55% 45% at 82% 78%, rgba(5, 4, 14, 0.16) 0%, rgba(5, 4, 14, 0.09) 35%, rgba(5, 4, 14, 0.00) 72%);"
+		aria-hidden="true"
+	></div>
+
+	<!-- Film grain — ultra-subtle organic texture that glues background and UI together. -->
+	<div class="os-film-grain fixed inset-0 pointer-events-none" style="z-index: -8;" aria-hidden="true"></div>
+
 	<!-- App chrome + content — z-index is auto (above -z-10 layers) -->
 	<Header />
 	<Sidebar />
