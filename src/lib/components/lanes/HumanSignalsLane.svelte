@@ -4,10 +4,6 @@
 </script>
 
 <section class="relative pt-6 pb-2">
-	<!-- Human Signals (SECONDARY) — slightly warmer blue, "inhabited" reading zone.
-	     R-channel lifted from 95 to 110 for a subtle warmer cast (not orange — just less cold). -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 85% 55% at 50% 55%,rgba(110,135,180,0.16) 0%,rgba(110,135,180,0.08) 40%,rgba(110,135,180,0.03) 65%,transparent 85%);"></div>
-
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-accent/65 shrink-0" aria-hidden="true"></div>

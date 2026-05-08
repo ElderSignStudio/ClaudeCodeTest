@@ -7,10 +7,6 @@
 </script>
 
 <section class="relative pt-6 pb-2">
-	<!-- Outside the Bubble (SECONDARY) — present but calmer. Tighter horizontal extent
-	     (82% vs 85%) reinforces the lane's "isolated cold pocket" identity. -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 82% 52% at 50% 55%,rgba(70,100,145,0.14) 0%,rgba(70,100,145,0.07) 40%,rgba(70,100,145,0.025) 65%,transparent 85%);"></div>
-
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<!-- Cyan section mark — this lane is cold, not warm like Breaking Out -->

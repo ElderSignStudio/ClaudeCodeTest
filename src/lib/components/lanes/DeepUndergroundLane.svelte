@@ -14,10 +14,6 @@
 </script>
 
 <section class="relative">
-	<!-- Deep Underground (TERTIARY) — intentionally faint. Tighter vertical, lowest opacity.
-	     Pulled even quieter than OSA so the section feels like a true atmospheric trough. -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 80% 45% at 50% 55%,rgba(35,55,95,0.08) 0%,rgba(35,55,95,0.04) 45%,transparent 85%);"></div>
-
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-secondary/60 shrink-0" aria-hidden="true"></div>

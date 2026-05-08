@@ -19,10 +19,6 @@
 </script>
 
 <section class="relative">
-	<!-- One Step Away (TERTIARY) — quiet, restrained. Pulled down to create scrolling rhythm
-	     between the loud primary lanes (BP, BO, OS) and the dense card row here. -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 85% 50% at 50% 55%,rgba(40,130,175,0.13) 0%,rgba(40,130,175,0.06) 40%,rgba(40,130,175,0.02) 65%,transparent 85%);"></div>
-
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-accent shrink-0" aria-hidden="true"></div>

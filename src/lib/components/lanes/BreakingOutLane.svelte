@@ -56,12 +56,6 @@
 </script>
 
 <section class="relative">
-	<!-- Breaking Out atmospheric anchor (PRIMARY) — kinetic, energized.
-	     Two layers: outer wash + inner glow. Inner glow uses slightly lifted teal for kinetic feel
-	     without crossing into saturated cyberpunk territory. -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 90% 62% at 50% 55%,rgba(40,125,105,0.16) 0%,rgba(40,125,105,0.08) 40%,rgba(40,125,105,0.03) 65%,transparent 87%);"></div>
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 68% 48% at 50% 60%,rgba(50,140,115,0.18) 0%,rgba(50,140,115,0.09) 45%,transparent 72%);"></div>
-
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-success shrink-0" aria-hidden="true"></div>

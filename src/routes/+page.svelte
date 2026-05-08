@@ -14,8 +14,30 @@
 		if (hour < 17) return 'Good afternoon.';
 		return 'Good evening.';
 	}
-
 </script>
+
+<!--
+	Atmosphere as intentional emotional rhythm, not environmental fog.
+
+	Three lanes have atmospheric accents in a clear hierarchy. Everything
+	else acts as visual silence between them.
+
+	  Best Picks       — faint cool-blue home orbit       (peak 0.09, env -70px)
+	  Breaking Out     — kinetic teal/green momentum      (peak 0.14, env -90px)
+	  Origin Stories   — cinematic violet memory field    (peak 0.20, env -120px)
+
+	Hierarchy reinforced through TWO axes:
+	  • peak opacity        BP < BO < OS  (≈0.09 / 0.14 / 0.20)
+	  • spatial extent      BP < BO < OS  (-70 / -90 / -120 wrapper)
+
+	Five lanes (OSA, DU, HS, OTB) sit on clean dark space — their depth comes
+	from card-level shadows, borders, surface contrast, hover elevation, and
+	hero emphasis defined in app.css and the lane components.
+
+	Long soft falloff curves (residual stop ~80% before transparent at 100%)
+	mean each accent fades into surrounding dark space without a visible
+	horizontal clipping edge.
+-->
 
 <div class="max-w-400 mx-auto w-full px-6 xl:px-8 py-8 space-y-18">
 
@@ -35,13 +57,49 @@
 		</p>
 	</div>
 
-	<ForYouLane />
+	<!--
+		Best Picks — faint cool-blue home orbit.
+		Smallest envelope (-70px) and lowest peak (0.09) of the three accents.
+		Single soft layer, ellipse 82% 75% gives a slightly tighter shape than
+		BO/OS — reinforces the "personal, close-to-you" orbital feeling rather
+		than broad atmospheric spread.
+	-->
+	<div class="relative">
+		<div class="absolute pointer-events-none" aria-hidden="true" style="top:-70px;bottom:-70px;left:0;right:0;background:radial-gradient(ellipse 82% 75% at 50% 50%,rgba(48,92,178,0.09) 0%,rgba(48,92,178,0.05) 25%,rgba(48,92,178,0.018) 55%,rgba(48,92,178,0.006) 80%,transparent 100%);"></div>
+		<ForYouLane />
+	</div>
+
 	<OneStepAwayLane />
 	<DeepUndergroundLane />
-	<BreakingOutLane />
+
+	<!--
+		Breaking Out — kinetic teal/green momentum.
+		Medium envelope (-90px) and peak 0.14 — strengthened from the previous
+		0.11 to make the energy more clearly visible above and below the cards.
+		Wider ellipse (88% × 80%) supports the "spreading / propagating outward"
+		feeling without becoming a fog shelf.
+	-->
+	<div class="relative">
+		<div class="absolute pointer-events-none" aria-hidden="true" style="top:-90px;bottom:-90px;left:0;right:0;background:radial-gradient(ellipse 88% 80% at 50% 50%,rgba(40,125,105,0.14) 0%,rgba(40,125,105,0.08) 25%,rgba(40,125,105,0.028) 55%,rgba(40,125,105,0.010) 80%,transparent 100%);"></div>
+		<BreakingOutLane />
+	</div>
+
 	<HumanSignalsLane />
 	<OutsideTheBubbleLane />
-	<OriginStoriesLane />
+
+	<!--
+		Origin Stories — cinematic violet memory field. Strongest accent.
+		Two layers preserved exactly: outer wash establishes broad envelope,
+		inner glow concentrates intensity behind the propagation diagrams.
+		Largest envelope (-120px) lets the field fade smoothly into the dark
+		space above (OTB) and below (Drift) without a visible horizontal clip.
+	-->
+	<div class="relative">
+		<div class="absolute pointer-events-none" aria-hidden="true" style="top:-120px;bottom:-120px;left:0;right:0;background:radial-gradient(ellipse 92% 85% at 50% 50%,rgba(115,75,200,0.20) 0%,rgba(115,75,200,0.11) 22%,rgba(115,75,200,0.04) 50%,rgba(115,75,200,0.014) 78%,transparent 100%);"></div>
+		<div class="absolute pointer-events-none" aria-hidden="true" style="top:-100px;bottom:-100px;left:0;right:0;background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(130,90,215,0.18) 0%,rgba(130,90,215,0.08) 30%,rgba(130,90,215,0.025) 60%,transparent 90%);"></div>
+		<OriginStoriesLane />
+	</div>
+
 	<DriftSection />
 
 </div>

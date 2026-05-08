@@ -45,14 +45,12 @@ test('atmosphere screenshots', async ({ page }) => {
 });
 
 /**
- * Background polish validation.
- * Captures three scrolled viewport positions matching the spec's review checklist:
- *   1. top    — Best Picks + One Step Away
- *   2. middle — Breaking Out + Human Signals
- *   3. lower  — Outside the Bubble + Origin Stories
- * Plus a full-page screenshot for overall feel.
+ * Three review viewports — one per atmospheric accent:
+ *   1. Top viewport (Best Picks faint blue orbit)
+ *   2. Breaking Out (kinetic teal momentum)
+ *   3. Origin Stories (cinematic violet memory field)
  */
-test('background polish viewports', async ({ page }) => {
+test('lane accent viewports', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
   await page.waitForLoadState('networkidle');
@@ -63,21 +61,28 @@ test('background polish viewports', async ({ page }) => {
     fullPage: true,
   });
 
-  const sections = await page.locator('main section').all();
+  // 1. Top viewport — Best Picks visible from the start
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior }));
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: 'tests/screenshots/viewport-top.png', fullPage: false });
 
-  const viewports: Array<{ label: string; sectionIndex: number }> = [
-    { label: 'top-bestpicks-osa', sectionIndex: 0 },
-    { label: 'middle-bo-hs', sectionIndex: 3 },
-    { label: 'lower-otb-os', sectionIndex: 5 },
-  ];
-
-  for (const v of viewports) {
-    await sections[v.sectionIndex].scrollIntoViewIfNeeded();
-    // Settle a moment for any post-scroll layout
-    await page.waitForTimeout(200);
-    await page.screenshot({
-      path: `tests/screenshots/${v.label}.png`,
-      fullPage: false,
+  const positions = await page.evaluate(() => {
+    const sections = Array.from(document.querySelectorAll('main section'));
+    return sections.map((s) => {
+      const r = s.getBoundingClientRect();
+      return { top: r.top + window.scrollY, bottom: r.bottom + window.scrollY };
     });
-  }
+  });
+
+  // 2. Breaking Out — center the BO lane vertically in viewport
+  const boCenter = (positions[3].top + positions[3].bottom) / 2;
+  await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior }), boCenter - 450);
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: 'tests/screenshots/viewport-breaking-out.png', fullPage: false });
+
+  // 3. Origin Stories — center the OS lane vertically in viewport
+  const osCenter = (positions[6].top + positions[6].bottom) / 2;
+  await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior }), osCenter - 450);
+  await page.waitForTimeout(200);
+  await page.screenshot({ path: 'tests/screenshots/viewport-origin-stories.png', fullPage: false });
 });

@@ -4,13 +4,6 @@
 </script>
 
 <section class="relative pt-6 pb-2">
-	<!-- Origin Stories atmospheric anchor (PRIMARY benchmark) — most cinematic lane.
-	     Two layers: outer atmospheric wash spans the widest vertical (70% height) +
-	     inner glow that the propagation diagrams sit inside. The result is the
-	     "memory density" the lane is named for — depth, not just color. -->
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 92% 70% at 50% 55%,rgba(115,75,200,0.20) 0%,rgba(115,75,200,0.11) 40%,rgba(115,75,200,0.04) 65%,transparent 90%);"></div>
-	<div class="absolute inset-0 pointer-events-none" aria-hidden="true" style="background:radial-gradient(ellipse 70% 50% at 50% 58%,rgba(130,90,215,0.18) 0%,rgba(130,90,215,0.09) 45%,transparent 72%);"></div>
-
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-secondary shrink-0" aria-hidden="true"></div>
