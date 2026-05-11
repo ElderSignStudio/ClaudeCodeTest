@@ -13,7 +13,7 @@
 			? 'bg-base-200/65 border-primary/22 hover:border-primary/35'
 			: 'bg-base-200/52 border-white/12 hover:border-white/22 hover:bg-base-200/62',
 	]}
-	style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 14px 40px rgba(0,0,0,0.32), inset 0 1px 0 rgba(255,255,255,0.045);"
+	style="box-shadow: 0 0 0 1px rgba(255,255,255,0.06), 0 5px 14px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.025), inset 0 -1px 0 rgba(0,0,0,0.26);"
 >
 	<div class="p-3.5 flex flex-col flex-1">
 

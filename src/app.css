@@ -420,16 +420,24 @@ body {
     surfacing. The compressed y-offset (3px vs 8-10px elsewhere) is the key
     signal: shallow depth reads as distant in the z-stack.
   */
+  /*
+    Panel elevation language — DU surfaces are RECESSED.
+    Card almost dissolves into the dark lane around it: very faint ring,
+    minimal close shadow, and a small inset darkening that pulls the inner
+    edges back into shadow. "Emerges from darkness" rather than "floats above it."
+  */
   .os-card-deep {
     box-shadow:
-      0 0 0 1px rgba(255,255,255,0.012),
-      0 3px 12px rgba(0,0,0,0.18);
+      0 0 0 1px rgba(255,255,255,0.003),
+      0 1px 3px rgba(0,0,0,0.08),
+      inset 0 0 14px rgba(0,0,0,0.22);
     transition: box-shadow 0.22s ease;
 
     &:hover {
       box-shadow:
-        0 0 0 1px rgba(255,255,255,0.03),
-        0 4px 16px rgba(0,0,0,0.24);
+        0 0 0 1px rgba(255,255,255,0.016),
+        0 2px 6px rgba(0,0,0,0.14),
+        inset 0 0 12px rgba(0,0,0,0.16);
     }
   }
 
@@ -447,17 +455,29 @@ body {
     the mid-plane, pushing outward. Hover has stronger border response than
     any other lane to reinforce the emissive, active identity.
   */
+  /*
+    Panel elevation language — BO surfaces are the HIGHEST elevation, but the
+    elevation comes from edge definition + top highlight + multi-layer shadow,
+    NOT from a single big drop shadow. A softer outer shadow combined with a
+    closer near-shadow gives the card a physical "slightly closer to viewer"
+    presence. The top inset highlight reads as a subtle reflection on the
+    upper edge — what a real lit surface would show. The success-tinted ring
+    is slightly stronger so the propagating energy reads through the edge.
+  */
   .os-card-breaking {
     box-shadow:
-      0 0 0 1px oklch(0.74 0.17 158 / 0.12),
-      0 10px 30px rgba(0,0,0,0.24);
+      0 0 0 1px oklch(0.74 0.17 158 / 0.18),
+      0 8px 24px rgba(0,0,0,0.22),
+      0 2px 6px rgba(0,0,0,0.24),
+      inset 0 1px 0 rgba(255,255,255,0.075);
     transition: box-shadow 0.22s ease, transform 0.22s ease;
 
     &:hover {
       box-shadow:
-        0 0 0 1px oklch(0.74 0.17 158 / 0.35),
+        0 0 0 1px oklch(0.74 0.17 158 / 0.38),
         0 0 18px -4px oklch(0.74 0.17 158 / 0.22),
-        0 10px 32px -4px oklch(0 0 0 / 0.58);
+        0 10px 32px -4px oklch(0 0 0 / 0.58),
+        inset 0 1px 0 rgba(255,255,255,0.085);
       transform: translateY(-2px) scale(1.015);
     }
   }

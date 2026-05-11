@@ -35,7 +35,7 @@
 		<!-- ── Hero card (left) — transmission window, not panel ── -->
 		<div
 			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/15 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
-			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.06), 0 14px 40px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.22);"
+			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.10), 0 8px 28px rgba(0,0,0,0.28), 0 2px 6px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.04);"
 		>
 			<img
 				src={bubbleFeatured.image}
