@@ -6,7 +6,7 @@
 	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
 </script>
 
-<section class="relative pt-6 pb-2">
+<section class="relative pt-8 pb-4">
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<!-- Cyan section mark — this lane is cold, not warm like Breaking Out -->
@@ -22,22 +22,43 @@
 		</a>
 	</div>
 
-	<div class="mt-5 grid gap-6 items-stretch" style="grid-template-columns: 1.6fr 1fr;">
+	<!--
+		Asymmetric split: hero ~74% / supporting echoes ~26%. Hero still
+		dominates clearly, but the right column is wide enough that the echoes
+		read as real secondary signals rather than squeezed metadata.
+		minmax(240px, 1fr) on the right keeps cards readable if the viewport
+		shrinks (right column floors at 240px before the hero gives up width).
+		minmax(0, …) on the left lets the hero shrink without grid-overflow.
+	-->
+	<div class="mt-6 grid gap-6 items-stretch" style="grid-template-columns: minmax(0, 2.85fr) minmax(240px, 1fr);">
 
-		<!-- ── Hero card (left) ── -->
+		<!-- ── Hero card (left) — transmission window, not panel ── -->
 		<div
-			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/22 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
-			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.10), 0 14px 40px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.22);"
+			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/15 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
+			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.06), 0 14px 40px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.22);"
 		>
 			<img
 				src={bubbleFeatured.image}
 				alt={bubbleFeatured.title}
-				class="absolute inset-0 w-full h-full object-cover opacity-63 group-hover:opacity-75 transition-opacity duration-500"
+				class="absolute inset-0 w-full h-full object-cover opacity-70 group-hover:opacity-82 transition-opacity duration-500"
 			/>
 			<!-- Cold tint overlay — cyan instead of warm yellow -->
 			<div class="absolute inset-0 bg-linear-to-br from-cyan-400/6 to-transparent mix-blend-color"></div>
-			<!-- Slightly darker bottom gradient for colder, more distant feel -->
-			<div class="absolute inset-0 bg-linear-to-b from-black/32 via-transparent to-black/89"></div>
+			<!-- Softer top fade, similar bottom protection — image breathes more, text stays readable -->
+			<div class="absolute inset-0 bg-linear-to-b from-black/22 via-transparent to-black/86"></div>
+			<!--
+				Directional signal haze. Faint cyan concentrated at the hero's
+				right edge, fading inward. Peak ~7% cyan opacity at the edge,
+				fading to transparent before reaching the middle of the card.
+				Reads subconsciously as transmission energy moving toward the
+				echo column on the right, not as a decorative line or arrow.
+				No animation, no hard edges, no UI affordance.
+			-->
+			<div
+				class="absolute inset-0 pointer-events-none"
+				style="background: radial-gradient(ellipse 65% 55% at 100% 50%, oklch(0.72 0.16 220 / 0.07) 0%, oklch(0.72 0.16 220 / 0.025) 35%, transparent 70%);"
+				aria-hidden="true"
+			></div>
 			<!-- Hover radial — cold cyan, not warm -->
 			<div
 				class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
@@ -68,8 +89,8 @@
 				</div>
 			</div>
 
-			<!-- Bottom text block -->
-			<div class="absolute bottom-0 left-0 right-0 px-4 pb-3.5 pt-10">
+			<!-- Bottom text block — slightly shorter pt so the image dominates more vertically -->
+			<div class="absolute bottom-0 left-0 right-0 px-4 pb-3.5 pt-8">
 				<p class="text-[22px] font-extrabold text-white leading-tight tracking-tight mb-1">{bubbleFeatured.title}</p>
 				<p class="text-[12px] text-white/58 mb-2">{bubbleFeatured.artist}</p>
 
@@ -102,8 +123,16 @@
 			</div>
 		</div>
 
-		<!-- ── Right column — stacked mini cards ── -->
-		<div class="flex flex-col gap-5 pt-1 pl-3" style="border-left: 1px solid oklch(0.72 0.16 220 / 0.10);">
+		<!--
+			── Right column — supporting echoes from adjacent scenes ──
+			pt-5 offsets the first card down from the hero's top edge, creating
+			a directional drift feeling (signals arriving slightly later than the
+			hero, not perfectly aligned). gap-6 (vs the previous gap-5) widens the
+			vertical breathing between the two echoes. The left divider is softened
+			from /10 to /05 — it now reads as a faint atmospheric edge instead of
+			a hard column wall, supporting the "less boxed-in" goal.
+		-->
+		<div class="flex flex-col gap-6 pt-5 pl-3" style="border-left: 1px solid oklch(0.72 0.16 220 / 0.05);">
 
 			{#each bubbleSupporting.slice(0, 2) as item (item.id)}
 				<!--
