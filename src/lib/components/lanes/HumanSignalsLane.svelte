@@ -3,7 +3,7 @@
 	import ScoutCard from '$lib/components/ScoutCard.svelte';
 </script>
 
-<section class="pt-6 pb-2">
+<section class="relative pt-6 pb-2">
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-accent/65 shrink-0" aria-hidden="true"></div>

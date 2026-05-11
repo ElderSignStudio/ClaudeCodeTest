@@ -6,7 +6,7 @@
 	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
 </script>
 
-<section class="pt-6 pb-2">
+<section class="relative pt-6 pb-2">
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<!-- Cyan section mark — this lane is cold, not warm like Breaking Out -->

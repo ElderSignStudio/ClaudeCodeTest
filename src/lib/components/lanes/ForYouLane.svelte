@@ -13,7 +13,7 @@
 	];
 </script>
 
-<section>
+<section class="relative">
 	<div class="flex items-start justify-between w-full">
 		<div class="flex items-start gap-3">
 			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-primary shrink-0" aria-hidden="true"></div>
