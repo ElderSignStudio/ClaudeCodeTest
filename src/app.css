@@ -117,6 +117,67 @@
   .deep-pulse { animation: none !important; }
 }
 
+/* ─── Deep Underground — passive network motion ────────────
+  Submerged environmental depth. Two low-opacity masses drift slowly behind
+  the lane to make this section feel marginally more submerged than the
+  lanes around it. Effect must NOT read as particles, stars, FX, or moving
+  background.
+*/
+@keyframes deep-atmo-drift-1 {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(18px, -14px, 0); }
+}
+@keyframes deep-atmo-drift-2 {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(-12px, 16px, 0); }
+}
+
+.deep-atmosphere-field {
+  /* Soft vertical fade so blobs never form a hard edge at the section bounds. */
+  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+}
+
+.deep-atmo-blob {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+  animation-iteration-count: infinite;
+  /* Ultra-soft sine-like easing — no linear movement, no obvious in/out. */
+  animation-timing-function: cubic-bezier(0.45, 0.0, 0.55, 1.0);
+}
+
+/* Two spatial roles:
+   - blob-1: faint left-edge bleed (indigo)
+   - blob-2: low, wide depth anchor in the bottom-right (dark blue)
+   Both sit mostly outside the section's `overflow-hidden` clip so the viewer
+   never sees a defined shape — only a directional pressure entering from
+   beyond the edges. Long fade bands (~22% plateau → 82% transparent) keep
+   edges very soft. */
+
+.deep-atmo-blob-1 {
+  width: 520px; height: 520px;
+  top: 14%; left: -190px;
+  background: radial-gradient(circle, oklch(0.32 0.10 270 / 0.14) 0%, oklch(0.32 0.10 270 / 0.14) 22%, transparent 82%);
+  animation-name: deep-atmo-drift-1;
+  animation-duration: 42s;
+  animation-delay: -3s;
+}
+.deep-atmo-blob-2 {
+  /* Wide-low ellipse: width > height so the mass hugs the bottom of the
+     section rather than reading as a circle bleeding through the corner. */
+  width: 620px; height: 460px;
+  bottom: -150px; right: -140px;
+  background: radial-gradient(ellipse, oklch(0.30 0.08 250 / 0.24) 0%, oklch(0.30 0.08 250 / 0.24) 24%, transparent 82%);
+  animation-name: deep-atmo-drift-2;
+  animation-duration: 38s;
+  animation-delay: -14s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deep-atmo-blob { animation: none !important; }
+}
+
 /* ─── Breaking Out — heat pill shimmer + spike ───────────── */
 
 /*

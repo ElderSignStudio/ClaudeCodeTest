@@ -3,12 +3,13 @@
 	import { outsideBubbleItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
+	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
 
 	const bubbleFeatured = outsideBubbleItems.find(i => i.featured)!;
 	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
 </script>
 
-<section class="relative pt-8 pb-4">
+<section class="relative pt-1 pb-2">
 	<!-- Cyan accent: this lane is cold, not warm like Breaking Out -->
 	<LaneHeader
 		title="Outside the Bubble"
@@ -88,7 +89,9 @@
 					rather than editorial copy. Very dim: a technical signal, not a headline.
 				-->
 				{#if bubbleFeatured.crossingPath}
-					<p class="font-mono text-[11px] text-cyan-300/58 mb-3.5 tracking-wide">{bubbleFeatured.crossingPath}</p>
+					<p class="font-mono text-[11px] text-cyan-300/58 mb-3.5 tracking-wide">
+						{#if bubbleFeatured.multiOrigin}<MultiOriginMarker seed={bubbleFeatured.id} colorClass="text-cyan-300/28" /> {/if}{bubbleFeatured.crossingPath}
+					</p>
 				{/if}
 
 				<!--
@@ -150,7 +153,9 @@
 							More prominent than artist name; less prominent than title.
 						-->
 						{#if item.crossingPath}
-							<p class="font-mono text-[11px] text-cyan-300/55 mt-0.5 tracking-wide">{item.crossingPath}</p>
+							<p class="font-mono text-[11px] text-cyan-300/55 mt-0.5 tracking-wide">
+								{#if item.multiOrigin}<MultiOriginMarker seed={item.id} colorClass="text-cyan-300/28" /> {/if}{item.crossingPath}
+							</p>
 						{/if}
 
 						{#if item.whyHere}

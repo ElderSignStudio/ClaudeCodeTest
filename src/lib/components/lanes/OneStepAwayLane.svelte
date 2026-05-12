@@ -3,6 +3,7 @@
 	import { oneStepAwayItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
+	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
 
 	// Badge opacity varies by life state — more momentum = more visible
 	const badgeOpacity: Record<string, number> = {
@@ -74,7 +75,7 @@
 							</p>
 						{/if}
 						<p class="text-[11px] font-normal truncate text-cyan-300/78">
-							{networkLabel(item.scouts)}
+							{#if item.multiOrigin}<MultiOriginMarker seed={item.id} colorClass="text-accent/25" /> {/if}{networkLabel(item.scouts)}
 						</p>
 					</div>
 					<!-- 5. Amplify -->
