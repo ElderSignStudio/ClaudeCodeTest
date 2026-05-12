@@ -18,8 +18,8 @@
 	</div>
 
 	<div class="mt-5 grid gap-5 pb-2 w-full" style="grid-template-columns: repeat(4, minmax(240px, 1fr));">
-		{#each scoutItems as scout (scout.id)}
-			<ScoutCard {scout} />
+		{#each scoutItems as scout, i (scout.id)}
+			<ScoutCard {scout} index={i} />
 		{/each}
 	</div>
 </section>

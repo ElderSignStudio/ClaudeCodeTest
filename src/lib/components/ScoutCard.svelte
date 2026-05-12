@@ -2,7 +2,20 @@
 	import { UserPlus, UserCheck } from 'lucide-svelte';
 	import type { Scout } from '$lib/mock/data';
 
-	let { scout }: { scout: Scout } = $props();
+	let { scout, index = 0 }: { scout: Scout; index?: number } = $props();
+
+	// Per-scout activity-dot flicker timing.
+	// Different durations + non-zero negative delays ensure scouts don't sync.
+	// `null` = no animation class applied (scout's dot stays completely static).
+	// Index cycles via index % 4 so the pattern repeats predictably if more
+	// scouts are ever added.
+	const dotTimings: Array<{ duration: string; delay: string } | null> = [
+		{ duration: '13s', delay: '-1s' },     // moderately active
+		{ duration: '11s', delay: '-6.5s' },   // recently flickered, won't again for a while
+		null,                                   // completely static — at least one stays silent
+		{ duration: '19s', delay: '-3s' },     // less frequent activity
+	];
+	const flicker = $derived(dotTimings[index % dotTimings.length]);
 </script>
 
 <div
@@ -30,7 +43,11 @@
 				</div>
 				{#if scout.activityLabel}
 					<span
-						class="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-base-200"
+						class={[
+							'absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-accent border-2 border-base-200',
+							flicker && 'scout-signal-flicker',
+						]}
+						style={flicker ? `--flicker-duration:${flicker.duration};--flicker-delay:${flicker.delay};` : undefined}
 						aria-hidden="true"
 					></span>
 				{/if}

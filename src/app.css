@@ -492,6 +492,57 @@ body {
   }
 
   /*
+    Scout activity dot — micro luminance instability.
+
+    The dot stays visually stable across most of the cycle (the first 30%
+    and the final 58%). Between 30%–42% (roughly 12% of cycle duration) it
+    flickers briefly: brightness lifts 4–6% with a microscopic cyan bloom,
+    asymmetric so the peak doesn't read as a sinusoidal pulse. With a 14s
+    cycle, the active window is ~1.7s and the rest is silence.
+
+    Per-scout variation comes from CSS variables --flicker-duration and
+    --flicker-delay set inline by ScoutCard. Different durations across
+    scouts (11–19s) ensure the cycles never sync. One scout has no class
+    applied at all, so a portion of the lane remains completely static
+    per spec.
+  */
+  @keyframes scout-signal-flicker {
+    0%, 28% {
+      filter: brightness(1);
+      box-shadow: none;
+    }
+    31% {
+      filter: brightness(1.25) saturate(1.2);
+      box-shadow: 0 0 10px 1px oklch(0.72 0.16 220 / 0.70);
+    }
+    34% {
+      filter: brightness(1.45) saturate(1.3);
+      box-shadow: 0 0 16px 2px oklch(0.72 0.16 220 / 0.90);
+    }
+    37% {
+      filter: brightness(1.30) saturate(1.2);
+      box-shadow: 0 0 12px 1px oklch(0.72 0.16 220 / 0.70);
+    }
+    40% {
+      filter: brightness(1.12);
+      box-shadow: 0 0 6px oklch(0.72 0.16 220 / 0.35);
+    }
+    44%, 100% {
+      filter: brightness(1);
+      box-shadow: none;
+    }
+  }
+
+  .scout-signal-flicker {
+    animation: scout-signal-flicker var(--flicker-duration, 14s) ease-in-out infinite;
+    animation-delay: var(--flicker-delay, 0s);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scout-signal-flicker { animation: none !important; }
+  }
+
+  /*
     os-film-grain: ultra-subtle global texture overlay.
     SVG fractalNoise generates a fine grayscale grain that tiles every 160px;
     soft-light blend lets the noise gently lighten/darken background pixels
