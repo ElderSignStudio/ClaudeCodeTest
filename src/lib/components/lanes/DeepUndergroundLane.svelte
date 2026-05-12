@@ -15,7 +15,22 @@
 	}
 </script>
 
-<section class="relative">
+<section class="relative isolate">
+	<!--
+		Passive network motion. Two ultra-subtle masses drift slowly behind the
+		lane to give the section a sense of submerged depth without reading as
+		decorative animation. Both sit mostly outside the section's clip so the
+		viewer only ever sees directional pressure, never a defined shape.
+		`isolate` on the section + `-z-10` here keep the atmosphere inside this
+		lane's stacking context, so it can't bleed behind the page body.
+		`pointer-events-none` ensures no hover interference. Timing, color, and
+		opacity all live in app.css.
+	-->
+	<div class="absolute inset-0 -z-10 overflow-hidden pointer-events-none deep-atmosphere-field" aria-hidden="true">
+		<div class="deep-atmo-blob deep-atmo-blob-1"></div>
+		<div class="deep-atmo-blob deep-atmo-blob-2"></div>
+	</div>
+
 	<LaneHeader
 		title="Deep Underground"
 		subtitle="Signals barely discovered anywhere — find them first"
