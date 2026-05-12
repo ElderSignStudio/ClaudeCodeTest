@@ -80,6 +80,28 @@ test('lane accent viewports', async ({ page }) => {
   await page.waitForTimeout(200);
   await page.screenshot({ path: 'tests/screenshots/viewport-breaking-out.png', fullPage: false });
 
+  // 2b. Close crop around Ember Field + Low Orbit + Mirror Static (BO cards 0-2)
+  // so the ambient contamination on cards 0 and 1 can be compared directly
+  // against the non-emitting card 2.
+  const cropBox = await page.evaluate(() => {
+    const grid = document.querySelectorAll('main section')[3]?.querySelector('.grid');
+    if (!grid) return null;
+    const items = Array.from(grid.children);
+    if (items.length < 3) return null;
+    const first = items[0].getBoundingClientRect();
+    const third = items[2].getBoundingClientRect();
+    const PAD = 50;
+    return {
+      x: Math.max(0, first.left - PAD),
+      y: Math.max(0, first.top - PAD),
+      width: Math.min(1440, third.right + PAD) - Math.max(0, first.left - PAD),
+      height: Math.min(900, third.bottom + PAD) - Math.max(0, first.top - PAD),
+    };
+  });
+  if (cropBox && cropBox.width > 0 && cropBox.height > 0) {
+    await page.screenshot({ path: 'tests/screenshots/bo-closecrop-ember-low-mirror.png', clip: cropBox });
+  }
+
   // 3. Origin Stories — center the OS lane vertically in viewport
   const osCenter = (positions[6].top + positions[6].bottom) / 2;
   await page.evaluate((y) => window.scrollTo({ top: y, behavior: 'instant' as ScrollBehavior }), osCenter - 450);

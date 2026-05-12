@@ -420,16 +420,24 @@ body {
     surfacing. The compressed y-offset (3px vs 8-10px elsewhere) is the key
     signal: shallow depth reads as distant in the z-stack.
   */
+  /*
+    Panel elevation language — DU surfaces are RECESSED.
+    Card almost dissolves into the dark lane around it: very faint ring,
+    minimal close shadow, and a small inset darkening that pulls the inner
+    edges back into shadow. "Emerges from darkness" rather than "floats above it."
+  */
   .os-card-deep {
     box-shadow:
-      0 0 0 1px rgba(255,255,255,0.012),
-      0 3px 12px rgba(0,0,0,0.18);
+      0 0 0 1px rgba(255,255,255,0.003),
+      0 1px 3px rgba(0,0,0,0.08),
+      inset 0 0 14px rgba(0,0,0,0.22);
     transition: box-shadow 0.22s ease;
 
     &:hover {
       box-shadow:
-        0 0 0 1px rgba(255,255,255,0.03),
-        0 4px 16px rgba(0,0,0,0.24);
+        0 0 0 1px rgba(255,255,255,0.016),
+        0 2px 6px rgba(0,0,0,0.14),
+        inset 0 0 12px rgba(0,0,0,0.16);
     }
   }
 
@@ -447,17 +455,29 @@ body {
     the mid-plane, pushing outward. Hover has stronger border response than
     any other lane to reinforce the emissive, active identity.
   */
+  /*
+    Panel elevation language — BO surfaces are the HIGHEST elevation, but the
+    elevation comes from edge definition + top highlight + multi-layer shadow,
+    NOT from a single big drop shadow. A softer outer shadow combined with a
+    closer near-shadow gives the card a physical "slightly closer to viewer"
+    presence. The top inset highlight reads as a subtle reflection on the
+    upper edge — what a real lit surface would show. The success-tinted ring
+    is slightly stronger so the propagating energy reads through the edge.
+  */
   .os-card-breaking {
     box-shadow:
-      0 0 0 1px oklch(0.74 0.17 158 / 0.12),
-      0 10px 30px rgba(0,0,0,0.24);
+      0 0 0 1px oklch(0.74 0.17 158 / 0.18),
+      0 8px 24px rgba(0,0,0,0.22),
+      0 2px 6px rgba(0,0,0,0.24),
+      inset 0 1px 0 rgba(255,255,255,0.075);
     transition: box-shadow 0.22s ease, transform 0.22s ease;
 
     &:hover {
       box-shadow:
-        0 0 0 1px oklch(0.74 0.17 158 / 0.35),
+        0 0 0 1px oklch(0.74 0.17 158 / 0.38),
         0 0 18px -4px oklch(0.74 0.17 158 / 0.22),
-        0 10px 32px -4px oklch(0 0 0 / 0.58);
+        0 10px 32px -4px oklch(0 0 0 / 0.58),
+        inset 0 1px 0 rgba(255,255,255,0.085);
       transform: translateY(-2px) scale(1.015);
     }
   }
@@ -469,6 +489,57 @@ body {
   */
   .os-bar-shimmer {
     animation: os-shimmer 3s ease-in-out infinite;
+  }
+
+  /*
+    Scout activity dot — micro luminance instability.
+
+    The dot stays visually stable across most of the cycle (the first 30%
+    and the final 58%). Between 30%–42% (roughly 12% of cycle duration) it
+    flickers briefly: brightness lifts 4–6% with a microscopic cyan bloom,
+    asymmetric so the peak doesn't read as a sinusoidal pulse. With a 14s
+    cycle, the active window is ~1.7s and the rest is silence.
+
+    Per-scout variation comes from CSS variables --flicker-duration and
+    --flicker-delay set inline by ScoutCard. Different durations across
+    scouts (11–19s) ensure the cycles never sync. One scout has no class
+    applied at all, so a portion of the lane remains completely static
+    per spec.
+  */
+  @keyframes scout-signal-flicker {
+    0%, 28% {
+      filter: brightness(1);
+      box-shadow: none;
+    }
+    31% {
+      filter: brightness(1.25) saturate(1.2);
+      box-shadow: 0 0 10px 1px oklch(0.72 0.16 220 / 0.70);
+    }
+    34% {
+      filter: brightness(1.45) saturate(1.3);
+      box-shadow: 0 0 16px 2px oklch(0.72 0.16 220 / 0.90);
+    }
+    37% {
+      filter: brightness(1.30) saturate(1.2);
+      box-shadow: 0 0 12px 1px oklch(0.72 0.16 220 / 0.70);
+    }
+    40% {
+      filter: brightness(1.12);
+      box-shadow: 0 0 6px oklch(0.72 0.16 220 / 0.35);
+    }
+    44%, 100% {
+      filter: brightness(1);
+      box-shadow: none;
+    }
+  }
+
+  .scout-signal-flicker {
+    animation: scout-signal-flicker var(--flicker-duration, 14s) ease-in-out infinite;
+    animation-delay: var(--flicker-delay, 0s);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .scout-signal-flicker { animation: none !important; }
   }
 
   /*

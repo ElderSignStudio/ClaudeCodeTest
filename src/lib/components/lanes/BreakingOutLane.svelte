@@ -74,8 +74,59 @@
 			{@const Icon = tierIcon(item.tag)}
 			{@const vars = cardVars[i] ?? cardVars[0]}
 			{@const spike = spikeClass(item.tag)}
-			<!-- Card: clean, dark, no tier-based halo -->
-			<div class="group rounded-lg overflow-hidden border border-white/10 hover:border-success/40 cursor-pointer transition-all duration-200 os-card-breaking">
+
+			<!--
+				Per-card wrapper. For non-emitting cards (Mirror Static, Pale Cathedral,
+				Ground Hum) this is just a passthrough — the wrapper adds zero visual
+				effect. For the two emitting cards (Ember Field, Low Orbit) it hosts an
+				ambient contamination layer that extends OUTSIDE the card boundaries via
+				negative-offset absolute positioning, ignored by pointer events, blended
+				with mix-blend-mode: screen so the contamination only LIGHTENS the dark
+				environment around the card and leaves brighter areas untouched.
+
+				DOM order is the stacking mechanism: the contamination div is rendered
+				FIRST inside the wrapper, then the card. Both sit at the same paint
+				level (positioned descendants, no z-index), so the later-painted card
+				covers the contamination wherever the card itself is — but the bleed
+				past the wrapper bounds remains visible against the surrounding
+				darkness.
+
+				The card's own `overflow-hidden` does NOT clip the contamination
+				because the contamination is OUTSIDE the card, not inside it.
+			-->
+			<div class="relative">
+
+				{#if item.id === 'ember-field'}
+					<!--
+						Ember Field — ambient object glow (EXTERNAL pieces),
+						ported from the Outside the Bubble hero card. Same four-
+						element technique: external halo + external bottom-left
+						reflection here in the wrapper, plus internal warm tint
+						and rim inside the card's image area (see below).
+
+						Highlight-extraction pipeline: brightness → contrast →
+						saturate → small blur. With screen blend, only the
+						bright pixels of the artwork emit light into the
+						surrounding darkness; dark pixels are crushed by the
+						contrast filter and contribute nothing.
+
+						Sizes scaled for the smaller BO card vs the OTB hero:
+						halo width 25px (was 55px), reflection 36% × 25px
+						(was 36% × 74px), halo height 65% to approximate the
+						image area portion (BO card has image + text, OTB hero
+						is image-only).
+					-->
+					<img src={item.image} alt="" aria-hidden="true"
+						class="absolute pointer-events-none"
+						style="left:-25px;top:0;width:25px;height:65%;object-fit:cover;object-position:0 center;filter:brightness(0.85) contrast(2.1) saturate(1.05) blur(5.5px);opacity:0.30;mask-image:radial-gradient(ellipse 110% 62% at 100% 48%,black 0%,rgba(0,0,0,0.5) 40%,rgba(0,0,0,0.15) 75%,transparent 100%);-webkit-mask-image:radial-gradient(ellipse 110% 62% at 100% 48%,black 0%,rgba(0,0,0,0.5) 40%,rgba(0,0,0,0.15) 75%,transparent 100%);mix-blend-mode:screen;" />
+					<img src={item.image} alt="" aria-hidden="true"
+						class="absolute pointer-events-none"
+						style="left:1%;bottom:-15px;width:36%;height:25px;object-fit:cover;object-position:0 100%;filter:brightness(0.85) contrast(2.1) saturate(1.05) blur(7px);opacity:0.26;mask-image:radial-gradient(ellipse 78% 108% at 50% 0%,black 0%,rgba(0,0,0,0.5) 42%,rgba(0,0,0,0.15) 75%,transparent 100%);-webkit-mask-image:radial-gradient(ellipse 78% 108% at 50% 0%,black 0%,rgba(0,0,0,0.5) 42%,rgba(0,0,0,0.15) 75%,transparent 100%);mix-blend-mode:screen;" />
+
+				{/if}
+
+				<!-- Card: clean, dark, no tier-based halo. `relative` keeps it at the same paint level as the contamination, with DOM order putting it on top. -->
+				<div class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-success/40 cursor-pointer transition-all duration-200 os-card-breaking">
 				<div class="relative w-full aspect-square">
 					<img
 						src={item.image}
@@ -90,6 +141,15 @@
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.74 0.17 158 / 0.12) 0%, transparent 65%);"
 						aria-hidden="true"
 					></div>
+					{#if item.id === 'ember-field'}
+						<!-- INTERNAL AMBIENT OBJECT GLOW — image-derived highlight bloom inside Ember Field's image area. Ported from the OTB hero card. Constrained to this aspect-square parent (not the text area). -->
+						<img src={item.image} alt="" aria-hidden="true"
+							class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+							style="filter:brightness(0.85) contrast(2.1) saturate(1.05) blur(6px);opacity:0.20;mask-image:radial-gradient(ellipse 62% 85% at 15% 45%,black 0%,rgba(0,0,0,0.55) 38%,rgba(0,0,0,0.18) 68%,transparent 92%);-webkit-mask-image:radial-gradient(ellipse 62% 85% at 15% 45%,black 0%,rgba(0,0,0,0.55) 38%,rgba(0,0,0,0.18) 68%,transparent 92%);mix-blend-mode:screen;" />
+						<img src={item.image} alt="" aria-hidden="true"
+							class="absolute pointer-events-none"
+							style="left:0;top:0;width:2px;height:100%;object-fit:cover;object-position:0 center;filter:brightness(0.95) contrast(1.4) saturate(1.05) blur(2.5px);opacity:0.20;mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,0.4) 10%,black 28%,black 72%,rgba(0,0,0,0.4) 90%,transparent 100%);-webkit-mask-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,0.4) 10%,black 28%,black 72%,rgba(0,0,0,0.4) 90%,transparent 100%);mix-blend-mode:screen;" />
+					{/if}
 					{#if item.tag}
 						<div class="absolute top-2 right-2 z-10">
 							<span
@@ -181,6 +241,7 @@
 						</button>
 					</div>
 				</div>
+			</div>
 			</div>
 		{/each}
 	</div>
