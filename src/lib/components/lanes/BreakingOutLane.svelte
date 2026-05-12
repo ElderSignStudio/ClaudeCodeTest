@@ -3,6 +3,7 @@
 	import { breakingOutItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
+	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
 
 	// Per-card shimmer variables — each card gets distinct width, skew, and delay.
 	const cardVars = [
@@ -217,7 +218,9 @@
 								No truncation — truncate class removed.
 							-->
 							{#if item.spreadReason}
-								<p class="text-[13px] text-zinc-300/82 leading-normal line-clamp-2">{item.spreadReason}</p>
+								<p class="text-[13px] text-zinc-300/82 leading-normal line-clamp-2">
+									{#if item.multiOrigin}<MultiOriginMarker seed={item.id} colorClass="text-accent/25" /> {/if}{item.spreadReason}
+								</p>
 							{/if}
 						</div>
 					{/if}
