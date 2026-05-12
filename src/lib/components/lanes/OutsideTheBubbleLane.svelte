@@ -9,7 +9,7 @@
 	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
 </script>
 
-<section class="relative pt-8 pb-4">
+<section class="relative pt-1 pb-2">
 	<!-- Cyan accent: this lane is cold, not warm like Breaking Out -->
 	<LaneHeader
 		title="Outside the Bubble"

@@ -4,7 +4,7 @@
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 </script>
 
-<section class="relative pt-6 pb-2">
+<section class="relative pt-1 pb-2">
 	<LaneHeader
 		title="Human Signals"
 		subtitle="Scouts shaping the signal network with taste close to yours"

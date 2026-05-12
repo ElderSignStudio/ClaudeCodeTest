@@ -41,18 +41,29 @@
 
 	<div class="mt-5 grid gap-3 pb-2 w-full" style="grid-template-columns: repeat(7, minmax(130px, 1fr));">
 		{#each deepUndergroundItems as item (item.id)}
+			{@const coverDim = item.coverDim === true}
+			<!--
+				`coverDim` cards (Silver Coast, Static Bloom, Zero Archive) carry
+				naturally dim cover art and would cross into "visually broken" with
+				the lane's full darkening stack. They get a small per-card boost:
+				image opacity +7pp, gradient-bottom darkness eased, archival
+				compression skipped, title +6pp opacity. Still well within the
+				lane's "barely surfaced" mood — every other lane stays brighter.
+			-->
 			<div class="group relative rounded-lg overflow-hidden border border-white/3 hover:border-white/5 cursor-pointer transition-colors duration-300 os-card-deep">
 
 				<div class="relative w-full aspect-square">
 					<img
 						src={item.image}
 						alt={item.title}
-						class="w-full h-full object-cover opacity-48 group-hover:opacity-64 transition-opacity duration-500"
+						class={['w-full h-full object-cover group-hover:opacity-64 transition-opacity duration-500', coverDim ? 'opacity-55' : 'opacity-48']}
 					/>
-					<div class="absolute inset-0 bg-linear-to-t from-black/80 via-black/18 to-black/12"></div>
+					<div class={['absolute inset-0 bg-linear-to-t', coverDim ? 'from-black/68 via-black/16 to-black/10' : 'from-black/80 via-black/18 to-black/12']}></div>
 					<div class="absolute inset-0 bg-black/10"></div>
-					<!-- Archival density — uniform very slight tonal compression, DU only -->
-					<div class="absolute inset-0 bg-black/4 pointer-events-none" aria-hidden="true"></div>
+					{#if !coverDim}
+						<!-- Archival density — uniform very slight tonal compression, DU only -->
+						<div class="absolute inset-0 bg-black/4 pointer-events-none" aria-hidden="true"></div>
+					{/if}
 					<div
 						class="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-400 pointer-events-none"
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.75 0.04 265 / 0.07) 0%, transparent 60%);"
@@ -73,7 +84,7 @@
 				</div>
 
 				<div class="p-2 bg-base-300/70">
-					<p class="text-[12px] font-semibold text-base-content/82 truncate leading-snug">{item.title}</p>
+					<p class={['text-[12px] font-semibold truncate leading-snug', coverDim ? 'text-base-content/88' : 'text-base-content/82']}>{item.title}</p>
 					<p class="text-[11px] text-base-content/64 truncate mt-0.5">{item.artist}</p>
 					<!-- Presence first (factual anchor), origin second (flavor) -->
 					<div class="mt-2 space-y-0.5">

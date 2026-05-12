@@ -28,7 +28,7 @@
 	feed-density content.
 -->
 
-<section class="relative pt-14 pb-12">
+<section class="relative pt-7 pb-6">
 
 	<LaneHeader
 		title="Origin Stories"
