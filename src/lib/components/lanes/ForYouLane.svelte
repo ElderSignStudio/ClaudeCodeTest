@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { Radio, RefreshCw } from 'lucide-svelte';
+	import { Radio } from 'lucide-svelte';
 	import { forYouItems } from '$lib/mock/data';
+	import LaneHeader from '$lib/components/LaneHeader.svelte';
+	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 
 	const featuredItem = forYouItems.find(i => i.featured)!;
 	const regularItems = forYouItems.filter(i => !i.featured);
@@ -14,19 +16,13 @@
 </script>
 
 <section class="relative">
-	<div class="flex items-start justify-between w-full">
-		<div class="flex items-start gap-3">
-			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-primary shrink-0" aria-hidden="true"></div>
-			<div>
-				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Best picks for you</p>
-				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals resonating closest to your orbit</p>
-			</div>
-		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/75 hover:text-base-content/90 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
-			Refresh
-			<RefreshCw size={11} class="opacity-90 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
-		</a>
-	</div>
+	<LaneHeader
+		title="Best picks for you"
+		subtitle="Signals resonating closest to your orbit"
+		accentClass="bg-primary"
+		variant="refresh"
+		href="/discover"
+	/>
 
 	<div class="mt-5 grid gap-4 pb-2 w-full items-start" style="grid-template-columns: minmax(320px, 1.55fr) repeat(4, minmax(170px, 1fr));">
 
@@ -170,13 +166,7 @@
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
 						aria-hidden="true"
 					></div>
-					<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-						<div class="w-8 h-8 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-							<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-								<path d="M3 2l8 4-8 4V2z" />
-							</svg>
-						</div>
-					</div>
+					<PlayOverlay size="md" />
 				</div>
 				<div class="px-2.5 pt-2.5 pb-2 bg-base-200/70">
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>

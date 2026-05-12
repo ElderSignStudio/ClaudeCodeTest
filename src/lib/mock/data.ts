@@ -45,6 +45,7 @@ export type GainingItem = {
 	resonance?: number;     // 0–100, drives the resonance bar fill
 	tag?: 'Rising' | 'Surging' | 'Breakthrough';
 	spreadReason?: string;  // how this signal is propagating — editorial phrase from a fixed allowed set
+	emitsAmbientGlow?: boolean;  // marks the card as an "ambient emitter" — gets the image-derived halo/bloom treatment in BreakingOutLane. Editorial decision, decoupled from item identity.
 };
 
 export type HumanSignalItem = {
@@ -136,7 +137,7 @@ export const deepUndergroundItems: Item[] = [
 
 // 4. Breaking Out — signals gaining traction fast
 export const breakingOutItems: GainingItem[] = [
-	{ id: 'ember-field',    title: 'Ember Field',    artist: 'Pale Iris',     scouts: 8,  genre: 'Electronic',   image: coverOf('ember-field'),    growth: 6, trend: 'surging', weeklyScouts: 6,  sparksToday: 2, resonance: 65, tag: 'Surging',      spreadReason: 'Spreading from ambient circles'       },
+	{ id: 'ember-field',    title: 'Ember Field',    artist: 'Pale Iris',     scouts: 8,  genre: 'Electronic',   image: coverOf('ember-field'),    growth: 6, trend: 'surging', weeklyScouts: 6,  sparksToday: 2, resonance: 65, tag: 'Surging',      spreadReason: 'Spreading from ambient circles',      emitsAmbientGlow: true },
 	{ id: 'low-orbit',      title: 'Low Orbit',      artist: 'Contour',       scouts: 14, genre: 'Ambient',      image: coverOf('low-orbit'),      growth: 9, trend: 'surging', weeklyScouts: 9,  sparksToday: 3, resonance: 82, tag: 'Breakthrough', spreadReason: 'Moving beyond its first cluster'      },
 	{ id: 'mirror-static',  title: 'Mirror Static',  artist: 'Pale Signal',   scouts: 5,  genre: 'Drone',        image: coverOf('mirror-static'),  growth: 3, trend: 'rising',  weeklyScouts: 3,  sparksToday: 1, resonance: 38, tag: 'Rising',       spreadReason: 'Crossing into adjacent scenes'        },
 	{ id: 'pale-cathedral', title: 'Pale Cathedral', artist: 'Herd of Birds', scouts: 11, genre: 'Experimental', image: coverOf('pale-cathedral'), growth: 7, trend: 'surging', weeklyScouts: 7,  sparksToday: 2, resonance: 72, tag: 'Surging',      spreadReason: 'Picked up by high-trust scouts'       },
