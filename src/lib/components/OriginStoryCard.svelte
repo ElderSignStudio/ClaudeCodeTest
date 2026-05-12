@@ -7,17 +7,10 @@
 </script>
 
 <!--
-	Cinematic Origin Stories card.
-
-	Wider and significantly taller than the standard StoryCard. Aggressively
-	more whitespace. Diagram is the visual centerpiece — rendered via
-	OriginPropagationDiagram in cinematic mode (taller viewBox = ~60% more
-	rendered height at the same width). Metadata simplified to a single line
-	to remove the dashboard feel.
-
-	Visual language identical to the rest of the product: same border,
-	box-shadow stack, secondary hover color, dark surface fill. Only the
-	cadence — padding, spacing, font scales — differs from StoryCard.
+	Cinematic Origin Stories card. Aggressively spacious — diagram is the
+	visual centerpiece, rendered via OriginPropagationDiagram in cinematic
+	mode (taller viewBox = ~60% more rendered height at the same width).
+	Metadata simplified to a single line to remove the dashboard feel.
 -->
 
 <div

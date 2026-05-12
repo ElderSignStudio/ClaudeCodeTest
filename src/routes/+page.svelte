@@ -91,7 +91,7 @@
 		Two layers preserved exactly: outer wash establishes broad envelope,
 		inner glow concentrates intensity behind the propagation diagrams.
 		Largest envelope (-120px) lets the field fade smoothly into the dark
-		space above (OTB) and below (Drift) without a visible horizontal clip.
+		space above (OTB) and below the lane without a visible horizontal clip.
 	-->
 	<div class="relative">
 		<div class="absolute pointer-events-none" aria-hidden="true" style="top:-120px;bottom:-120px;left:0;right:0;background:radial-gradient(ellipse 92% 85% at 50% 50%,rgba(115,75,200,0.20) 0%,rgba(115,75,200,0.11) 22%,rgba(115,75,200,0.04) 50%,rgba(115,75,200,0.014) 78%,transparent 100%);"></div>

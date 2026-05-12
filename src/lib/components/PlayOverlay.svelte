@@ -5,7 +5,7 @@
 
 		  xs — Deep Underground / OTB supporting echoes  (6px square button)
 		  sm — One Step Away                              (7px square)
-		  md — For You / Breaking Out / Drift             (8px square)
+		  md — For You / Breaking Out                     (8px square)
 		  lg — OTB hero                                   (12px square)
 
 		bg/border alphas are bound to size so the button stays perceptually

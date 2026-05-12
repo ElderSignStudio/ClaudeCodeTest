@@ -22,10 +22,10 @@
 </script>
 
 <!--
-	Symbolic propagation diagram. Same SVG content as the standard StoryCard
-	diagram, but exposes a `cinematic` prop that gives the diagram significantly
-	more vertical presence by enlarging the viewBox without changing any element
-	coordinates. Used by OriginStoryCard for the editorial Origin Stories lane.
+	Symbolic propagation diagram used by OriginStoryCard for the editorial
+	Origin Stories lane. The `cinematic` prop enlarges the viewBox (without
+	changing any element coordinates) so the diagram reads with significantly
+	more vertical presence.
 -->
 
 {#if item.storyType === 'independent-discovery'}

@@ -356,16 +356,6 @@ body {
 
 @layer utilities {
 
-  .os-surface {
-    background-color: oklch(0.135 0.028 265 / 0.75);
-    border: 1px solid oklch(1 0 0 / 0.11);
-    border-radius: 0.75rem;
-    box-shadow:
-      inset 0 1px 0 oklch(1 0 0 / 0.09),
-      0 4px 20px -2px oklch(0 0 0 / 0.45),
-      0 1px 4px -1px oklch(0 0 0 / 0.3);
-  }
-
   .os-surface-raised {
     background-color: oklch(0.13 0.029 265 / 0.45);
     backdrop-filter: blur(24px);
@@ -417,7 +407,7 @@ body {
   }
 
   /*
-    os-card-glow: Standard mid-plane card lift (One Step Away, Drift).
+    os-card-glow: Standard mid-plane card lift (One Step Away).
     Resting: very subtle ring + dark shadow detaches card from background.
     Hover: deepens shadow + faint color bloom.
   */
@@ -458,20 +448,7 @@ body {
   }
 
   /*
-    os-card-deep: Deep Underground lane card.
-    Resting: compressed shadow — appears farther away than standard cards.
-    Cards in this lane should feel denser/flatter by design.
-    Very slight border ring; no color component.
-  */
-  /*
-    os-card-deep: Deep Underground lane card.
-    Resting: compressed, flat shadow — appears farther back than all other cards.
-    Minimal ring; very slight lift. Hover barely responds — these cards resist
-    surfacing. The compressed y-offset (3px vs 8-10px elsewhere) is the key
-    signal: shallow depth reads as distant in the z-stack.
-  */
-  /*
-    Panel elevation language — DU surfaces are RECESSED.
+    os-card-deep: Deep Underground lane card — RECESSED surface.
     Card almost dissolves into the dark lane around it: very faint ring,
     minimal close shadow, and a small inset darkening that pulls the inner
     edges back into shadow. "Emerges from darkness" rather than "floats above it."
@@ -492,27 +469,13 @@ body {
   }
 
   /*
-    os-card-breaking: Breaking Out lane card.
-    Resting: faint success-tinted border ring + real elevation — the card emits
-    slightly, communicating forward momentum. Shadow component deepened vs old
-    value to sit further off the background plane.
-    Hover: success ring brightens + ambient bloom + stronger elevation.
-  */
-  /*
-    os-card-breaking: Breaking Out lane card.
-    Resting: success-tinted ring signals forward momentum. Shadow slightly
-    deeper and wider than standard cards — these exist on the near side of
-    the mid-plane, pushing outward. Hover has stronger border response than
-    any other lane to reinforce the emissive, active identity.
-  */
-  /*
-    Panel elevation language — BO surfaces are the HIGHEST elevation, but the
+    os-card-breaking: Breaking Out lane card — HIGHEST elevation, but the
     elevation comes from edge definition + top highlight + multi-layer shadow,
     NOT from a single big drop shadow. A softer outer shadow combined with a
     closer near-shadow gives the card a physical "slightly closer to viewer"
     presence. The top inset highlight reads as a subtle reflection on the
-    upper edge — what a real lit surface would show. The success-tinted ring
-    is slightly stronger so the propagating energy reads through the edge.
+    upper edge. The success-tinted ring is slightly stronger so the
+    propagating energy reads through the edge.
   */
   .os-card-breaking {
     box-shadow:
