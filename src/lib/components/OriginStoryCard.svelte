@@ -1,6 +1,7 @@
 <script lang="ts">
 	import type { OriginItem } from '$lib/mock/data';
 	import OriginPropagationDiagram from './OriginPropagationDiagram.svelte';
+	import MultiOriginMarker from './MultiOriginMarker.svelte';
 
 	let { item }: { item: OriginItem } = $props();
 </script>
@@ -64,7 +65,7 @@
 			Metadata — single calm line instead of two stacked dashboard lines.
 		-->
 		<p class="mt-7 mb-6 text-[12px] text-base-content/52 leading-normal">
-			First surfaced: {item.seedLocation} · {item.reachedScouts} scouts reached
+			{#if item.multiOrigin}<MultiOriginMarker seed={item.id} colorClass="text-secondary/28" /> {/if}First surfaced: {item.seedLocation} · {item.reachedScouts} scouts reached
 		</p>
 
 		<!--
