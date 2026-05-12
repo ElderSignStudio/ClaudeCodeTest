@@ -74,47 +74,26 @@
 			{@const spike = spikeClass(item.tag)}
 
 			<!--
-				Per-card wrapper. For non-emitting cards (Mirror Static, Pale Cathedral,
-				Ground Hum) this is just a passthrough — the wrapper adds zero visual
-				effect. For the two emitting cards (Ember Field, Low Orbit) it hosts an
-				ambient contamination layer that extends OUTSIDE the card boundaries via
-				negative-offset absolute positioning, ignored by pointer events, blended
-				with mix-blend-mode: screen so the contamination only LIGHTENS the dark
-				environment around the card and leaves brighter areas untouched.
-
-				DOM order is the stacking mechanism: the contamination div is rendered
-				FIRST inside the wrapper, then the card. Both sit at the same paint
-				level (positioned descendants, no z-index), so the later-painted card
-				covers the contamination wherever the card itself is — but the bleed
-				past the wrapper bounds remains visible against the surrounding
-				darkness.
-
-				The card's own `overflow-hidden` does NOT clip the contamination
-				because the contamination is OUTSIDE the card, not inside it.
+				Per-card wrapper. Non-emitter cards pass through with no effect.
+				Emitter cards (`emitsAmbientGlow: true`) host ambient contamination
+				layers that extend OUTSIDE the card via negative-offset absolute
+				siblings with mix-blend-mode: screen — the bleed past the wrapper
+				stays visible against the surrounding darkness, and the card's
+				own overflow-hidden does NOT clip it (the contamination lives
+				outside the card). DOM order is the stacking mechanism:
+				contamination first, card second, so the card paints on top.
 			-->
 			<div class="relative">
 
 				{#if item.emitsAmbientGlow}
 					<!--
-						Ambient-emitter cards get the four-element image-derived
-						glow treatment (external halo + external reflection here
-						in the wrapper, plus internal warm tint and rim inside
-						the image area). Trigger is `emitsAmbientGlow: true` on
-						the data item — editorial, not identity-coupled, so the
-						effect follows the flag wherever the card lands.
-						and rim inside the card's image area (see below).
-
-						Highlight-extraction pipeline: brightness → contrast →
-						saturate → small blur. With screen blend, only the
-						bright pixels of the artwork emit light into the
-						surrounding darkness; dark pixels are crushed by the
-						contrast filter and contribute nothing.
-
-						Sizes scaled for the smaller BO card vs the OTB hero:
-						halo width 25px (was 55px), reflection 36% × 25px
-						(was 36% × 74px), halo height 65% to approximate the
-						image area portion (BO card has image + text, OTB hero
-						is image-only).
+						Image-derived halo (external left) + reflection (external
+						bottom), plus internal warm tint + rim inside the image
+						area (rendered further below). The filter pipeline
+						(brightness → contrast → saturate → small blur) combined
+						with mix-blend-mode: screen means only bright artwork
+						pixels emit light into the surroundings; dark pixels are
+						crushed by contrast and contribute nothing.
 					-->
 					<img src={item.image} alt="" aria-hidden="true"
 						class="absolute pointer-events-none"
