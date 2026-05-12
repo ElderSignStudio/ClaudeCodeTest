@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Radio, Activity, Zap } from 'lucide-svelte';
 	import { breakingOutItems } from '$lib/mock/data';
+	import LaneHeader from '$lib/components/LaneHeader.svelte';
+	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 
 	// Per-card shimmer variables — each card gets distinct width, skew, and delay.
 	const cardVars = [
@@ -56,18 +58,13 @@
 </script>
 
 <section class="relative">
-	<div class="flex items-start justify-between w-full">
-		<div class="flex items-start gap-3">
-			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-success shrink-0" aria-hidden="true"></div>
-			<div>
-				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">Breaking Out</p>
-				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals gaining momentum — help them spread</p>
-			</div>
-		</div>
-		<a href="/discover" class="text-[13px] text-base-content/75 hover:text-success/88 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
-			See all →
-		</a>
-	</div>
+	<LaneHeader
+		title="Breaking Out"
+		subtitle="Signals gaining momentum — help them spread"
+		accentClass="bg-success"
+		linkHoverClass="hover:text-success/88"
+		href="/discover"
+	/>
 
 	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(5, minmax(180px, 1fr));">
 		{#each breakingOutItems as item, i (item.id)}
@@ -96,12 +93,14 @@
 			-->
 			<div class="relative">
 
-				{#if item.id === 'ember-field'}
+				{#if item.emitsAmbientGlow}
 					<!--
-						Ember Field — ambient object glow (EXTERNAL pieces),
-						ported from the Outside the Bubble hero card. Same four-
-						element technique: external halo + external bottom-left
-						reflection here in the wrapper, plus internal warm tint
+						Ambient-emitter cards get the four-element image-derived
+						glow treatment (external halo + external reflection here
+						in the wrapper, plus internal warm tint and rim inside
+						the image area). Trigger is `emitsAmbientGlow: true` on
+						the data item — editorial, not identity-coupled, so the
+						effect follows the flag wherever the card lands.
 						and rim inside the card's image area (see below).
 
 						Highlight-extraction pipeline: brightness → contrast →
@@ -141,8 +140,8 @@
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.74 0.17 158 / 0.12) 0%, transparent 65%);"
 						aria-hidden="true"
 					></div>
-					{#if item.id === 'ember-field'}
-						<!-- INTERNAL AMBIENT OBJECT GLOW — image-derived highlight bloom inside Ember Field's image area. Ported from the OTB hero card. Constrained to this aspect-square parent (not the text area). -->
+					{#if item.emitsAmbientGlow}
+						<!-- INTERNAL AMBIENT OBJECT GLOW — image-derived highlight bloom inside the emitter card's image area. Constrained to this aspect-square parent (not the text area). -->
 						<img src={item.image} alt="" aria-hidden="true"
 							class="absolute inset-0 w-full h-full object-cover pointer-events-none"
 							style="filter:brightness(0.85) contrast(2.1) saturate(1.05) blur(6px);opacity:0.20;mask-image:radial-gradient(ellipse 62% 85% at 15% 45%,black 0%,rgba(0,0,0,0.55) 38%,rgba(0,0,0,0.18) 68%,transparent 92%);-webkit-mask-image:radial-gradient(ellipse 62% 85% at 15% 45%,black 0%,rgba(0,0,0,0.55) 38%,rgba(0,0,0,0.18) 68%,transparent 92%);mix-blend-mode:screen;" />
@@ -158,13 +157,7 @@
 							>{item.tag}</span>
 						</div>
 					{/if}
-					<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-						<div class="w-8 h-8 rounded-full bg-white/22 border border-white/38 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-							<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-								<path d="M3 2l8 4-8 4V2z" />
-							</svg>
-						</div>
-					</div>
+					<PlayOverlay size="md" />
 				</div>
 
 				<div class="p-2.5 bg-base-200/70">

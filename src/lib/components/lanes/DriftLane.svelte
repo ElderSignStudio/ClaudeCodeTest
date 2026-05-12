@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { driftItems } from '$lib/mock/data';
+	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 
 	const cardTints = [
 		'from-primary/20 to-transparent',
@@ -34,13 +35,7 @@
 						style="background: radial-gradient(circle at 50% 50%, oklch(0.68 0.20 265 / 0.10) 0%, transparent 65%);"
 						aria-hidden="true"
 					></div>
-					<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-						<div class="w-8 h-8 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-							<svg class="w-3.5 h-3.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-								<path d="M3 2l8 4-8 4V2z" />
-							</svg>
-						</div>
-					</div>
+					<PlayOverlay size="md" />
 					<div class="absolute bottom-0 left-0 right-0 p-2.5">
 						<p class="text-[13px] font-bold text-white truncate leading-snug">{item.title}</p>
 						<p class="text-[12px] text-white/85 truncate mt-0.5">{item.genre}</p>
