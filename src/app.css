@@ -78,17 +78,6 @@
     0 0 5px -1px oklch(0.72 0.16 220 / 0.50);
 }
 
-/* ─── Resonance bar shimmer (used by DriftSection) ──────── */
-
-/*
-  Slow sweep across a resonance bar fill: 3s, ease-in-out.
-  Defined outside @layer utilities because @keyframes are always global.
-*/
-@keyframes os-shimmer {
-  0%   { transform: translateX(-150%); }
-  100% { transform: translateX(250%); }
-}
-
 /* ─── Deep Underground — presence pulse ─────────────────── */
 
 /*
@@ -480,15 +469,6 @@ body {
         inset 0 1px 0 rgba(255,255,255,0.085);
       transform: translateY(-2px) scale(1.015);
     }
-  }
-
-  /*
-    os-bar-shimmer: applied to the highlight sweep inside a resonance bar.
-    Uses the os-shimmer keyframe. duration-[3s] equivalent but defined here
-    so the timing is co-located with the keyframe declaration above.
-  */
-  .os-bar-shimmer {
-    animation: os-shimmer 3s ease-in-out infinite;
   }
 
   /*

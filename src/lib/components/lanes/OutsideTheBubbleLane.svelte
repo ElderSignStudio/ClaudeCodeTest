@@ -1,26 +1,22 @@
 <script lang="ts">
-	import { Radio, RefreshCw } from 'lucide-svelte';
+	import { Radio } from 'lucide-svelte';
 	import { outsideBubbleItems } from '$lib/mock/data';
+	import LaneHeader from '$lib/components/LaneHeader.svelte';
+	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 
 	const bubbleFeatured = outsideBubbleItems.find(i => i.featured)!;
 	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
 </script>
 
 <section class="relative pt-8 pb-4">
-	<div class="flex items-start justify-between w-full">
-		<div class="flex items-start gap-3">
-			<!-- Cyan section mark — this lane is cold, not warm like Breaking Out -->
-			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-cyan-400/55 shrink-0" aria-hidden="true"></div>
-			<div>
-				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/95">Outside the Bubble</p>
-				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals that crossed into your branch from distant scenes</p>
-			</div>
-		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/75 hover:text-base-content/90 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
-			Refresh
-			<RefreshCw size={11} class="opacity-90 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
-		</a>
-	</div>
+	<!-- Cyan accent: this lane is cold, not warm like Breaking Out -->
+	<LaneHeader
+		title="Outside the Bubble"
+		subtitle="Signals that crossed into your branch from distant scenes"
+		accentClass="bg-cyan-400/55"
+		variant="refresh"
+		href="/discover"
+	/>
 
 	<!--
 		Asymmetric split: hero ~74% / supporting echoes ~26%. Hero still
@@ -80,14 +76,7 @@
 				</span>
 			</div>
 
-			<!-- Play overlay -->
-			<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-				<div class="w-12 h-12 rounded-full bg-white/14 border border-white/28 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-					<svg class="w-4 h-4 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-						<path d="M3 2l8 4-8 4V2z" />
-					</svg>
-				</div>
-			</div>
+			<PlayOverlay size="lg" />
 
 			<!-- Bottom text block — slightly shorter pt so the image dominates more vertically -->
 			<div class="absolute bottom-0 left-0 right-0 px-4 pb-3.5 pt-8">
@@ -149,13 +138,7 @@
 							class="absolute inset-0 w-full h-full object-cover opacity-58 group-hover:opacity-80 transition-opacity duration-300"
 						/>
 						<div class="absolute inset-0 bg-linear-to-br from-cyan-400/6 to-transparent mix-blend-color"></div>
-						<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-							<div class="w-6 h-6 rounded-full bg-white/18 border border-white/30 text-white flex items-center justify-center backdrop-blur-sm">
-								<svg class="w-2.5 h-2.5 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-									<path d="M3 2l8 4-8 4V2z" />
-								</svg>
-							</div>
-						</div>
+						<PlayOverlay size="xs" scaleOnHover={false} />
 					</div>
 
 					<!-- Text block: title → crossing path → explanation → Amplify -->

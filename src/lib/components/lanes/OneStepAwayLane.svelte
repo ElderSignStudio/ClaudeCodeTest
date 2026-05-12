@@ -1,6 +1,8 @@
 <script lang="ts">
-	import { Radio, RefreshCw } from 'lucide-svelte';
+	import { Radio } from 'lucide-svelte';
 	import { oneStepAwayItems } from '$lib/mock/data';
+	import LaneHeader from '$lib/components/LaneHeader.svelte';
+	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 
 	// Badge opacity varies by life state — more momentum = more visible
 	const badgeOpacity: Record<string, number> = {
@@ -19,19 +21,13 @@
 </script>
 
 <section class="relative">
-	<div class="flex items-start justify-between w-full">
-		<div class="flex items-start gap-3">
-			<div class="mt-0.5 w-0.5 h-5 rounded-full bg-accent shrink-0" aria-hidden="true"></div>
-			<div>
-				<p class="text-sm font-bold uppercase tracking-widest leading-tight text-base-content/90">One Step Away</p>
-				<p class="mt-0.5 text-[13px] leading-normal text-base-content/72 max-w-105">Signals discovered by scouts just outside your taste orbit</p>
-			</div>
-		</div>
-		<a href="/discover" class="group flex items-center gap-1.5 text-[13px] text-base-content/75 hover:text-base-content/90 transition-colors shrink-0" style="margin-right: clamp(0px, 6vw - 48px, 120px);">
-			Refresh
-			<RefreshCw size={11} class="opacity-90 transition-transform duration-500 group-hover:rotate-180 group-hover:opacity-100" />
-		</a>
-	</div>
+	<LaneHeader
+		title="One Step Away"
+		subtitle="Signals discovered by scouts just outside your taste orbit"
+		accentClass="bg-accent"
+		variant="refresh"
+		href="/discover"
+	/>
 
 	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(6, minmax(150px, 1fr));">
 		{#each oneStepAwayItems as item (item.id)}
@@ -63,13 +59,7 @@
 							{item.lifeLabel ?? 'Emerging'}
 						</span>
 					</div>
-					<div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-						<div class="w-7 h-7 rounded-full bg-white/20 border border-white/35 text-white flex items-center justify-center backdrop-blur-sm scale-90 group-hover:scale-100 transition-transform duration-200">
-							<svg class="w-3 h-3 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
-								<path d="M3 2l8 4-8 4V2z" />
-							</svg>
-						</div>
-					</div>
+					<PlayOverlay size="sm" />
 				</div>
 				<div class="pt-2.5 pr-2.5 pb-2 pl-3.5 bg-base-200/70">
 					<!-- 1. Title -->
