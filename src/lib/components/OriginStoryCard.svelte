@@ -2,6 +2,7 @@
 	import type { OriginItem } from '$lib/mock/data';
 	import OriginPropagationDiagram from './OriginPropagationDiagram.svelte';
 	import MultiOriginMarker from './MultiOriginMarker.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	let { item }: { item: OriginItem } = $props();
 </script>
@@ -16,6 +17,11 @@
 <div
 	class="group h-full rounded-xl border border-white/6 bg-base-200/40 cursor-pointer transition-all duration-250 hover:border-secondary/22 hover:bg-base-200/55 flex flex-col"
 	style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 8px 22px rgba(0,0,0,0.26), inset 0 1px 0 rgba(255,255,255,0.025), inset 0 -1px 0 rgba(0,0,0,0.22), inset 0 0 28px rgba(0,0,0,0.16);"
+	onclick={(e) => navigateToItem(item.id, e)}
+	onkeydown={(e) => navigateToItemKey(item.id, e)}
+	role="button"
+	tabindex="0"
+	aria-label={`View ${item.title}`}
 >
 	<div class="p-7 flex-1 flex flex-col">
 

@@ -3,6 +3,7 @@
 	import { forYouItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	const featuredItem = forYouItems.find(i => i.featured)!;
 	const regularItems = forYouItems.filter(i => !i.featured);
@@ -36,7 +37,14 @@
 			feathered gradient show through it, so the artwork bleeds seamlessly into the
 			content area. No hard edge; no panel.
 		-->
-		<div class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/36 os-hero-card flex flex-col min-h-72">
+		<div
+			class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/36 os-hero-card flex flex-col min-h-72"
+			onclick={(e) => navigateToItem(featuredItem.id, e)}
+			onkeydown={(e) => navigateToItemKey(featuredItem.id, e)}
+			role="button"
+			tabindex="0"
+			aria-label={`View ${featuredItem.title}`}
+		>
 
 			<!--
 				Image covers the ENTIRE card (spacer + text zone) via absolute inset-0
@@ -151,7 +159,14 @@
 
 		<!-- Standard cards -->
 		{#each regularItems as item, i (item.id)}
-			<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/20 transition-all duration-250 os-card-refined">
+			<div
+				class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/20 transition-all duration-250 os-card-refined"
+				onclick={(e) => navigateToItem(item.id, e)}
+				onkeydown={(e) => navigateToItemKey(item.id, e)}
+				role="button"
+				tabindex="0"
+				aria-label={`View ${item.title}`}
+			>
 				<div class="relative aspect-square w-full">
 					<img
 						src={item.image}
