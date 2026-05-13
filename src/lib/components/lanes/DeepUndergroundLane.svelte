@@ -3,6 +3,7 @@
 	import { deepUndergroundItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	// Capped scout count: minimum 1 (never show 0), maximum 3
 	function capped(scouts: number): number {
@@ -50,7 +51,14 @@
 				compression skipped, title +6pp opacity. Still well within the
 				lane's "barely surfaced" mood — every other lane stays brighter.
 			-->
-			<div class="group relative rounded-lg overflow-hidden border border-white/3 hover:border-white/5 cursor-pointer transition-colors duration-300 os-card-deep">
+			<div
+				class="group relative rounded-lg overflow-hidden border border-white/3 hover:border-white/5 cursor-pointer transition-colors duration-300 os-card-deep"
+				onclick={(e) => navigateToItem(item.id, e)}
+				onkeydown={(e) => navigateToItemKey(item.id, e)}
+				role="button"
+				tabindex="0"
+				aria-label={`View ${item.title}`}
+			>
 
 				<div class="relative w-full aspect-square">
 					<img

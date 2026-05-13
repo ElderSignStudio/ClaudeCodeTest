@@ -4,6 +4,7 @@
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	// Badge opacity varies by life state — more momentum = more visible
 	const badgeOpacity: Record<string, number> = {
@@ -32,7 +33,14 @@
 
 	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(6, minmax(150px, 1fr));">
 		{#each oneStepAwayItems as item (item.id)}
-			<div class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-accent/40 cursor-pointer transition-all duration-200 os-card-glow">
+			<div
+				class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-accent/40 cursor-pointer transition-all duration-200 os-card-glow"
+				onclick={(e) => navigateToItem(item.id, e)}
+				onkeydown={(e) => navigateToItemKey(item.id, e)}
+				role="button"
+				tabindex="0"
+				aria-label={`View ${item.title}`}
+			>
 				<div
 					class="absolute left-0 top-0 bottom-0 w-0.75 bg-accent/30 group-hover:bg-accent/55 transition-colors duration-200 z-10"
 					aria-hidden="true"

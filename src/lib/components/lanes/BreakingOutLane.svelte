@@ -4,6 +4,7 @@
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	// Per-card shimmer variables — each card gets distinct width, skew, and delay.
 	const cardVars = [
@@ -105,7 +106,14 @@
 				{/if}
 
 				<!-- Card: clean, dark, no tier-based halo. `relative` keeps it at the same paint level as the contamination, with DOM order putting it on top. -->
-				<div class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-success/40 cursor-pointer transition-all duration-200 os-card-breaking">
+				<div
+					class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-success/40 cursor-pointer transition-all duration-200 os-card-breaking"
+					onclick={(e) => navigateToItem(item.id, e)}
+					onkeydown={(e) => navigateToItemKey(item.id, e)}
+					role="button"
+					tabindex="0"
+					aria-label={`View ${item.title}`}
+				>
 				<div class="relative w-full aspect-square">
 					<img
 						src={item.image}

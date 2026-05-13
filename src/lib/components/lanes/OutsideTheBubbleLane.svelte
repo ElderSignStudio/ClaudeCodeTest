@@ -4,6 +4,7 @@
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	const bubbleFeatured = outsideBubbleItems.find(i => i.featured)!;
 	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
@@ -33,6 +34,11 @@
 		<div
 			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/15 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
 			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.10), 0 8px 28px rgba(0,0,0,0.28), 0 2px 6px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.04);"
+			onclick={(e) => navigateToItem(bubbleFeatured.id, e)}
+			onkeydown={(e) => navigateToItemKey(bubbleFeatured.id, e)}
+			role="button"
+			tabindex="0"
+			aria-label={`View ${bubbleFeatured.title}`}
 		>
 			<img
 				src={bubbleFeatured.image}
@@ -131,7 +137,14 @@
 					Hover adds a faint cyan border ring — "nearby anomaly" feel.
 					-mx-1.5 + px-1.5 so the ring extends slightly beyond the text column.
 				-->
-				<div class="group flex gap-3 cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 border border-transparent hover:bg-cyan-400/4 hover:border-cyan-300/8 transition-all duration-250">
+				<div
+					class="group flex gap-3 cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 border border-transparent hover:bg-cyan-400/4 hover:border-cyan-300/8 transition-all duration-250"
+					onclick={(e) => navigateToItem(item.id, e)}
+					onkeydown={(e) => navigateToItemKey(item.id, e)}
+					role="button"
+					tabindex="0"
+					aria-label={`View ${item.title}`}
+				>
 
 					<!-- Thumbnail — slightly taller than before (h-16 vs h-14) -->
 					<div class="relative w-20 h-16 rounded-md overflow-hidden shrink-0">
