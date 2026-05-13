@@ -57,14 +57,21 @@ export type GainingItem = {
 	routeNarrative: string;      // editorial one-line route phrasing rendered on the card
 };
 
+/*
+	Origin Stories propagation story types.
+
+	Outer Signal's propagation model is a FOREST of independent trees: signals
+	do not merge, branches never converge, each user has exactly one origin
+	for an item. These 5 story types describe the editorially interesting
+	shapes that emerge in that forest — they are about how propagation
+	UNFOLDS, not how paths "reach" a signal.
+*/
 export type StoryType =
-	| 'independent-discovery'
-	| 'bridge-crossing'
-	| 'slow-burn'
-	| 'sudden-bloom'
-	| 'convergent-paths'
-	| 'isolated-artifact'
-	| 'origin-hub';
+	| 'independent-origins'   // multiple isolated roots discovered the signal in parallel
+	| 'cross-scene-spread'    // one origin diverged into distinct cultural ecosystems
+	| 'dormant-breakout'      // sparse early chain, then sudden network ignition
+	| 'quiet-persistence'     // a small branch quietly kept the signal alive over time
+	| 'bridge-scout-event';   // a single scout connected two otherwise distant scenes
 
 export type OriginItem = {
 	id: string;
@@ -229,33 +236,50 @@ export const outsideBubbleItems: Item[] = [
 ];
 
 // 7. Origin Stories — global historical propagation, NOT personal discovery routes.
-// This lane intentionally documents how signals evolved through the network, so
-// multi-origin framing remains valid here. No sourceScoutId / routeNarrative.
+// This lane intentionally documents how signals evolved through the network.
+// `multiOrigin` remains valid here only for stories where the data literally is
+// multi-origin (independent-origins). Other story types have a single origin
+// but diverge / breakout / persist / bridge from there.
 export const originItems: OriginItem[] = [
 	{
 		id: 'forest-mouth',    title: 'Forest Mouth',    artist: 'Haul',            genre: 'Experimental',
 		image: coverOf('forest-mouth'), reachedScouts: 18, discoveries: 3,
-		branch:       'Branch growing from Łódź',
-		headline:     'Three scouts found this independently before it spread',
+		branch:       'Independent origins across separate scenes',
+		headline:     'Three scouts surfaced this independently before it spread',
 		seedLocation: 'Łódź',
-		storyType:    'independent-discovery',
+		storyType:    'independent-origins',
 		multiOrigin:  true,
 	},
 	{
 		id: 'iron-coast',      title: 'Iron Coast',      artist: 'The Meridian',    genre: 'Drone',
-		image: coverOf('iron-coast'), reachedScouts: 12, discoveries: 2,
-		branch:       'Spreading from Halifax',
-		headline:     'Two separate paths reached the same signal from different scenes',
+		image: coverOf('iron-coast'), reachedScouts: 12, discoveries: 1,
+		branch:       'Cross-scene divergence from Halifax',
+		headline:     'Ambient and industrial branches carried this signal in different directions',
 		seedLocation: 'Halifax',
-		storyType:    'convergent-paths',
-		multiOrigin:  true,
+		storyType:    'cross-scene-spread',
 	},
 	{
 		id: 'weight-of-cloud', title: 'Weight of Cloud', artist: 'Six Months',      genre: 'Ambient',
-		image: coverOf('weight-of-cloud'), reachedScouts: 31, discoveries: 6,
-		branch:       'Started in Copenhagen',
-		headline:     'From one spark in Copenhagen to 31 scouts across six branches',
+		image: coverOf('weight-of-cloud'), reachedScouts: 31, discoveries: 1,
+		branch:       'Dormant for weeks before the network noticed',
+		headline:     'Months underground, then rapid propagation',
 		seedLocation: 'Copenhagen',
-		storyType:    'origin-hub',
+		storyType:    'dormant-breakout',
+	},
+	{
+		id: 'radio-silt',      title: 'Radio Silt',      artist: 'Current Source',  genre: 'Electronic',
+		image: coverOf('radio-silt'), reachedScouts: 4, discoveries: 1,
+		branch:       'Persistent low-volume circulation',
+		headline:     'A small branch quietly kept this signal alive for years',
+		seedLocation: 'Reykjavík',
+		storyType:    'quiet-persistence',
+	},
+	{
+		id: 'still-margin',    title: 'Still Margin',    artist: 'Null Point',      genre: 'Experimental',
+		image: coverOf('still-margin'), reachedScouts: 14, discoveries: 1,
+		branch:       'Single bridge connection across scenes',
+		headline:     'One scout bridged two distant listening circles',
+		seedLocation: 'Vienna',
+		storyType:    'bridge-scout-event',
 	},
 ];
