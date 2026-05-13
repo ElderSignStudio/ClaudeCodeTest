@@ -3,7 +3,6 @@
 	import { outsideBubbleItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
-	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
 	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	const bubbleFeatured = outsideBubbleItems.find(i => i.featured)!;
@@ -96,20 +95,16 @@
 				-->
 				{#if bubbleFeatured.crossingPath}
 					<p class="font-mono text-[11px] text-cyan-300/58 mb-3.5 tracking-wide">
-						{#if bubbleFeatured.multiOrigin}<MultiOriginMarker seed={bubbleFeatured.id} colorClass="text-cyan-300/28" /> {/if}{bubbleFeatured.crossingPath}
+						{bubbleFeatured.crossingPath}
 					</p>
 				{/if}
 
 				<!--
-					CROSSING PATHS: replaces "WHY THIS IS HERE".
-					Label is tiny, uppercase, muted. Explanatory line is calm prose, not promotional.
+					Discovery route — bridge scout. No section label; the
+					crossingPath line above already communicates the "crossing
+					scenes" idea visually.
 				-->
-				{#if bubbleFeatured.whyHere}
-					<div class="mb-4">
-						<p class="text-[10px] font-semibold uppercase tracking-widest mb-1.5 text-cyan-300/52">Crossing paths</p>
-						<p class="text-xs leading-relaxed text-white/78">{bubbleFeatured.whyHere}</p>
-					</div>
-				{/if}
+				<p class="text-xs leading-relaxed text-white/78 mb-4">{bubbleFeatured.routeNarrative}</p>
 
 				<button
 					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/46 bg-black/40 hover:bg-accent/22 hover:border-accent/65 transition-all backdrop-blur-sm"
@@ -167,13 +162,12 @@
 						-->
 						{#if item.crossingPath}
 							<p class="font-mono text-[11px] text-cyan-300/55 mt-0.5 tracking-wide">
-								{#if item.multiOrigin}<MultiOriginMarker seed={item.id} colorClass="text-cyan-300/28" /> {/if}{item.crossingPath}
+								{item.crossingPath}
 							</p>
 						{/if}
 
-						{#if item.whyHere}
-							<p class="text-[12px] leading-normal text-base-content/68 mt-1.5 mb-2 line-clamp-2">{item.whyHere}</p>
-						{/if}
+						<!-- Discovery route — kept quieter so the title still leads. -->
+						<p class="text-[12px] leading-normal text-base-content/52 mt-1.5 mb-2 line-clamp-2">{item.routeNarrative}</p>
 
 						<button
 							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/82 border border-accent/36 hover:bg-accent/16 hover:border-accent/54 hover:text-accent transition-all"

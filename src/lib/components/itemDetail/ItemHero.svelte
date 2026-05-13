@@ -21,11 +21,14 @@
 
 	// One-line contextual sub-copy assembled from whichever editorial fields
 	// the source lane provides. Falls back gracefully if all are absent.
+	// Hero contextual sub-copy:
+	//  - Origin Stories items lead with their historical narrative headline.
+	//  - Every other item uses its singular discovery route. Fallback chain
+	//    keeps spread/whisper editorial text available for items that have it.
 	const contextLine = $derived(
 		item.headline
+			?? item.routeNarrative
 			?? item.spreadReason
-			?? item.whyHere
-			?? item.resonanceContext
 			?? item.whisperHint
 			?? null,
 	);

@@ -4,6 +4,21 @@
 	All arrays are shaped like real API responses so load() functions
 	can replace these imports directly when a backend is added.
 
+	── Discovery-route IA (current rule) ────────────────────────────
+	Every visible item card on the homepage resolves to ONE specific
+	source scout (`sourceScoutId`) and ONE editorial route phrasing
+	(`routeNarrative`). Internally the recommendation engine may use
+	multi-origin / propagation overlap / adjacency scoring, but the
+	feed surface always presents a singular discovery context.
+
+	The SAME item may legitimately appear in multiple lanes through
+	different routes — that's a feature, not a bug. Each represents a
+	different cultural pathway into the same signal.
+
+	Origin Stories is the ONE exception: it documents how a signal
+	spread historically through the network, so multi-origin framing
+	remains valid there (see `OriginItem.multiOrigin`).
+
 	Images: Spotify artwork from data/home-seed.spotify.json.
 */
 
@@ -18,14 +33,12 @@ export type Item = {
 	type?: 'Song' | 'Album';
 	image: string;
 	featured?: boolean;
-	adjacencyReason?: string;
 	lifeLabel?: 'Early' | 'Emerging' | 'Quiet' | 'Spreading'; // signal momentum label for One Step Away lane
 	whisperHint?: string;      // editorial hint for Deep Underground lane — one of a fixed allowed set
-	whyHere?: string;          // network-distance explanation for Outside the Bubble lane
-	crossingPath?: string;     // scene-crossing metadata, e.g. "ambient → spiritual jazz"
-	orbitState?: string;       // proximity-based pill label for Best Picks lane, e.g. "Closely Orbiting"
-	resonanceContext?: string; // network resonance context line for Best Picks lane
-	multiOrigin?: boolean;     // signal emerged independently from multiple scout circles — surfaces a tiny topology marker in the metadata region
+	crossingPath?: string;     // scene-crossing data for Outside the Bubble, e.g. "ambient → spiritual jazz"
+	orbitState?: string;       // taste-proximity pill for Best Picks lane, e.g. "Closely Orbiting"
+	sourceScoutId: string;     // single discovery route — scoutItems.id of the route's source scout
+	routeNarrative: string;    // editorial one-line route phrasing rendered on the card
 	coverDim?: boolean;        // Deep Underground only: cover artwork is naturally dim/low-contrast. Triggers a small readability boost so the card doesn't cross from "barely surfaced" into "visually broken."
 };
 
@@ -38,9 +51,10 @@ export type GainingItem = {
 	image: string;
 	weeklyScouts?: number;       // new scouts added this week — rendered inside the heat pill
 	tag?: 'Rising' | 'Surging' | 'Breakthrough';
-	spreadReason?: string;       // how this signal is propagating — editorial phrase from a fixed allowed set
+	spreadReason?: string;       // momentum language — how the signal is propagating (kept alongside the route narrative)
 	emitsAmbientGlow?: boolean;  // marks the card as an "ambient emitter" — gets the image-derived halo/bloom treatment in BreakingOutLane
-	multiOrigin?: boolean;       // signal emerged independently from multiple scout circles — surfaces a tiny topology marker in the metadata region
+	sourceScoutId: string;       // single discovery route — scoutItems.id of the source branch
+	routeNarrative: string;      // editorial one-line route phrasing rendered on the card
 };
 
 export type StoryType =
@@ -64,7 +78,7 @@ export type OriginItem = {
 	headline: string;       // narrative sentence for the Story Card
 	seedLocation: string;   // where the signal originated
 	storyType: StoryType;   // determines the symbolic diagram grammar
-	multiOrigin?: boolean;  // signal emerged independently from multiple scout circles — surfaces a tiny topology marker in the metadata region
+	multiOrigin?: boolean;  // Origin Stories remains historically multi-origin — surfaces the topology marker
 };
 
 // Build a lookup of Spotify cover URLs keyed by item id
@@ -91,43 +105,43 @@ function coverOf(id: string): string {
 	return _spotifyCovers.get(id) ?? '';
 }
 
-// 1. For You — personalized signals based on user taste
+// 1. For You — strongest discovery routes converging around your taste.
 export const forYouItems: Item[] = [
-	{ id: 'frozen-sun',         title: 'Frozen Sun',         artist: 'Obscure Slovenian Band', scouts: 1,  genre: 'Ambient',      type: 'Song',  image: coverOf('frozen-sun'),         featured: true, orbitState: 'Closely Orbiting', resonanceContext: 'Resonating across your late-night ambient branch'      },
-	{ id: 'night-forest',       title: 'Night Forest',       artist: 'Pale Atelier',           scouts: 53, genre: 'Drone',        type: 'Album', image: coverOf('night-forest'),                        orbitState: 'Strong Resonance',  resonanceContext: 'Reappearing among scouts you follow'                    },
-	{ id: 'wolves-under-glass', title: 'Wolves Under Glass', artist: 'Aesthian Ritual',        scouts: 7,  genre: 'Experimental', type: 'Song',  image: coverOf('wolves-under-glass'),                  orbitState: 'Near Your Branch',  resonanceContext: 'Quiet overlap with your drone listening patterns'       },
-	{ id: 'ashes-in-snow',      title: 'Ashes in Snow',      artist: 'Meridian Depth',         scouts: 12, genre: 'Folk',         type: 'Song',  image: coverOf('ashes-in-snow'),                       orbitState: 'Quiet Match',       resonanceContext: 'Surfacing near your experimental folk orbit'            },
-	{ id: 'pale-static',        title: 'Pale Static',        artist: 'Meridian Line',          scouts: 4,  genre: 'Electronic',   type: 'Song',  image: coverOf('pale-static'),                         orbitState: 'Drifting Closer',   resonanceContext: 'Frequently amplified by adjacent ambient scouts'        },
+	{ id: 'frozen-sun',         title: 'Frozen Sun',         artist: 'Obscure Slovenian Band', scouts: 1,  genre: 'Ambient',      type: 'Song',  image: coverOf('frozen-sun'),         featured: true, orbitState: 'Closely Orbiting', sourceScoutId: 'marco', routeNarrative: "Through Marco's ambient orbit" },
+	{ id: 'night-forest',       title: 'Night Forest',       artist: 'Pale Atelier',           scouts: 53, genre: 'Drone',        type: 'Album', image: coverOf('night-forest'),                        orbitState: 'Strong Resonance',  sourceScoutId: 'alice', routeNarrative: "via Alice"                     },
+	{ id: 'wolves-under-glass', title: 'Wolves Under Glass', artist: 'Aesthian Ritual',        scouts: 7,  genre: 'Experimental', type: 'Song',  image: coverOf('wolves-under-glass'),                  orbitState: 'Near Your Branch',  sourceScoutId: 'yuki',  routeNarrative: "Yuki orbit"                    },
+	{ id: 'ashes-in-snow',      title: 'Ashes in Snow',      artist: 'Meridian Depth',         scouts: 12, genre: 'Folk',         type: 'Song',  image: coverOf('ashes-in-snow'),                       orbitState: 'Quiet Match',       sourceScoutId: 'dan',   routeNarrative: "Dan folk listening"            },
+	{ id: 'pale-static',        title: 'Pale Static',        artist: 'Meridian Line',          scouts: 4,  genre: 'Electronic',   type: 'Song',  image: coverOf('pale-static'),                         orbitState: 'Drifting Closer',   sourceScoutId: 'marco', routeNarrative: "Marco branch"                  },
 ];
 
-// 2. One Step Away — adjacent discovery, related but not obvious
+// 2. One Step Away — signals entering your orbit through adjacent scouts.
 export const oneStepAwayItems: Item[] = [
-	{ id: 'edge-of-field',  title: 'Edge of Field',  artist: 'Dusk Bureau',  scouts: 6,  genre: 'Ambient',      image: coverOf('edge-of-field'),  adjacencyReason: 'From scouts who explore ambient',              lifeLabel: 'Emerging'  },
-	{ id: 'iron-weather',   title: 'Iron Weather',   artist: 'Pale Motion',  scouts: 9,  genre: 'Drone',        image: coverOf('iron-weather'),   adjacencyReason: 'From scouts exploring adjacent genres',         lifeLabel: 'Spreading', multiOrigin: true },
-	{ id: 'soft-collapse',  title: 'Soft Collapse',  artist: 'Terrain',      scouts: 3,  genre: 'Electronic',   image: coverOf('soft-collapse'),  adjacencyReason: 'From scouts with similar taste',                lifeLabel: 'Early'     },
-	{ id: 'slow-satellite', title: 'Slow Satellite', artist: 'White Canvas', scouts: 11, genre: 'Experimental', image: coverOf('slow-satellite'), adjacencyReason: 'From listeners close to your orbit',            lifeLabel: 'Spreading', multiOrigin: true },
-	{ id: 'minor-current',  title: 'Minor Current',  artist: 'Field Notes',  scouts: 2,  genre: 'Folk',         image: coverOf('minor-current'),  adjacencyReason: 'From nearby listening circles',                 lifeLabel: 'Quiet'     },
-	{ id: 'glass-signal',   title: 'Glass Signal',   artist: 'Pale Archive', scouts: 5,  genre: 'Post-Rock',    image: coverOf('glass-signal'),   adjacencyReason: 'From scouts exploring outside your usual taste', lifeLabel: 'Emerging'  },
+	{ id: 'edge-of-field',  title: 'Edge of Field',  artist: 'Dusk Bureau',  scouts: 6,  genre: 'Ambient',      image: coverOf('edge-of-field'),  lifeLabel: 'Emerging',  sourceScoutId: 'marco', routeNarrative: "Marco branch"      },
+	{ id: 'iron-weather',   title: 'Iron Weather',   artist: 'Pale Motion',  scouts: 9,  genre: 'Drone',        image: coverOf('iron-weather'),   lifeLabel: 'Spreading', sourceScoutId: 'alice', routeNarrative: "via Alice"         },
+	{ id: 'soft-collapse',  title: 'Soft Collapse',  artist: 'Terrain',      scouts: 3,  genre: 'Electronic',   image: coverOf('soft-collapse'),  lifeLabel: 'Early',     sourceScoutId: 'dan',   routeNarrative: "Dan orbit"         },
+	{ id: 'slow-satellite', title: 'Slow Satellite', artist: 'White Canvas', scouts: 11, genre: 'Experimental', image: coverOf('slow-satellite'), lifeLabel: 'Spreading', sourceScoutId: 'yuki',  routeNarrative: "via Yuki"          },
+	{ id: 'minor-current',  title: 'Minor Current',  artist: 'Field Notes',  scouts: 2,  genre: 'Folk',         image: coverOf('minor-current'),  lifeLabel: 'Quiet',     sourceScoutId: 'dan',   routeNarrative: "via Dan"           },
+	{ id: 'glass-signal',   title: 'Glass Signal',   artist: 'Pale Archive', scouts: 5,  genre: 'Post-Rock',    image: coverOf('glass-signal'),   lifeLabel: 'Emerging',  sourceScoutId: 'marco', routeNarrative: "Through Marco"     },
 ];
 
-// 3. Deep Underground — very obscure, barely discovered
+// 3. Deep Underground — signals barely propagated through the network yet.
 export const deepUndergroundItems: Item[] = [
-	{ id: 'dust-choir',    title: 'Dust Choir',    artist: 'Mare Internum',   scouts: 1, genre: 'Ambient',      image: coverOf('dust-choir'),    whisperHint: 'Barely surfaced'                      },
-	{ id: 'neon-veda',     title: 'Neon Veda',     artist: '3 Scouts',        scouts: 3, genre: 'Electronic',   image: coverOf('neon-veda'),     whisperHint: 'Circulating quietly in small circles' },
-	{ id: 'orbital-form',  title: 'Orbital Form',  artist: 'Ultra Obscure',   scouts: 0, genre: 'Experimental', image: coverOf('orbital-form'),  whisperHint: 'No clear origin yet'                  },
-	{ id: 'silver-coast',  title: 'Silver Coast',  artist: 'Unnamed Project', scouts: 1, genre: 'Folk',         image: coverOf('silver-coast'),  whisperHint: 'Found in isolation, off the grid',    coverDim: true },
-	{ id: 'hollow-ritual', title: 'Hollow Ritual', artist: 'Cave Press',      scouts: 2, genre: 'Drone',        image: coverOf('hollow-ritual'), whisperHint: 'One scout found it before anyone else' },
-	{ id: 'static-bloom',  title: 'Static Bloom',  artist: 'Margin Signal',   scouts: 1, genre: 'Ambient',      image: coverOf('static-bloom'),  whisperHint: 'Found at the edge of the map',        coverDim: true },
-	{ id: 'zero-archive',  title: 'Zero Archive',  artist: 'Unknown',         scouts: 0, genre: 'Experimental', image: coverOf('zero-archive'),  whisperHint: 'Untracked signal',                    coverDim: true },
+	{ id: 'dust-choir',    title: 'Dust Choir',    artist: 'Mare Internum',   scouts: 1, genre: 'Ambient',      image: coverOf('dust-choir'),    whisperHint: 'Barely surfaced',                      sourceScoutId: 'marco', routeNarrative: "Marco archive"            },
+	{ id: 'neon-veda',     title: 'Neon Veda',     artist: '3 Scouts',        scouts: 3, genre: 'Electronic',   image: coverOf('neon-veda'),     whisperHint: 'Circulating quietly in small circles', sourceScoutId: 'alice', routeNarrative: "Alice archive"            },
+	{ id: 'orbital-form',  title: 'Orbital Form',  artist: 'Ultra Obscure',   scouts: 0, genre: 'Experimental', image: coverOf('orbital-form'),  whisperHint: 'No clear origin yet',                  sourceScoutId: 'yuki',  routeNarrative: "First carried by Yuki"    },
+	{ id: 'silver-coast',  title: 'Silver Coast',  artist: 'Unnamed Project', scouts: 1, genre: 'Folk',         image: coverOf('silver-coast'),  whisperHint: 'Found in isolation, off the grid',     sourceScoutId: 'dan',   routeNarrative: "Dan transmission",        coverDim: true },
+	{ id: 'hollow-ritual', title: 'Hollow Ritual', artist: 'Cave Press',      scouts: 2, genre: 'Drone',        image: coverOf('hollow-ritual'), whisperHint: 'One scout found it before anyone else', sourceScoutId: 'marco', routeNarrative: "Marco transmission"       },
+	{ id: 'static-bloom',  title: 'Static Bloom',  artist: 'Margin Signal',   scouts: 1, genre: 'Ambient',      image: coverOf('static-bloom'),  whisperHint: 'Found at the edge of the map',         sourceScoutId: 'alice', routeNarrative: "First carried by Alice",  coverDim: true },
+	{ id: 'zero-archive',  title: 'Zero Archive',  artist: 'Unknown',         scouts: 0, genre: 'Experimental', image: coverOf('zero-archive'),  whisperHint: 'Untracked signal',                     sourceScoutId: 'yuki',  routeNarrative: "Yuki archive",            coverDim: true },
 ];
 
-// 4. Breaking Out — signals gaining traction fast
+// 4. Breaking Out — signals accelerating through the network from specific branches.
 export const breakingOutItems: GainingItem[] = [
-	{ id: 'ember-field',    title: 'Ember Field',    artist: 'Pale Iris',     scouts: 8,  genre: 'Electronic',   image: coverOf('ember-field'),    weeklyScouts: 6,  tag: 'Surging',      spreadReason: 'Spreading from ambient circles',      emitsAmbientGlow: true, multiOrigin: true },
-	{ id: 'low-orbit',      title: 'Low Orbit',      artist: 'Contour',       scouts: 14, genre: 'Ambient',      image: coverOf('low-orbit'),      weeklyScouts: 9,  tag: 'Breakthrough', spreadReason: 'Moving beyond its first cluster',     multiOrigin: true      },
-	{ id: 'mirror-static',  title: 'Mirror Static',  artist: 'Pale Signal',   scouts: 5,  genre: 'Drone',        image: coverOf('mirror-static'),  weeklyScouts: 3,  tag: 'Rising',       spreadReason: 'Crossing into adjacent scenes'        },
-	{ id: 'pale-cathedral', title: 'Pale Cathedral', artist: 'Herd of Birds', scouts: 11, genre: 'Experimental', image: coverOf('pale-cathedral'), weeklyScouts: 7,  tag: 'Surging',      spreadReason: 'Picked up by high-trust scouts',      multiOrigin: true      },
-	{ id: 'ground-hum',     title: 'Ground Hum',     artist: 'Vessel',        scouts: 3,  genre: 'Electronic',   image: coverOf('ground-hum'),     weeklyScouts: 2,  tag: 'Rising',       spreadReason: 'Reaching new listening circles'       },
+	{ id: 'ember-field',    title: 'Ember Field',    artist: 'Pale Iris',     scouts: 8,  genre: 'Electronic',   image: coverOf('ember-field'),    weeklyScouts: 6,  tag: 'Surging',      spreadReason: 'Spreading from ambient circles', emitsAmbientGlow: true, sourceScoutId: 'alice', routeNarrative: "Alice's ambient branch"      },
+	{ id: 'low-orbit',      title: 'Low Orbit',      artist: 'Contour',       scouts: 14, genre: 'Ambient',      image: coverOf('low-orbit'),      weeklyScouts: 9,  tag: 'Breakthrough', spreadReason: 'Moving beyond its first cluster',                         sourceScoutId: 'marco', routeNarrative: "Marco's drone orbit"         },
+	{ id: 'mirror-static',  title: 'Mirror Static',  artist: 'Pale Signal',   scouts: 5,  genre: 'Drone',        image: coverOf('mirror-static'),  weeklyScouts: 3,  tag: 'Rising',       spreadReason: 'Crossing into adjacent scenes',                           sourceScoutId: 'dan',   routeNarrative: "Dan's drone archive"         },
+	{ id: 'pale-cathedral', title: 'Pale Cathedral', artist: 'Herd of Birds', scouts: 11, genre: 'Experimental', image: coverOf('pale-cathedral'), weeklyScouts: 7,  tag: 'Surging',      spreadReason: 'Picked up by high-trust scouts',                          sourceScoutId: 'yuki',  routeNarrative: "Yuki's experimental branch"  },
+	{ id: 'ground-hum',     title: 'Ground Hum',     artist: 'Vessel',        scouts: 3,  genre: 'Electronic',   image: coverOf('ground-hum'),     weeklyScouts: 2,  tag: 'Rising',       spreadReason: 'Reaching new listening circles',                          sourceScoutId: 'marco', routeNarrative: "Marco branch"                },
 ];
 
 // Scout: a person-card type for the Human Signals lane.
@@ -205,16 +219,18 @@ export const scoutItems: Scout[] = [
 	},
 ];
 
-// 6. Outside the Bubble — intentionally different from user taste
+// 6. Outside the Bubble — signals crossing into your orbit from distant scenes through a specific bridge scout.
 export const outsideBubbleItems: Item[] = [
-	{ id: 'brass-weather', title: 'Brass Weather', artist: 'South Facing',    scouts: 22, genre: 'Jazz',       type: 'Album', image: coverOf('brass-weather'), featured: true, crossingPath: 'ambient → spiritual jazz',  whyHere: 'Reached your branch through low-overlap scouts from adjacent jazz circles',  multiOrigin: true },
-	{ id: 'loud-harbour',  title: 'Loud Harbour',  artist: 'Dock Street',     scouts: 18, genre: 'Post-Punk',  image: coverOf('loud-harbour'),  crossingPath: 'drone → post-punk',          whyHere: 'Crossing from drone listeners into neighboring post-punk territory'           },
-	{ id: 'red-satellite', title: 'Red Satellite', artist: 'Power Station',   scouts: 31, genre: 'Industrial', image: coverOf('red-satellite'), crossingPath: 'noise → industrial',         whyHere: 'Arrived through weak ties in experimental noise networks',                    multiOrigin: true },
-	{ id: 'paper-engine',  title: 'Paper Engine',  artist: 'The Office Club', scouts: 9,  genre: 'R&B',        image: coverOf('paper-engine'),  crossingPath: 'electronic → soul',          whyHere: 'Shared by scouts sitting at the far edge of your cluster'                    },
-	{ id: 'signal-green',  title: 'Signal Green',  artist: 'Grasslands',      scouts: 14, genre: 'Country',    image: coverOf('signal-green'),  crossingPath: 'folk → alt-country',         whyHere: 'Emerged from neighboring folk scenes through bridge scouts',                  multiOrigin: true },
+	{ id: 'brass-weather', title: 'Brass Weather', artist: 'South Facing',    scouts: 22, genre: 'Jazz',       type: 'Album', image: coverOf('brass-weather'), featured: true, crossingPath: 'ambient → spiritual jazz',  sourceScoutId: 'alice', routeNarrative: "Through Alice"          },
+	{ id: 'loud-harbour',  title: 'Loud Harbour',  artist: 'Dock Street',     scouts: 18, genre: 'Post-Punk',  image: coverOf('loud-harbour'),                  crossingPath: 'drone → post-punk',          sourceScoutId: 'marco', routeNarrative: "Marco's drone branch"   },
+	{ id: 'red-satellite', title: 'Red Satellite', artist: 'Power Station',   scouts: 31, genre: 'Industrial', image: coverOf('red-satellite'),                 crossingPath: 'noise → industrial',         sourceScoutId: 'yuki',  routeNarrative: "Yuki orbit"             },
+	{ id: 'paper-engine',  title: 'Paper Engine',  artist: 'The Office Club', scouts: 9,  genre: 'R&B',        image: coverOf('paper-engine'),                  crossingPath: 'electronic → soul',          sourceScoutId: 'dan',   routeNarrative: "via Dan"                },
+	{ id: 'signal-green',  title: 'Signal Green',  artist: 'Grasslands',      scouts: 14, genre: 'Country',    image: coverOf('signal-green'),                  crossingPath: 'folk → alt-country',         sourceScoutId: 'alice', routeNarrative: "Alice's folk orbit"     },
 ];
 
-// 7. Origin Stories — how signals spread and propagate
+// 7. Origin Stories — global historical propagation, NOT personal discovery routes.
+// This lane intentionally documents how signals evolved through the network, so
+// multi-origin framing remains valid here. No sourceScoutId / routeNarrative.
 export const originItems: OriginItem[] = [
 	{
 		id: 'forest-mouth',    title: 'Forest Mouth',    artist: 'Haul',            genre: 'Experimental',
@@ -243,4 +259,3 @@ export const originItems: OriginItem[] = [
 		storyType:    'origin-hub',
 	},
 ];
-
