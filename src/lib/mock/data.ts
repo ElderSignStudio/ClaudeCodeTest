@@ -39,6 +39,8 @@ export type Item = {
 	orbitState?: string;       // taste-proximity pill for Best Picks lane, e.g. "Closely Orbiting"
 	sourceScoutId: string;     // single discovery route — scoutItems.id of the route's source scout
 	routeNarrative: string;    // editorial one-line route phrasing rendered on the card
+	propagationState?: string; // From Your Scouts: small editorial state line (e.g. "Spreading through ambient listeners")
+	scoutQualityNote?: string; // High-Quality Scouts: editorial credibility hint (e.g. "Strong early signal track record")
 	coverDim?: boolean;        // Deep Underground only: cover artwork is naturally dim/low-contrast. Triggers a small readability boost so the card doesn't cross from "barely surfaced" into "visually broken."
 };
 
@@ -111,6 +113,28 @@ const _spotifyCovers = new Map<string, string>(
 function coverOf(id: string): string {
 	return _spotifyCovers.get(id) ?? '';
 }
+
+// 0a. From Your Scouts — signals directly surfaced by scouts the user follows.
+// Conceptually the closest, warmest discovery layer. Source scout is the
+// primary visual subject on each card; the propagation-state line is a tiny
+// editorial whisper about how the signal is moving in the network.
+export const fromYourScoutsItems: Item[] = [
+	{ id: 'pale-verge',   title: 'Pale Verge',   artist: 'The Outline',   scouts: 4, genre: 'Ambient',     image: coverOf('pale-verge'),   sourceScoutId: 'dan',   routeNarrative: "Shared by Dan",          propagationState: "Picked up quietly"                  },
+	{ id: 'hollow-coast', title: 'Hollow Coast', artist: 'Shore Signal',  scouts: 2, genre: 'Drone',       image: coverOf('hollow-coast'), sourceScoutId: 'alice', routeNarrative: "From Alice",             propagationState: "Spreading through drone listeners"  },
+	{ id: 'tape-weather', title: 'Tape Weather', artist: 'Archive Unit',  scouts: 7, genre: 'Electronic',  image: coverOf('tape-weather'), sourceScoutId: 'alice', routeNarrative: "Surfaced through Alice", propagationState: "Early movement"                     },
+	{ id: 'soft-border',  title: 'Soft Border',  artist: 'Liminal State', scouts: 9, genre: 'Folk',        image: coverOf('soft-border'),  sourceScoutId: 'dan',   routeNarrative: "Dan transmission",       propagationState: "Reaching into adjacent folk circles" },
+];
+
+// 0b. Trusted Scouts — calmly reliable scouts the user doesn't necessarily
+// follow. "Credibility, not popularity": the card focuses on the scout's
+// discovery track record rather than their personality. No avatar in the
+// card chrome — observational restraint is the language.
+export const trustedScoutsItems: Item[] = [
+	{ id: 'cinder-plain',  title: 'Cinder Plain',  artist: 'Hoarfrost',      scouts: 4, genre: 'Ambient',      image: coverOf('cinder-plain'),  sourceScoutId: 'marco', routeNarrative: "via Marco",        scoutQualityNote: "Frequently surfaces enduring signals" },
+	{ id: 'open-window',   title: 'Open Window',   artist: 'Still Life',     scouts: 2, genre: 'Folk',         image: coverOf('open-window'),   sourceScoutId: 'marco', routeNarrative: "Marco branch",     scoutQualityNote: "Historically reliable scout"          },
+	{ id: 'burial-light',  title: 'Burial Light',  artist: 'Three Thousand', scouts: 1, genre: 'Experimental', image: coverOf('burial-light'),  sourceScoutId: 'yuki',  routeNarrative: "Surfaced by Yuki", scoutQualityNote: "Often discovered before breakout"     },
+	{ id: 'cold-dispatch', title: 'Cold Dispatch', artist: 'Wire Theory',    scouts: 6, genre: 'Post-Punk',    image: coverOf('cold-dispatch'), sourceScoutId: 'yuki',  routeNarrative: "Yuki orbit",       scoutQualityNote: "Strong downstream resonance"          },
+];
 
 // 1. For You — strongest discovery routes converging around your taste.
 export const forYouItems: Item[] = [

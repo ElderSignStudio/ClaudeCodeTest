@@ -1,5 +1,7 @@
 import { error } from '@sveltejs/kit';
 import {
+	fromYourScoutsItems,
+	trustedScoutsItems,
 	forYouItems,
 	oneStepAwayItems,
 	deepUndergroundItems,
@@ -29,7 +31,7 @@ export type DetailItem = {
 	genre: string;
 	image: string;
 	scouts: number;
-	source: 'best-picks' | 'one-step-away' | 'deep-underground' | 'breaking-out' | 'outside-bubble' | 'origin-stories';
+	source: 'from-your-scouts' | 'trusted-scouts' | 'best-picks' | 'one-step-away' | 'deep-underground' | 'breaking-out' | 'outside-bubble' | 'origin-stories';
 	type?: string;           // 'Song' / 'Album' when Item.type is set
 	spreadReason?: string;   // from GainingItem (momentum language)
 	crossingPath?: string;   // from OTB items (scene-crossing data)
@@ -80,12 +82,14 @@ export const load = ({ params }) => {
 		return { item: detail, forest: propagationForestFor(id, detail.scouts) };
 	}
 
-	// Item-typed lanes: For You / OSA / DU / OTB. We look up in each.
+	// Item-typed lanes: From Your Scouts / High-Quality Scouts / For You / OSA / DU / OTB.
 	const lookups: Array<{ items: typeof forYouItems; source: DetailItem['source'] }> = [
-		{ items: forYouItems,         source: 'best-picks' },
-		{ items: oneStepAwayItems,    source: 'one-step-away' },
-		{ items: deepUndergroundItems, source: 'deep-underground' },
-		{ items: outsideBubbleItems,  source: 'outside-bubble' },
+		{ items: fromYourScoutsItems,   source: 'from-your-scouts' },
+		{ items: trustedScoutsItems, source: 'trusted-scouts' },
+		{ items: forYouItems,           source: 'best-picks' },
+		{ items: oneStepAwayItems,      source: 'one-step-away' },
+		{ items: deepUndergroundItems,  source: 'deep-underground' },
+		{ items: outsideBubbleItems,    source: 'outside-bubble' },
 	];
 
 	for (const { items, source } of lookups) {
