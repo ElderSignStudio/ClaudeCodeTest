@@ -3,7 +3,6 @@
 	import { breakingOutItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
-	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
 	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	// Per-card shimmer variables — each card gets distinct width, skew, and delay.
@@ -152,8 +151,17 @@
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
 					<p class="text-[12px] text-base-content/68 truncate mt-1">{item.artist} · {item.genre}</p>
 
+					<!--
+						Discovery route — the source branch propagating this
+						signal. Sits ABOVE the velocity pill but at a lower
+						opacity than the spreadReason line below it, so the
+						momentum pair (pill + spreadReason) leads visually and
+						the route reads as secondary context.
+					-->
+					<p class="text-[11px] text-zinc-300/56 truncate mt-2">{item.routeNarrative}</p>
+
 					{#if item.weeklyScouts !== undefined}
-						<div class="mt-2 space-y-1">
+						<div class="mt-1.5 space-y-1">
 							<!--
 								Pill wrapper: w-fit so the halo tracks the pill width.
 								CSS variables cascade to shimmer + spike children.
@@ -205,9 +213,7 @@
 								No truncation — truncate class removed.
 							-->
 							{#if item.spreadReason}
-								<p class="text-[13px] text-zinc-300/82 leading-normal line-clamp-2">
-									{#if item.multiOrigin}<MultiOriginMarker seed={item.id} colorClass="text-accent/25" /> {/if}{item.spreadReason}
-								</p>
+								<p class="text-[13px] text-zinc-300/82 leading-normal line-clamp-2">{item.spreadReason}</p>
 							{/if}
 						</div>
 					{/if}

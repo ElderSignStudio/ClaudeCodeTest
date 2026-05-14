@@ -1,4 +1,6 @@
 <script lang="ts">
+	import FromYourScoutsLane from '$lib/components/lanes/FromYourScoutsLane.svelte';
+	import TrustedScoutsLane from '$lib/components/lanes/TrustedScoutsLane.svelte';
 	import ForYouLane from '$lib/components/lanes/ForYouLane.svelte';
 	import OneStepAwayLane from '$lib/components/lanes/OneStepAwayLane.svelte';
 	import DeepUndergroundLane from '$lib/components/lanes/DeepUndergroundLane.svelte';
@@ -55,6 +57,16 @@
 			Signals curated to your frequency. What's faint today may resonate tomorrow.
 		</p>
 	</div>
+
+	<!--
+		Two scout-foundational lanes sit ABOVE Best Picks: every card resolves
+		through ONE specific scout, so they anchor the homepage in the
+		single-origin discovery model before the broader synthesis lanes begin.
+		Both sit on clean dark space (no atmospheric envelope) — the
+		differentiation comes from card-level treatment.
+	-->
+	<FromYourScoutsLane />
+	<TrustedScoutsLane />
 
 	<!--
 		Best Picks — faint cool-blue home orbit.

@@ -1,5 +1,7 @@
 import { error } from '@sveltejs/kit';
 import {
+	fromYourScoutsItems,
+	trustedScoutsItems,
 	forYouItems,
 	oneStepAwayItems,
 	deepUndergroundItems,
@@ -29,16 +31,16 @@ export type DetailItem = {
 	genre: string;
 	image: string;
 	scouts: number;
-	source: 'best-picks' | 'one-step-away' | 'deep-underground' | 'breaking-out' | 'outside-bubble' | 'origin-stories';
-	type?: string;          // 'Song' / 'Album' when Item.type is set
-	spreadReason?: string;  // from GainingItem
-	whyHere?: string;       // from OTB items
-	crossingPath?: string;  // from OTB items
-	whisperHint?: string;   // from DU items
-	resonanceContext?: string; // from ForYou items
-	headline?: string;      // from OriginItem
-	seedLocation?: string;  // from OriginItem
-	tag?: string;           // from GainingItem
+	source: 'from-your-scouts' | 'trusted-scouts' | 'best-picks' | 'one-step-away' | 'deep-underground' | 'breaking-out' | 'outside-bubble' | 'origin-stories';
+	type?: string;           // 'Song' / 'Album' when Item.type is set
+	spreadReason?: string;   // from GainingItem (momentum language)
+	crossingPath?: string;   // from OTB items (scene-crossing data)
+	whisperHint?: string;    // from DU items (editorial whisper)
+	routeNarrative?: string; // from Item / GainingItem (singular discovery route)
+	sourceScoutId?: string;  // from Item / GainingItem (source scout id)
+	headline?: string;       // from OriginItem (multi-origin historical narrative)
+	seedLocation?: string;   // from OriginItem
+	tag?: string;            // from GainingItem
 };
 
 export const load = ({ params }) => {
@@ -74,16 +76,20 @@ export const load = ({ params }) => {
 			source: 'breaking-out',
 			spreadReason: gaining.spreadReason,
 			tag: gaining.tag,
+			routeNarrative: gaining.routeNarrative,
+			sourceScoutId: gaining.sourceScoutId,
 		};
 		return { item: detail, forest: propagationForestFor(id, detail.scouts) };
 	}
 
-	// Item-typed lanes: For You / OSA / DU / OTB. We look up in each.
+	// Item-typed lanes: From Your Scouts / High-Quality Scouts / For You / OSA / DU / OTB.
 	const lookups: Array<{ items: typeof forYouItems; source: DetailItem['source'] }> = [
-		{ items: forYouItems,         source: 'best-picks' },
-		{ items: oneStepAwayItems,    source: 'one-step-away' },
-		{ items: deepUndergroundItems, source: 'deep-underground' },
-		{ items: outsideBubbleItems,  source: 'outside-bubble' },
+		{ items: fromYourScoutsItems,   source: 'from-your-scouts' },
+		{ items: trustedScoutsItems, source: 'trusted-scouts' },
+		{ items: forYouItems,           source: 'best-picks' },
+		{ items: oneStepAwayItems,      source: 'one-step-away' },
+		{ items: deepUndergroundItems,  source: 'deep-underground' },
+		{ items: outsideBubbleItems,    source: 'outside-bubble' },
 	];
 
 	for (const { items, source } of lookups) {
@@ -98,10 +104,10 @@ export const load = ({ params }) => {
 				scouts: found.scouts,
 				source,
 				type: found.type,
-				whyHere: found.whyHere,
 				crossingPath: found.crossingPath,
 				whisperHint: found.whisperHint,
-				resonanceContext: found.resonanceContext,
+				routeNarrative: found.routeNarrative,
+				sourceScoutId: found.sourceScoutId,
 			};
 			return { item: detail, forest: propagationForestFor(id, detail.scouts) };
 		}

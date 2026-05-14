@@ -139,12 +139,10 @@
 					class="text-[13px] font-normal text-white/90 truncate mt-2.5"
 					style="text-shadow: 0 1px 8px rgba(0,0,0,0.75);"
 				>{featuredItem.artist}</p>
-				{#if featuredItem.resonanceContext}
-					<p
-						class="text-[12px] text-white/78 leading-loose mt-3.5 line-clamp-2 max-w-[88%]"
-						style="text-shadow: 0 1px 8px rgba(0,0,0,0.70);"
-					>{featuredItem.resonanceContext}</p>
-				{/if}
+				<p
+					class="text-[12px] text-white/78 leading-loose mt-3.5 line-clamp-2 max-w-[88%]"
+					style="text-shadow: 0 1px 8px rgba(0,0,0,0.70);"
+				>{featuredItem.routeNarrative}</p>
 				<div class="flex justify-end mt-4">
 					<button
 						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent/72 border border-accent/32 bg-black/22 hover:bg-accent/12 hover:border-accent/50 hover:text-accent/92 transition-all backdrop-blur-sm"
@@ -191,13 +189,11 @@
 					-->
 					<p class="text-[13px] font-normal text-base-content/68 truncate mt-1">{item.artist}{item.type ? ` · ${item.genre} ${item.type.toLowerCase()}` : ` · ${item.genre}`}</p>
 					<!--
-						Resonance context — a whisper, not a reason.
-						Reduced to /44 opacity and wider leading so it drifts rather than explains.
-						line-clamp-2 preserves equal card heights.
+						Discovery route — kept quieter than the featured hero so
+						the title leads visually. /42 opacity reads as editorial
+						metadata, not a competing headline.
 					-->
-					{#if item.resonanceContext}
-						<p class="text-[12px] text-base-content/58 leading-relaxed mt-2.5 line-clamp-2">{item.resonanceContext}</p>
-					{/if}
+					<p class="text-[12px] text-base-content/42 leading-relaxed mt-2.5 line-clamp-2">{item.routeNarrative}</p>
 					<!--
 						Amplify — present but not calling for attention.
 						Dimmer than Breaking Out / One Step Away equivalents.
