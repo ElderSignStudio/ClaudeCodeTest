@@ -22,11 +22,15 @@
 	let {
 		item,
 		forest,
+		isAmplified,
 		onReset,
+		onToggleAmplify,
 	}: {
 		item: DetailItem;
 		forest: PropagationForest;
+		isAmplified: boolean;
 		onReset: () => void;
+		onToggleAmplify: () => void;
 	} = $props();
 
 	// One-line contextual sub-copy assembled from whichever editorial fields
@@ -165,12 +169,26 @@
 					</svg>
 					Play
 				</button>
+				<!--
+					Amplify toggle. When the current viewer is already in the
+					lineage (or has just amplified) the button reads "Amplified"
+					with a brighter pressed-in styling; clicking removes their
+					node. Click handler stopPropagation so it doesn't bubble
+					into the hero's reset-to-global handler.
+				-->
 				<button
-					class="flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-semibold text-accent border border-accent/46 bg-black/30 hover:bg-accent/16 hover:border-accent/65 transition-all"
-					onclick={(e) => e.stopPropagation()}
+					class={[
+						'flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-semibold transition-all',
+						isAmplified
+							? 'text-accent-content bg-accent/30 border border-accent/65 hover:bg-accent/40 hover:border-accent/82'
+							: 'text-accent border border-accent/46 bg-black/30 hover:bg-accent/16 hover:border-accent/65',
+					]}
+					onclick={(e) => { e.stopPropagation(); onToggleAmplify(); }}
+					aria-pressed={isAmplified}
+					title={isAmplified ? 'Remove your amplification' : 'Amplify this signal'}
 				>
 					<Radio size={12} />
-					Amplify
+					{isAmplified ? 'Amplified' : 'Amplify'}
 				</button>
 			</div>
 		</div>

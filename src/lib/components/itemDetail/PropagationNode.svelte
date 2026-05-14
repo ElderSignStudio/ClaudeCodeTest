@@ -64,19 +64,24 @@
 		selection. The tree-level mouseleave clears the preview when the
 		pointer exits the lineage area entirely.
 	-->
+	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 	<div
 		class={[
-			'group/row w-full flex items-start gap-2 py-1.5 pl-1 pr-2 rounded-md text-left transition-colors duration-150 cursor-pointer',
-			isSelected
+			'group/row w-full flex items-start gap-2 py-1.5 pl-1 pr-2 rounded-md text-left transition-colors duration-150',
+			user.isPreviewNode
+				? 'cursor-default opacity-50'
+				: 'cursor-pointer',
+			!user.isPreviewNode && (isSelected
 				? 'bg-accent/12 ring-1 ring-accent/35'
-				: 'hover:bg-white/4',
+				: 'hover:bg-white/4'),
 		]}
 		onclick={() => onSelect(user)}
-		onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(user); } }}
+		onkeydown={(e) => { if (!user.isPreviewNode && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(user); } }}
 		onmouseenter={() => onPreview({ kind: 'user', user })}
 		onfocusin={() => onPreview({ kind: 'user', user })}
-		role="button"
-		tabindex="0"
+		role={user.isPreviewNode ? 'presentation' : 'button'}
+		tabindex={user.isPreviewNode ? undefined : 0}
+		aria-disabled={user.isPreviewNode ? 'true' : undefined}
 	>
 		<!-- Expand/collapse caret — only when there are visible children -->
 		{#if hasVisibleChildren}
@@ -97,33 +102,40 @@
 
 		<!--
 			Avatar.
-			  - `isOrigin`     → accent-tinted border + small spark dot at the
-			    top-right corner. Reads as "this user brought the signal into
-			    the network from outside."
-			  - `highImpact`   → faint accent ring around the avatar — signals
-			    "this scout helped the signal travel" without prestige cues.
-			  - `isSelected`   → committed selection wins on the border colour.
+			  - `isPreviewNode`  → dashed border + low opacity wrapper above
+			    treats the whole row as "pending placement."
+			  - `isCurrentUser`  → primary-coloured ring so the viewer's own
+			    node reads distinctly from origin/high-impact accent cyan.
+			  - `isOrigin`       → accent-tinted border + small spark dot at
+			    the top-right corner.
+			  - `highImpact`     → faint accent ring around the avatar.
+			  - `isSelected`     → committed selection wins on border colour.
 		-->
 		<div class="shrink-0 mt-0.5 relative">
 			<div
 				class={[
 					'w-7 h-7 rounded-full overflow-hidden border',
-					isSelected
-						? 'border-accent/60'
-						: user.isOrigin
-							? 'border-accent/45'
-							: 'border-white/14',
-					!isSelected && user.highImpact && 'ring-1 ring-accent/22',
+					user.isPreviewNode
+						? 'border-white/15 border-dashed'
+						: isSelected
+							? 'border-accent/60'
+							: user.isCurrentUser
+								? 'border-primary/55'
+								: user.isOrigin
+									? 'border-accent/45'
+									: 'border-white/14',
+					!isSelected && !user.isPreviewNode && user.highImpact && 'ring-1 ring-accent/22',
+					!isSelected && !user.isPreviewNode && user.isCurrentUser && 'ring-1 ring-primary/22',
 				]}
 			>
 				{#if user.avatar}
-					<img src={user.avatar} alt="" class="w-full h-full object-cover" />
+					<img src={user.avatar} alt="" class={['w-full h-full object-cover', user.isPreviewNode && 'grayscale opacity-60']} />
 				{:else}
 					<!-- Anonymous stub: solid neutral fill, no image -->
 					<div class="w-full h-full bg-base-content/12"></div>
 				{/if}
 			</div>
-			{#if user.isOrigin}
+			{#if user.isOrigin && !user.isPreviewNode}
 				<span
 					class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent/85 border border-base-200"
 					aria-hidden="true"
@@ -132,17 +144,35 @@
 			{/if}
 		</div>
 
-		<!-- Name + character + optional "origin" micro-label. -->
+		<!--
+			Name + character. Preview nodes italicize the character ("Amplify
+			to be included here") so the row reads as an invitation, not a
+			real scout. The viewer's own node gets a "you" micro-label
+			matching the origin/high-impact label cadence.
+		-->
 		<div class="min-w-0 flex-1">
 			<div class="flex items-baseline gap-2">
-				<p class={['text-[13px] font-semibold leading-snug truncate', isSelected ? 'text-accent/95' : 'text-base-content/92']}>
+				<p class={[
+					'text-[13px] font-semibold leading-snug truncate',
+					user.isPreviewNode
+						? 'text-base-content/45 italic'
+						: isSelected
+							? 'text-accent/95'
+							: 'text-base-content/92',
+				]}>
 					{user.name}
 				</p>
-				{#if user.isOrigin}
+				{#if user.isCurrentUser && !user.isPreviewNode}
+					<span class="text-[10px] uppercase tracking-widest text-primary/82 shrink-0">you</span>
+				{/if}
+				{#if user.isOrigin && !user.isPreviewNode}
 					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
 				{/if}
 			</div>
-			<p class="text-[11px] text-base-content/55 leading-snug truncate">
+			<p class={[
+				'text-[11px] leading-snug truncate',
+				user.isPreviewNode ? 'text-base-content/40 italic' : 'text-base-content/55',
+			]}>
 				{user.character}
 			</p>
 		</div>

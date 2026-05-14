@@ -61,6 +61,14 @@ export type PropagationUser = {
 	biggestSubcascadeName?: string;
 	/** Size of the largest downstream subcascade rooted at this user. */
 	biggestSubcascadeReach?: number;
+
+	/** Marks the current viewer's own node — triggers the "you" label,
+	 *  brighter avatar ring, and selection deference in the tree. */
+	isCurrentUser?: boolean;
+	/** Faint placeholder for the current user's pending amplification.
+	 *  Renders dimmed + italic + non-selectable; the row only invites the
+	 *  user to press the Amplify button. */
+	isPreviewNode?: boolean;
 };
 
 export type RootBranchSummary = {
@@ -420,4 +428,59 @@ export function findParentInForest(forest: PropagationForest, userId: string): P
 		if (hit) return hit;
 	}
 	return null;
+}
+
+/* ─────────────── Immutable forest transformers ───────────────
+   These helpers return a new forest with the requested change applied.
+   Used by the Item Detail page to derive the "displayed" forest from the
+   loaded forest + the current user's amplification state. */
+
+/** Returns a new forest with the given user removed wherever they appear. */
+export function removeUserFromForest(forest: PropagationForest, userId: string): PropagationForest {
+	function pruneChildren(user: PropagationUser): PropagationUser {
+		return {
+			...user,
+			children: user.children
+				.filter(c => c.id !== userId)
+				.map(pruneChildren),
+		};
+	}
+	return {
+		...forest,
+		roots: forest.roots
+			.filter(r => r.id !== userId)
+			.map(pruneChildren),
+	};
+}
+
+/** Returns a new forest with the given decoration merged onto the user whose
+ *  id matches. Useful for tagging the existing Dan node as `isCurrentUser`
+ *  without changing his data. */
+export function markUserInForest(
+	forest: PropagationForest,
+	userId: string,
+	decoration: Partial<PropagationUser>,
+): PropagationForest {
+	function decorate(user: PropagationUser): PropagationUser {
+		if (user.id === userId) {
+			return { ...user, ...decoration };
+		}
+		return { ...user, children: user.children.map(decorate) };
+	}
+	return { ...forest, roots: forest.roots.map(decorate) };
+}
+
+/** Returns a new forest with `child` appended to the children of `parentId`. */
+export function addChildToUserInForest(
+	forest: PropagationForest,
+	parentId: string,
+	child: PropagationUser,
+): PropagationForest {
+	function walk(user: PropagationUser): PropagationUser {
+		if (user.id === parentId) {
+			return { ...user, children: [...user.children, child] };
+		}
+		return { ...user, children: user.children.map(walk) };
+	}
+	return { ...forest, roots: forest.roots.map(walk) };
 }
