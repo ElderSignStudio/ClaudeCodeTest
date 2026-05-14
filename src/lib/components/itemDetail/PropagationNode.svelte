@@ -1,28 +1,32 @@
 <script lang="ts">
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
-	import type { PropagationUser } from '$lib/mock/propagation';
+	import type { PropagationUser, PreviewTarget } from '$lib/mock/propagation';
 	import Self from './PropagationNode.svelte';
 
 	/*
 		One row of the propagation tree. Renders this user plus, recursively,
-		its children. Expansion state for the node and for its hidden tail is
-		LOCAL — each node owns its own toggle. Selection is global to the page
-		and flows in via props.
+		its children. Expansion state is LOCAL per node. Selection is global
+		to the page (flowed in via props) and is set on click. Inspector
+		PREVIEW is also global to the page; previews fire on hover so the
+		inspector can dynamically describe whatever the user is currently
+		investigating without committing a selection.
 
 		v1 limitation: `hiddenChildren` is just an editorial count. Clicking
-		"+N more" reveals N greyed placeholder rows (anonymous listeners) so
-		the interaction lands; the inspector treats them as anonymized.
+		"+N more" reveals N greyed placeholder rows. Hovering "+N more"
+		previews the cluster's editorial description in the inspector.
 	*/
 
 	let {
 		user,
 		selectedUserId,
 		onSelect,
+		onPreview,
 		depth = 0,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
 		onSelect: (user: PropagationUser) => void;
+		onPreview: (target: PreviewTarget | null) => void;
 		depth?: number;
 	} = $props();
 
@@ -56,6 +60,9 @@
 		Row: caret + avatar + name + character. The row uses `role="button"`
 		(not a real <button>) so the inner caret can remain a real button
 		without nesting. Keyboard activation (Enter / Space) is wired manually.
+		Hover / focus preview the user in the inspector without committing the
+		selection. The tree-level mouseleave clears the preview when the
+		pointer exits the lineage area entirely.
 	-->
 	<div
 		class={[
@@ -66,6 +73,8 @@
 		]}
 		onclick={() => onSelect(user)}
 		onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect(user); } }}
+		onmouseenter={() => onPreview({ kind: 'user', user })}
+		onfocusin={() => onPreview({ kind: 'user', user })}
 		role="button"
 		tabindex="0"
 	>
@@ -86,29 +95,65 @@
 			<span class="shrink-0 mt-1 w-4 h-4" aria-hidden="true"></span>
 		{/if}
 
-		<!-- Avatar -->
-		<div class={['shrink-0 mt-0.5 w-7 h-7 rounded-full overflow-hidden border', isSelected ? 'border-accent/60' : 'border-white/14']}>
-			{#if user.avatar}
-				<img src={user.avatar} alt="" class="w-full h-full object-cover" />
-			{:else}
-				<!-- Anonymous stub: solid neutral fill, no image -->
-				<div class="w-full h-full bg-base-content/12"></div>
+		<!--
+			Avatar.
+			  - `isOrigin`     → accent-tinted border + small spark dot at the
+			    top-right corner. Reads as "this user brought the signal into
+			    the network from outside."
+			  - `highImpact`   → faint accent ring around the avatar — signals
+			    "this scout helped the signal travel" without prestige cues.
+			  - `isSelected`   → committed selection wins on the border colour.
+		-->
+		<div class="shrink-0 mt-0.5 relative">
+			<div
+				class={[
+					'w-7 h-7 rounded-full overflow-hidden border',
+					isSelected
+						? 'border-accent/60'
+						: user.isOrigin
+							? 'border-accent/45'
+							: 'border-white/14',
+					!isSelected && user.highImpact && 'ring-1 ring-accent/22',
+				]}
+			>
+				{#if user.avatar}
+					<img src={user.avatar} alt="" class="w-full h-full object-cover" />
+				{:else}
+					<!-- Anonymous stub: solid neutral fill, no image -->
+					<div class="w-full h-full bg-base-content/12"></div>
+				{/if}
+			</div>
+			{#if user.isOrigin}
+				<span
+					class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent/85 border border-base-200"
+					aria-hidden="true"
+					title="Origin scout"
+				></span>
 			{/if}
 		</div>
 
-		<!-- Name + character -->
+		<!-- Name + character + optional "origin" micro-label. -->
 		<div class="min-w-0 flex-1">
-			<p class={['text-[13px] font-semibold leading-snug truncate', isSelected ? 'text-accent/95' : 'text-base-content/92']}>
-				{user.name}
-			</p>
+			<div class="flex items-baseline gap-2">
+				<p class={['text-[13px] font-semibold leading-snug truncate', isSelected ? 'text-accent/95' : 'text-base-content/92']}>
+					{user.name}
+				</p>
+				{#if user.isOrigin}
+					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
+				{/if}
+			</div>
 			<p class="text-[11px] text-base-content/55 leading-snug truncate">
 				{user.character}
 			</p>
 		</div>
 
-		<!-- Branch-size hint on the right edge (only meaningful when > 0) -->
+		<!--
+			Branch-size hint on the right edge. High-impact scouts get a
+			brighter accent treatment so the number reads as "this scout
+			helped the signal travel" without becoming a badge.
+		-->
 		{#if user.branchSize > 0}
-			<span class="shrink-0 mt-1.5 text-[10px] font-mono text-base-content/40 tabular-nums">
+			<span class={['shrink-0 mt-1.5 text-[10px] font-mono tabular-nums', user.highImpact ? 'text-accent/72' : 'text-base-content/40']}>
 				+{user.branchSize}
 			</span>
 		{/if}
@@ -127,6 +172,7 @@
 					user={child}
 					{selectedUserId}
 					{onSelect}
+					{onPreview}
 					depth={depth + 1}
 				/>
 			{/each}
@@ -137,6 +183,20 @@
 					<button
 						class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
 						onclick={() => { tailExpanded = true; }}
+						onmouseenter={() => onPreview({
+							kind: 'cluster',
+							parent: user,
+							count: user.hiddenChildren ?? 0,
+							label: user.hiddenChildrenLabel ?? 'Quieter listeners',
+							description: user.hiddenChildrenDescription,
+						})}
+						onfocus={() => onPreview({
+							kind: 'cluster',
+							parent: user,
+							count: user.hiddenChildren ?? 0,
+							label: user.hiddenChildrenLabel ?? 'Quieter listeners',
+							description: user.hiddenChildrenDescription,
+						})}
 					>
 						<span class="shrink-0 w-4 h-4"></span>
 						<span class="shrink-0 w-7 h-7 rounded-full border border-dashed border-white/14 flex items-center justify-center text-[10px] font-mono text-base-content/45">
@@ -159,6 +219,7 @@
 							user={stub}
 							{selectedUserId}
 							{onSelect}
+							{onPreview}
 							depth={depth + 1}
 						/>
 					{/each}

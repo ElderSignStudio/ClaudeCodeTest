@@ -9,7 +9,7 @@ import {
 	outsideBubbleItems,
 	originItems,
 } from '$lib/mock/data';
-import { propagationForestFor } from '$lib/mock/propagation';
+import { propagationForestFor, type FameTier } from '$lib/mock/propagation';
 
 /*
 	Item Detail load function.
@@ -41,7 +41,35 @@ export type DetailItem = {
 	headline?: string;       // from OriginItem (multi-origin historical narrative)
 	seedLocation?: string;   // from OriginItem
 	tag?: string;            // from GainingItem
+
+	// Mocked global item metrics — derived in the load function. Show
+	// elegantly in the hero, not as a dashboard.
+	monthlyListeners: number;     // e.g. 18_400 → renders as "18.4k monthly listeners"
+	spotifyPopularity: number;    // 0-100, Spotify-style "popularity"
+	fameTier: FameTier;           // editorial novelty tier
 };
+
+/** Derive a fame tier from the scout count. Low scout = Underground, high = Hot. */
+function deriveFameTier(scouts: number): FameTier {
+	if (scouts <= 2) return 'Underground';
+	if (scouts <= 6) return 'Niche';
+	if (scouts <= 15) return 'Emerging';
+	return 'Hot';
+}
+
+/**
+ * Mock external metrics derived from the item's scout count. Real product
+ * would pull these from a backend; for v1 we generate plausible numbers
+ * so the hero feels item-specific without per-item hand-authoring.
+ */
+function externalMetrics(scouts: number) {
+	const base = scouts * 800 + scouts * scouts * 14;
+	return {
+		monthlyListeners: Math.max(420, base + 240),
+		spotifyPopularity: Math.min(82, Math.max(3, 4 + scouts * 2)),
+		fameTier: deriveFameTier(scouts),
+	};
+}
 
 export const load = ({ params }) => {
 	const id = params.id;
@@ -60,6 +88,7 @@ export const load = ({ params }) => {
 			source: 'origin-stories',
 			headline: origin.headline,
 			seedLocation: origin.seedLocation,
+			...externalMetrics(origin.reachedScouts),
 		};
 		return { item: detail, forest: propagationForestFor(id, detail.scouts) };
 	}
@@ -78,6 +107,7 @@ export const load = ({ params }) => {
 			tag: gaining.tag,
 			routeNarrative: gaining.routeNarrative,
 			sourceScoutId: gaining.sourceScoutId,
+			...externalMetrics(gaining.scouts),
 		};
 		return { item: detail, forest: propagationForestFor(id, detail.scouts) };
 	}
@@ -108,6 +138,7 @@ export const load = ({ params }) => {
 				whisperHint: found.whisperHint,
 				routeNarrative: found.routeNarrative,
 				sourceScoutId: found.sourceScoutId,
+				...externalMetrics(found.scouts),
 			};
 			return { item: detail, forest: propagationForestFor(id, detail.scouts) };
 		}

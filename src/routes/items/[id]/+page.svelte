@@ -2,40 +2,52 @@
 	import ItemHero from '$lib/components/itemDetail/ItemHero.svelte';
 	import PropagationTree from '$lib/components/itemDetail/PropagationTree.svelte';
 	import BranchInspector from '$lib/components/itemDetail/BranchInspector.svelte';
-	import type { PropagationUser } from '$lib/mock/propagation';
+	import type { PropagationUser, PreviewTarget } from '$lib/mock/propagation';
 
 	/*
-		Item Detail page v1.
+		Item Detail page.
 
-		Layout responsibility lives here (not in a separate Layout component) —
-		one routing entry, one place to coordinate state. State is small enough
-		to keep in this file: only the selected user id. Everything else
-		(per-node expansion, per-tail expansion) is local to PropagationNode.
+		Two-tier inspector state — preview (hover, ephemeral) vs selection
+		(click, committed). The active target is whichever exists, preferring
+		hover so the inspector responds immediately as the cursor moves
+		through the lineage. When hover clears (cursor leaves the tree), the
+		inspector falls back to the committed selection — or to the global
+		state if nothing is selected.
 
 		Mental model:
-		  - Item  = global context  (selectedUser === null)
-		  - User  = branch context  (selectedUser set)
-		  - Clicking the hero resets selectedUser to null.
+		  - Item   = global context  (no selection, no preview)
+		  - User   = branch context  (hovering or selecting a person)
+		  - Cluster = collapsed-tail context (hovering "+N more")
+		  - Clicking the hero resets the committed selection to null.
 
 		Responsive shape:
 		  - At lg+ we use a 2-column grid with the tree taking 1.55fr and the
-		    inspector 1fr. The inspector is `sticky` so it stays in view as
-		    the tree scrolls.
+		    inspector 1fr. Inspector is `sticky` so it stays in view as the
+		    tree scrolls.
 		  - Below lg the columns collapse to a single stacked column with the
-		    tree above the inspector (per spec: "Inspector panel updates
-		    beneath the tree naturally"). No cramped desktop imitation.
+		    tree above the inspector. No cramped desktop imitation.
 	*/
 
 	let { data } = $props();
 	const { item, forest } = $derived(data);
 
-	let selectedUser = $state<PropagationUser | null>(null);
+	let selectedTarget = $state<PreviewTarget | null>(null);
+	let hoveredTarget  = $state<PreviewTarget | null>(null);
+
+	// Inspector reads the active target. Hover wins over selection so the
+	// pane stays responsive as the cursor moves through nodes; once hover
+	// clears, the pane reverts to the committed selection.
+	const activeTarget = $derived<PreviewTarget | null>(hoveredTarget ?? selectedTarget);
 
 	function handleSelect(user: PropagationUser) {
-		selectedUser = user;
+		selectedTarget = { kind: 'user', user };
+	}
+	function handlePreview(target: PreviewTarget | null) {
+		hoveredTarget = target;
 	}
 	function resetToGlobal() {
-		selectedUser = null;
+		selectedTarget = null;
+		hoveredTarget = null;
 	}
 </script>
 
@@ -46,7 +58,7 @@
 <div class="max-w-360 mx-auto w-full px-6 xl:px-8 py-8 space-y-8">
 
 	<!-- ── Hero / item header ── -->
-	<ItemHero {item} onReset={resetToGlobal} />
+	<ItemHero {item} {forest} onReset={resetToGlobal} />
 
 	<!--
 		Split workspace. CSS Grid with a single fr-template that collapses to a
@@ -68,8 +80,9 @@
 			>
 				<PropagationTree
 					{forest}
-					selectedUserId={selectedUser?.id ?? null}
+					selectedUserId={selectedTarget?.kind === 'user' ? selectedTarget.user.id : null}
 					onSelect={handleSelect}
+					onPreview={handlePreview}
 				/>
 			</section>
 
@@ -83,7 +96,7 @@
 					class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
 					style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 				>
-					<BranchInspector {forest} {selectedUser} />
+					<BranchInspector {forest} target={activeTarget} />
 				</div>
 			</aside>
 		</div>

@@ -298,6 +298,22 @@
   .os-pulse-node { animation: none !important; }
 }
 
+/*
+  Fame-tier Hot shimmer. Used by the Item Detail hero's tier badge when the
+  signal is currently "Hot". Faint amber-light glow that breathes 7s slow
+  — deliberately gentle so the badge never reads as a notification. Off
+  entirely under prefers-reduced-motion.
+*/
+@keyframes fame-hot-shimmer {
+  0%, 100% { box-shadow: 0 0 0 0 oklch(0.84 0.13 75 / 0.00); }
+  50%      { box-shadow: 0 0 10px 0 oklch(0.84 0.13 75 / 0.22); }
+}
+.fame-hot-shimmer { animation: fame-hot-shimmer 7s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fame-hot-shimmer { animation: none !important; }
+}
+
 /* ─── Best Picks — hero card atmospheric motion ─────────── */
 
 /*
