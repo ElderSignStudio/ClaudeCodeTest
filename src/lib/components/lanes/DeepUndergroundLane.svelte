@@ -95,9 +95,15 @@
 					<p class={['text-[12px] font-semibold truncate leading-snug', coverDim ? 'text-base-content/88' : 'text-base-content/82']}>{item.title}</p>
 					<p class="text-[11px] text-base-content/64 truncate mt-0.5">{item.artist}</p>
 					<!-- Presence first (factual anchor), origin second (flavor) -->
+					<!--
+						Two-line metadata: scout count (factual anchor) + source-scout
+						route. The lane header already communicates obscurity, so we
+						no longer need a third "Barely surfaced / Found in isolation"
+						editorial line per card.
+					-->
 					<div class="mt-2 space-y-0.5">
 						<p class="text-sm font-medium text-zinc-400/88 truncate">{presenceLabel(item.scouts)}</p>
-						<p class="text-[13px] text-zinc-400/75 truncate">{item.whisperHint ?? 'Barely surfaced'}</p>
+						<p class="text-[13px] text-zinc-400/75 truncate">{item.routeNarrative}</p>
 					</div>
 					<!-- Amplify — quiet but clearly available: opacity-75 at rest, 90 on hover -->
 					<div class="flex justify-end mt-2">

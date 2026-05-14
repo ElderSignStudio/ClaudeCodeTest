@@ -56,26 +56,30 @@
 		</div>
 
 		<!--
-			Fixed-height text block: reserves space for up to 2 lines of taste + 2 lines of
-			context regardless of actual wrapping. This keeps the activity pill on a consistent
-			baseline across all cards.
-			72px ≈ (text-xs × 2 lines) + gap + (text-[11px] × 2 lines) at leading-snug.
+			Activity pill — scout-archetype tag. Sits directly under the name so
+			the scout's identity reads first (who this person is), before the
+			descriptive paragraph (what they listen to).
 		-->
-		<div class="min-h-18 mb-3 flex flex-col justify-start">
-			<p class="text-[13px] text-base-content/68 leading-normal line-clamp-2">{scout.tasteProfile}</p>
-			{#if scout.contextLine}
-				<p class="text-[12px] text-base-content/55 mt-1.5 leading-normal line-clamp-2">{scout.contextLine}</p>
-			{/if}
-		</div>
-
-		<!-- ── Activity pill — always on the same baseline ── -->
-		<div class="mb-3.5 min-h-5 flex items-center">
+		<div class="mb-3 min-h-5 flex items-center">
 			{#if scout.activityLabel}
 				<span
 					class="inline-block text-[12px] font-medium rounded-full px-2 py-0.5 leading-none text-accent/82 border border-accent/28 bg-accent/7 truncate max-w-full"
 				>
 					{scout.activityLabel}
 				</span>
+			{/if}
+		</div>
+
+		<!--
+			Fixed-height text block: reserves space for up to 2 lines of taste + 2 lines of
+			context regardless of actual wrapping. Keeps the stats row + follow button on
+			a consistent baseline across all cards.
+			72px ≈ (text-xs × 2 lines) + gap + (text-[11px] × 2 lines) at leading-snug.
+		-->
+		<div class="min-h-18 mb-3 flex flex-col justify-start">
+			<p class="text-[13px] text-base-content/68 leading-normal line-clamp-2">{scout.tasteProfile}</p>
+			{#if scout.contextLine}
+				<p class="text-[12px] text-base-content/55 mt-1.5 leading-normal line-clamp-2">{scout.contextLine}</p>
 			{/if}
 		</div>
 
