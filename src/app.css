@@ -314,6 +314,39 @@
   .fame-hot-shimmer { animation: none !important; }
 }
 
+/* ─── Propagation tree — current-user empty-downstream ember ───
+   A small primary-tinted ember that breathes slowly under the
+   current user's node when their branch has not propagated yet.
+   Restrained — peak opacity is low, halo is faint. The dot itself
+   sits inside; the glow rides as a box-shadow halo. Reduced-motion
+   removes the breathing animation but keeps the static halo.
+*/
+@keyframes signal-ember-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 0 1px oklch(from var(--color-primary) l c h / 0.22),
+      0 0 4px 1px oklch(from var(--color-primary) l c h / 0.22);
+    opacity: 0.78;
+  }
+  50% {
+    box-shadow:
+      0 0 0 2px oklch(from var(--color-primary) l c h / 0.30),
+      0 0 8px 2px oklch(from var(--color-primary) l c h / 0.32);
+    opacity: 1;
+  }
+}
+.signal-ember { animation: signal-ember-breathe 3.6s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .signal-ember {
+    animation: none !important;
+    box-shadow:
+      0 0 0 1px oklch(from var(--color-primary) l c h / 0.22),
+      0 0 4px 1px oklch(from var(--color-primary) l c h / 0.22);
+    opacity: 0.85;
+  }
+}
+
 /* ─── Best Picks — hero card atmospheric motion ─────────── */
 
 /*

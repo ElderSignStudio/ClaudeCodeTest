@@ -73,7 +73,9 @@
 				: 'cursor-pointer',
 			!user.isPreviewNode && (isSelected
 				? 'bg-accent/12 ring-1 ring-accent/35'
-				: 'hover:bg-white/4'),
+				: user.isCurrentUser
+					? 'bg-primary/6 ring-1 ring-primary/18 hover:bg-primary/10'
+					: 'hover:bg-white/4'),
 		]}
 		onclick={() => onSelect(user)}
 		onkeydown={(e) => { if (!user.isPreviewNode && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(user); } }}
@@ -125,7 +127,7 @@
 									? 'border-accent/45'
 									: 'border-white/14',
 					!isSelected && !user.isPreviewNode && user.highImpact && 'ring-1 ring-accent/22',
-					!isSelected && !user.isPreviewNode && user.isCurrentUser && 'ring-1 ring-primary/22',
+					!isSelected && !user.isPreviewNode && user.isCurrentUser && 'ring-2 ring-primary/40',
 				]}
 			>
 				{#if user.avatar}
@@ -158,12 +160,14 @@
 						? 'text-base-content/45 italic'
 						: isSelected
 							? 'text-accent/95'
-							: 'text-base-content/92',
+							: user.isCurrentUser
+								? 'text-primary/95'
+								: 'text-base-content/92',
 				]}>
 					{user.name}
 				</p>
 				{#if user.isCurrentUser && !user.isPreviewNode}
-					<span class="text-[10px] uppercase tracking-widest text-primary/82 shrink-0">you</span>
+					<span class="text-[10px] uppercase tracking-widest font-semibold text-primary shrink-0">you</span>
 				{/if}
 				{#if user.isOrigin && !user.isPreviewNode}
 					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
@@ -188,6 +192,30 @@
 			</span>
 		{/if}
 	</div>
+
+	<!--
+		Empty-downstream placeholder. When the current user is a real node in
+		the tree with no visible children (and no hidden ones), render a quiet
+		"signal searching for scouts" continuation so the user reads "my branch
+		exists but hasn't propagated yet" instead of a dead end. Decorative —
+		not selectable, not announced by screen readers as interactive.
+	-->
+	{#if user.isCurrentUser && !user.isPreviewNode && user.children.length === 0 && !user.hiddenChildren}
+		<div
+			class="relative pl-5 ml-3.5 border-l border-dashed border-primary/18"
+			aria-hidden="true"
+		>
+			<div class="flex items-center gap-2 py-1.5 pl-1 pr-2">
+				<span class="shrink-0 w-4 h-4" aria-hidden="true"></span>
+				<span class="shrink-0 w-7 h-7 flex items-center justify-center">
+					<span class="signal-ember w-1.5 h-1.5 rounded-full bg-primary/85"></span>
+				</span>
+				<p class="text-[11px] italic leading-snug text-base-content/45">
+					Signal searching for scouts
+				</p>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Children — recursive — only when expanded -->
 	{#if hasVisibleChildren && expanded}
