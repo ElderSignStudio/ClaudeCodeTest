@@ -66,9 +66,10 @@
 					</div>
 				{/if}
 
-				<!-- Artwork — square, no vertical clipping. Lane lightness comes
-				     from narrower cards + tighter padding, not from cropping covers. -->
-				<div class="relative aspect-square w-full mx-3 my-0" style="width: calc(100% - 24px);">
+				<!-- Artwork — square, no vertical clipping. Inset trimmed from
+				     mx-3 to mx-2 so the cover occupies slightly more of the card's
+				     visual mass — "small but emotionally vivid transmissions." -->
+				<div class="relative aspect-square w-full mx-2 my-0" style="width: calc(100% - 16px);">
 					<div class="absolute inset-0 rounded-lg overflow-hidden border border-white/8">
 						<img
 							src={item.image}
