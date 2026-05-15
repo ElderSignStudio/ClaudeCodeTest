@@ -15,6 +15,38 @@
 /** Editorial novelty tier — how famous the signal felt at a given moment. */
 export type FameTier = 'Underground' | 'Niche' | 'Emerging' | 'Hot';
 
+/*
+	Tree Visual Language v1.
+
+	`nodeKind` captures *how this scout received and treated the signal* —
+	independent of identity (current user, origin) and branch volume. The
+	visual language pairs these kinds with edge kinds (carried on the
+	incoming connector) so the tree can answer "how did the signal move
+	through these people" rather than "who got points".
+
+	Layering: identity decorations (isOrigin, isCurrentUser, isPreviewNode)
+	sit ON TOP of nodeKind. A user can be both an origin and a successful
+	amplifier — the rendering composes both treatments.
+*/
+
+/** What kind of listening / amplifying behavior this scout demonstrates. */
+export type PropagationNodeKind =
+	| 'passive-listener'      // signal arrived but didn't strongly propagate
+	| 'deep-listener'         // signal resonated deeply; quiet but engaged
+	| 'amplifier'             // intentionally transmitted onward
+	| 'successful-amplifier'  // their transmission carried the signal far
+	| 'bridge-scout';         // bridged distinct scenes / listening worlds
+
+/** Character of the incoming edge from this user's parent. */
+export type PropagationEdgeKind =
+	| 'passive'        // signal reached but barely traveled — thin, dim
+	| 'active'         // intentional transmission — brighter
+	| 'strong'         // strong propagation — thicker, glowing
+	| 'quiet'          // very thin, fading
+	| 'cross-scene'    // bridged scenes — dual-tone shimmer
+	| 'fresh'          // recent transmission — subtle motion
+	| 'archival';      // older / settled — cooler, dimmer
+
 export type PropagationUser = {
 	id: string;
 	name: string;
@@ -69,6 +101,27 @@ export type PropagationUser = {
 	 *  Renders dimmed + italic + non-selectable; the row only invites the
 	 *  user to press the Amplify button. */
 	isPreviewNode?: boolean;
+
+	/* ── Tree Visual Language v1 ──────────────────────────────────
+	   Semantic decorations that drive the node + edge rendering. None of
+	   these change the topology — only how the tree visually reads. */
+
+	/** Behavioral category — passive / deep / amplifier / etc. */
+	nodeKind?: PropagationNodeKind;
+	/** Character of the connector line bringing the signal into this node. */
+	incomingEdgeKind?: PropagationEdgeKind;
+	/** This scout is a bridge between distinct scenes/orbits. Composes on
+	 *  top of nodeKind (a bridge scout is also typically an amplifier). */
+	isBridgeScout?: boolean;
+	/** This scout demonstrably carried the signal forward — composes with
+	 *  amplifier nodeKind to upgrade visual treatment. */
+	isSuccessfulAmplifier?: boolean;
+	/** Recent activity hint — used by fresh-edge rendering. */
+	isFresh?: boolean;
+	/** Dormant — used by archival-edge rendering. */
+	isDormant?: boolean;
+	/** Editorial scene-flavor tag (used for cross-scene edge tinting). */
+	sceneFlavor?: 'ambient' | 'drone' | 'folk' | 'industrial' | 'experimental' | 'unknown';
 };
 
 export type RootBranchSummary = {
@@ -136,6 +189,10 @@ const baseRoots: PropagationUser[] = [
 		depthLevels: 3,
 		biggestSubcascadeName: 'Renan',
 		biggestSubcascadeReach: 5,
+		nodeKind: 'successful-amplifier',
+		isSuccessfulAmplifier: true,
+		isBridgeScout: true,
+		sceneFlavor: 'ambient',
 		children: [
 			{
 				id: 'julia',
@@ -151,6 +208,9 @@ const baseRoots: PropagationUser[] = [
 				fameIndexAtDiscovery: 11,
 				discoveryScore: 2.6,
 				depthLevels: 1,
+				nodeKind: 'amplifier',
+				incomingEdgeKind: 'active',
+				sceneFlavor: 'ambient',
 				children: [
 					{
 						id: 'sofia',
@@ -166,6 +226,9 @@ const baseRoots: PropagationUser[] = [
 						fameIndexAtDiscovery: 18,
 						discoveryScore: 1.2,
 						depthLevels: 0,
+						nodeKind: 'deep-listener',
+						incomingEdgeKind: 'quiet',
+						sceneFlavor: 'ambient',
 						children: [],
 					},
 				],
@@ -187,6 +250,10 @@ const baseRoots: PropagationUser[] = [
 				depthLevels: 1,
 				biggestSubcascadeName: 'Drone-leaning cluster',
 				biggestSubcascadeReach: 4,
+				nodeKind: 'amplifier',
+				incomingEdgeKind: 'strong',
+				isFresh: true,
+				sceneFlavor: 'drone',
 				children: [],
 				hiddenChildren: 4,
 				hiddenChildrenLabel: 'Drone-leaning listeners',
@@ -213,6 +280,9 @@ const baseRoots: PropagationUser[] = [
 		depthLevels: 3,
 		biggestSubcascadeName: 'Pieter',
 		biggestSubcascadeReach: 4,
+		nodeKind: 'successful-amplifier',
+		isSuccessfulAmplifier: true,
+		sceneFlavor: 'ambient',
 		children: [
 			{
 				id: 'daria',
@@ -228,6 +298,10 @@ const baseRoots: PropagationUser[] = [
 				fameIndexAtDiscovery: 16,
 				discoveryScore: 2.1,
 				depthLevels: 0,
+				nodeKind: 'passive-listener',
+				incomingEdgeKind: 'archival',
+				isDormant: true,
+				sceneFlavor: 'ambient',
 				children: [],
 			},
 			{
@@ -247,6 +321,10 @@ const baseRoots: PropagationUser[] = [
 				depthLevels: 1,
 				biggestSubcascadeName: 'Post-rock crossover',
 				biggestSubcascadeReach: 3,
+				nodeKind: 'bridge-scout',
+				incomingEdgeKind: 'cross-scene',
+				isBridgeScout: true,
+				sceneFlavor: 'experimental',
 				children: [],
 				hiddenChildren: 3,
 				hiddenChildrenLabel: 'Post-rock-adjacent listeners',
@@ -274,6 +352,8 @@ const baseRoots: PropagationUser[] = [
 		fameIndexAtDiscovery: 3,
 		discoveryScore: 3.8,
 		depthLevels: 1,
+		nodeKind: 'deep-listener',
+		sceneFlavor: 'ambient',
 		children: [
 			{
 				id: 'mara',
@@ -289,6 +369,9 @@ const baseRoots: PropagationUser[] = [
 				fameIndexAtDiscovery: 6,
 				discoveryScore: 1.8,
 				depthLevels: 0,
+				nodeKind: 'passive-listener',
+				incomingEdgeKind: 'passive',
+				sceneFlavor: 'ambient',
 				children: [],
 			},
 		],
@@ -318,6 +401,9 @@ const hiddenRootUsers: PropagationUser[] = [
 		fameIndexAtDiscovery: 2,
 		discoveryScore: 4.0,
 		depthLevels: 0,
+		nodeKind: 'deep-listener',
+		isDormant: true,
+		sceneFlavor: 'ambient',
 		children: [],
 	},
 	{
@@ -335,6 +421,9 @@ const hiddenRootUsers: PropagationUser[] = [
 		fameIndexAtDiscovery: 4,
 		discoveryScore: 3.4,
 		depthLevels: 0,
+		nodeKind: 'passive-listener',
+		isDormant: true,
+		sceneFlavor: 'experimental',
 		children: [],
 	},
 ];

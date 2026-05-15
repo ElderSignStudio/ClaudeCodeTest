@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
-	import type { PropagationUser, PreviewTarget } from '$lib/mock/propagation';
+	import type { PropagationUser, PreviewTarget, PropagationEdgeKind } from '$lib/mock/propagation';
 	import Self from './PropagationNode.svelte';
 
 	/*
@@ -10,6 +10,18 @@
 		PREVIEW is also global to the page; previews fire on hover so the
 		inspector can dynamically describe whatever the user is currently
 		investigating without committing a selection.
+
+		Tree Visual Language v1:
+		  - `nodeKind` drives a CSS class on the avatar wrapper (`nk-*`)
+		    which adds a kind-specific halo via a pseudo-element. Identity
+		    decorations (origin border, current-user ring, selected border)
+		    still apply to the inner avatar and compose over the halo.
+		  - `incomingEdgeKind` drives a per-child connector class on the
+		    absolute-positioned vertical line bringing the child into its
+		    parent. Each child carries its own segment so siblings can read
+		    differently while still forming a visually connected rail.
+		  - High-impact / successful-amplifier scouts get a brighter `+N`
+		    branch-size readout — branch mass made visible without badges.
 
 		v1 limitation: `hiddenChildren` is just an editorial count. Clicking
 		"+N more" reveals N greyed placeholder rows. Hovering "+N more"
@@ -36,10 +48,81 @@
 	const hasVisibleChildren = $derived(user.children.length > 0);
 	const isSelected = $derived(selectedUserId === user.id);
 
-	// Generate anonymous placeholder rows for the hidden tail when expanded.
-	// They are real PropagationUser shapes (so the inspector can pick them up
-	// and show a generic anonymized state) but carry no children or further
-	// editorial detail.
+	// Derived treatment helpers — each maps a semantic field onto a CSS
+	// variant class defined in app.css. Kept as pure functions so the
+	// classes can compose in the template via the [array] syntax.
+
+	function edgeLineClass(kind: PropagationEdgeKind | undefined): string {
+		switch (kind) {
+			case 'active':       return 'edge-line edge-active';
+			case 'strong':       return 'edge-line edge-strong';
+			case 'quiet':        return 'edge-line edge-quiet';
+			case 'cross-scene':  return 'edge-line edge-cross-scene';
+			case 'fresh':        return 'edge-line edge-fresh';
+			case 'archival':     return 'edge-line edge-archival';
+			case 'passive':
+			default:             return 'edge-line edge-passive';
+		}
+	}
+
+	function nodeKindClass(u: PropagationUser): string {
+		if (u.isPreviewNode) return '';
+		switch (u.nodeKind) {
+			case 'successful-amplifier': return 'nk-success';
+			case 'bridge-scout':         return 'nk-bridge';
+			case 'amplifier':            return 'nk-amp';
+			case 'deep-listener':        return 'nk-deep';
+			case 'passive-listener':     return 'nk-passive';
+			default:                     return '';
+		}
+	}
+
+	// Branch mass visual cue — successful amplifiers and high-impact scouts
+	// earn a slightly brighter +N readout. No new numbers, no badges.
+	const branchAccented = $derived(
+		(user.highImpact ?? false) || (user.isSuccessfulAmplifier ?? false),
+	);
+
+	// "Hub" parents — successful amplifiers and bridge scouts. Outgoing
+	// edges leaving these get a brightness boost via `.edges-from-hub`
+	// on the children container.
+	const isHubParent = $derived(
+		user.nodeKind === 'successful-amplifier'
+		|| user.isSuccessfulAmplifier === true
+		|| user.nodeKind === 'bridge-scout'
+		|| user.isBridgeScout === true,
+	);
+
+	// Whether this row should read as a "quiet" lane in scanning — dims
+	// the row a touch so the eye drops past it. Applies to passive
+	// listeners that are NOT the current user or a selected node.
+	const isQuietRow = $derived(
+		user.nodeKind === 'passive-listener'
+		&& !user.isPreviewNode
+		&& !user.isCurrentUser
+		&& !isSelected,
+	);
+
+	// High-impact non-success row tint. Successful-amplifier rows get
+	// their own (richer) hub glow via .sa-row.
+	const isHighImpactRow = $derived(
+		(user.highImpact === true || (user.branchSize ?? 0) >= 5)
+		&& user.nodeKind !== 'successful-amplifier'
+		&& !user.isSuccessfulAmplifier
+		&& !user.isPreviewNode
+		&& !isSelected
+		&& !user.isCurrentUser,
+	);
+
+	const isSuccessAmplifierRow = $derived(
+		(user.nodeKind === 'successful-amplifier' || user.isSuccessfulAmplifier === true)
+		&& !user.isPreviewNode
+		&& !isSelected,
+	);
+
+	// Anonymous placeholder rows for the hidden tail when expanded. They are
+	// real PropagationUser shapes so the inspector can pick them up; flagged
+	// as quiet/passive so they read as background presence in the tree.
 	function stubsFor(count: number): PropagationUser[] {
 		return Array.from({ length: count }, (_, i) => ({
 			id: `${user.id}-stub-${i}`,
@@ -51,6 +134,8 @@
 			discoveredAgo: 'Recently',
 			behaviorNote: 'Editorial topology hint — no individual reach data attached at this depth.',
 			children: [],
+			nodeKind: 'passive-listener' as const,
+			incomingEdgeKind: 'quiet' as const,
 		}));
 	}
 </script>
@@ -67,15 +152,18 @@
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 	<div
 		class={[
-			'group/row w-full flex items-start gap-2 py-1.5 pl-1 pr-2 rounded-md text-left transition-colors duration-150',
+			'group/row relative w-full flex items-start gap-2 py-1.5 pl-1 pr-2 rounded-md text-left transition-colors duration-150',
 			user.isPreviewNode
 				? 'cursor-default opacity-50'
 				: 'cursor-pointer',
 			!user.isPreviewNode && (isSelected
 				? 'bg-accent/12 ring-1 ring-accent/35'
 				: user.isCurrentUser
-					? 'bg-primary/6 ring-1 ring-primary/18 hover:bg-primary/10'
+					? 'bg-primary/8 ring-1 ring-primary/22 hover:bg-primary/12 cu-row'
 					: 'hover:bg-white/4'),
+			isSuccessAmplifierRow && 'sa-row',
+			isHighImpactRow && 'hi-row',
+			isQuietRow && 'q-row',
 		]}
 		onclick={() => onSelect(user)}
 		onkeydown={(e) => { if (!user.isPreviewNode && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(user); } }}
@@ -103,17 +191,16 @@
 		{/if}
 
 		<!--
-			Avatar.
-			  - `isPreviewNode`  → dashed border + low opacity wrapper above
-			    treats the whole row as "pending placement."
-			  - `isCurrentUser`  → primary-coloured ring so the viewer's own
-			    node reads distinctly from origin/high-impact accent cyan.
-			  - `isOrigin`       → accent-tinted border + small spark dot at
-			    the top-right corner.
-			  - `highImpact`     → faint accent ring around the avatar.
-			  - `isSelected`     → committed selection wins on border colour.
+			Avatar wrapper carries the `nk-*` class so the kind-specific halo
+			(rendered via ::after) sits outside the avatar's overflow-hidden
+			boundary. Identity decorations stay on the inner avatar.
 		-->
-		<div class="shrink-0 mt-0.5 relative">
+		<div
+			class={[
+				'shrink-0 mt-0.5 relative node-avatar',
+				!user.isPreviewNode && nodeKindClass(user),
+			]}
+		>
 			<div
 				class={[
 					'w-7 h-7 rounded-full overflow-hidden border',
@@ -126,12 +213,19 @@
 								: user.isOrigin
 									? 'border-accent/45'
 									: 'border-white/14',
-					!isSelected && !user.isPreviewNode && user.highImpact && 'ring-1 ring-accent/22',
 					!isSelected && !user.isPreviewNode && user.isCurrentUser && 'ring-2 ring-primary/40',
 				]}
 			>
 				{#if user.avatar}
-					<img src={user.avatar} alt="" class={['w-full h-full object-cover', user.isPreviewNode && 'grayscale opacity-60']} />
+					<img
+						src={user.avatar}
+						alt=""
+						class={[
+							'w-full h-full object-cover',
+							user.isPreviewNode && 'grayscale opacity-60',
+							user.nodeKind === 'passive-listener' && !user.isCurrentUser && 'opacity-80',
+						]}
+					/>
 				{:else}
 					<!-- Anonymous stub: solid neutral fill, no image -->
 					<div class="w-full h-full bg-base-content/12"></div>
@@ -143,6 +237,12 @@
 					aria-hidden="true"
 					title="Origin scout"
 				></span>
+			{/if}
+			{#if user.isBridgeScout && !user.isPreviewNode}
+				<!-- Secondary orbit marker for bridge scouts — a tiny offset
+				     accent dot that drifts very slowly. Reads as "this scout
+				     pulls from another orbit". -->
+				<span class="bridge-orbit-dot" aria-hidden="true"></span>
 			{/if}
 		</div>
 
@@ -162,7 +262,9 @@
 							? 'text-accent/95'
 							: user.isCurrentUser
 								? 'text-primary/95'
-								: 'text-base-content/92',
+								: user.nodeKind === 'passive-listener'
+									? 'text-base-content/72'
+									: 'text-base-content/92',
 				]}>
 					{user.name}
 				</p>
@@ -175,19 +277,31 @@
 			</div>
 			<p class={[
 				'text-[11px] leading-snug truncate',
-				user.isPreviewNode ? 'text-base-content/40 italic' : 'text-base-content/55',
+				user.isPreviewNode
+					? 'text-base-content/40 italic'
+					: user.nodeKind === 'passive-listener'
+						? 'text-base-content/45'
+						: 'text-base-content/55',
 			]}>
 				{user.character}
 			</p>
 		</div>
 
 		<!--
-			Branch-size hint on the right edge. High-impact scouts get a
-			brighter accent treatment so the number reads as "this scout
-			helped the signal travel" without becoming a badge.
+			Branch-size hint on the right edge. Successful amplifiers and
+			high-impact scouts get a brighter accent treatment so the number
+			reads as "this scout helped the signal travel" without becoming
+			a badge.
 		-->
 		{#if user.branchSize > 0}
-			<span class={['shrink-0 mt-1.5 text-[10px] font-mono tabular-nums', user.highImpact ? 'text-accent/72' : 'text-base-content/40']}>
+			<span class={[
+				'shrink-0 mt-1.5 text-[10px] font-mono tabular-nums',
+				(user.isSuccessfulAmplifier || user.nodeKind === 'successful-amplifier')
+					? 'text-accent font-semibold'
+					: branchAccented
+						? 'text-accent/85'
+						: 'text-base-content/42',
+			]}>
 				+{user.branchSize}
 			</span>
 		{/if}
@@ -202,84 +316,93 @@
 	-->
 	{#if user.isCurrentUser && !user.isPreviewNode && user.children.length === 0 && !user.hiddenChildren}
 		<div
-			class="relative pl-5 ml-3.5 border-l border-dashed border-primary/18"
+			class="relative pl-5 ml-3.5 border-l border-dashed border-primary/32"
 			aria-hidden="true"
 		>
 			<div class="flex items-center gap-2 py-1.5 pl-1 pr-2">
 				<span class="shrink-0 w-4 h-4" aria-hidden="true"></span>
 				<span class="shrink-0 w-7 h-7 flex items-center justify-center">
-					<span class="signal-ember w-1.5 h-1.5 rounded-full bg-primary/85"></span>
+					<span class="signal-ember w-2 h-2 rounded-full bg-primary"></span>
 				</span>
-				<p class="text-[11px] italic leading-snug text-base-content/45">
+				<p class="text-[11px] italic leading-snug text-primary/55">
 					Signal searching for scouts
 				</p>
 			</div>
 		</div>
 	{/if}
 
-	<!-- Children — recursive — only when expanded -->
+	<!--
+		Children — recursive — only when expanded. Each child wraps in its
+		own `pl-5` container with an absolute-positioned edge line whose
+		variant class derives from `child.incomingEdgeKind`. Stacked, the
+		segments form a connected rail where each section can read differently.
+	-->
 	{#if hasVisibleChildren && expanded}
-		<!--
-			Left rail: a soft vertical line that runs through the child column
-			so the eye reads them as a branch off this row. Indented by 14px
-			to align under this node's avatar center.
-		-->
-		<div class="relative pl-5 ml-3.5 border-l border-white/8">
+		<div class={['relative ml-3.5', isHubParent && 'edges-from-hub']}>
 			{#each user.children as child (child.id)}
-				<Self
-					user={child}
-					{selectedUserId}
-					{onSelect}
-					{onPreview}
-					depth={depth + 1}
-				/>
+				<div class="relative pl-5">
+					<span class={['absolute inset-y-0 left-0', edgeLineClass(child.incomingEdgeKind)]} aria-hidden="true"></span>
+					<Self
+						user={child}
+						{selectedUserId}
+						{onSelect}
+						{onPreview}
+						depth={depth + 1}
+					/>
+				</div>
 			{/each}
 
 			<!-- Hidden tail: "+N more" indicator (collapsed) or anonymized stubs (expanded) -->
 			{#if user.hiddenChildren && user.hiddenChildren > 0}
 				{#if !tailExpanded}
-					<button
-						class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
-						onclick={() => { tailExpanded = true; }}
-						onmouseenter={() => onPreview({
-							kind: 'cluster',
-							parent: user,
-							count: user.hiddenChildren ?? 0,
-							label: user.hiddenChildrenLabel ?? 'Quieter listeners',
-							description: user.hiddenChildrenDescription,
-						})}
-						onfocus={() => onPreview({
-							kind: 'cluster',
-							parent: user,
-							count: user.hiddenChildren ?? 0,
-							label: user.hiddenChildrenLabel ?? 'Quieter listeners',
-							description: user.hiddenChildrenDescription,
-						})}
-					>
-						<span class="shrink-0 w-4 h-4"></span>
-						<span class="shrink-0 w-7 h-7 rounded-full border border-dashed border-white/14 flex items-center justify-center text-[10px] font-mono text-base-content/45">
-							+{user.hiddenChildren}
-						</span>
-						<div class="min-w-0 flex-1">
-							<p class="text-[12px] leading-snug truncate text-base-content/68">
-								+{user.hiddenChildren} more
-							</p>
-							{#if user.hiddenChildrenLabel}
-								<p class="text-[11px] leading-snug truncate text-base-content/45 italic">
-									{user.hiddenChildrenLabel}
+					<div class="relative pl-5">
+						<span class="absolute inset-y-0 left-0 edge-line edge-passive" aria-hidden="true"></span>
+						<button
+							class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
+							onclick={() => { tailExpanded = true; }}
+							onmouseenter={() => onPreview({
+								kind: 'cluster',
+								parent: user,
+								count: user.hiddenChildren ?? 0,
+								label: user.hiddenChildrenLabel ?? 'Quieter listeners',
+								description: user.hiddenChildrenDescription,
+							})}
+							onfocus={() => onPreview({
+								kind: 'cluster',
+								parent: user,
+								count: user.hiddenChildren ?? 0,
+								label: user.hiddenChildrenLabel ?? 'Quieter listeners',
+								description: user.hiddenChildrenDescription,
+							})}
+						>
+							<span class="shrink-0 w-4 h-4"></span>
+							<span class="shrink-0 w-7 h-7 rounded-full border border-dashed border-white/14 flex items-center justify-center text-[10px] font-mono text-base-content/45">
+								+{user.hiddenChildren}
+							</span>
+							<div class="min-w-0 flex-1">
+								<p class="text-[12px] leading-snug truncate text-base-content/68">
+									+{user.hiddenChildren} more
 								</p>
-							{/if}
-						</div>
-					</button>
+								{#if user.hiddenChildrenLabel}
+									<p class="text-[11px] leading-snug truncate text-base-content/45 italic">
+										{user.hiddenChildrenLabel}
+									</p>
+								{/if}
+							</div>
+						</button>
+					</div>
 				{:else}
 					{#each stubsFor(user.hiddenChildren) as stub (stub.id)}
-						<Self
-							user={stub}
-							{selectedUserId}
-							{onSelect}
-							{onPreview}
-							depth={depth + 1}
-						/>
+						<div class="relative pl-5">
+							<span class="absolute inset-y-0 left-0 edge-line edge-quiet" aria-hidden="true"></span>
+							<Self
+								user={stub}
+								{selectedUserId}
+								{onSelect}
+								{onPreview}
+								depth={depth + 1}
+							/>
+						</div>
 					{/each}
 				{/if}
 			{/if}

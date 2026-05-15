@@ -90,6 +90,9 @@
 			children: [],
 			depthLevels: 0,
 			isCurrentUser: true,
+			nodeKind: 'amplifier',
+			incomingEdgeKind: 'active',
+			isFresh: true,
 		};
 	}
 
