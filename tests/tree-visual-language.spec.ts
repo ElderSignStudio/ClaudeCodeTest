@@ -23,10 +23,11 @@ test('Tree visual language — node + edge classes are applied', async ({ page }
 		if (!root) return null;
 		return {
 			nkSuccess: !!root.querySelector('.nk-success'),
-			nkBridge:  !!root.querySelector('.nk-bridge'),
 			nkAmp:     !!root.querySelector('.nk-amp'),
 			nkDeep:    !!root.querySelector('.nk-deep'),
 			nkPassive: !!root.querySelector('.nk-passive'),
+			// Bridge styling was removed in the v2 debug pass — assert absent.
+			nkBridge:  !!root.querySelector('.nk-bridge'),
 			edgeActive:      !!root.querySelector('.edge-active'),
 			edgeStrong:      !!root.querySelector('.edge-strong'),
 			edgeQuiet:       !!root.querySelector('.edge-quiet'),
@@ -37,17 +38,15 @@ test('Tree visual language — node + edge classes are applied', async ({ page }
 	});
 
 	expect(variantPresence).not.toBeNull();
-	// Forest contains: marco (success+bridge), julia (amp), sofia (deep),
-	// renan (amp), alice (success), daria (passive), pieter (bridge),
-	// dan-mock-origin (deep), mara (passive), tomas (deep, hidden), inga (passive, hidden).
-	// We expect at least nk-success (alice), nk-bridge (marco or pieter), nk-amp,
-	// nk-deep, nk-passive, edge-active (julia), edge-strong (renan), edge-quiet
-	// (sofia), edge-archival (daria), edge-cross-scene (pieter), edge-passive (mara).
+	// Visible forest covers all four supported node kinds + the two
+	// identity overlays (origin via Marco/Alice, current-user via Dan
+	// after Amplify). Bridge styling was removed, so .nk-bridge must
+	// NOT appear anywhere in the rendered tree.
 	expect(variantPresence?.nkSuccess).toBe(true);
-	expect(variantPresence?.nkBridge).toBe(true);
 	expect(variantPresence?.nkAmp).toBe(true);
 	expect(variantPresence?.nkDeep).toBe(true);
 	expect(variantPresence?.nkPassive).toBe(true);
+	expect(variantPresence?.nkBridge).toBe(false);
 	expect(variantPresence?.edgeActive).toBe(true);
 	expect(variantPresence?.edgeStrong).toBe(true);
 	expect(variantPresence?.edgeQuiet).toBe(true);
@@ -71,10 +70,9 @@ test('Tree visual language — current user after Amplify gets nk-amp + edge-act
 	// Dan's row should now carry nk-amp on its avatar wrapper, and his
 	// incoming edge segment should be edge-active.
 	const danHasAmpKind = await page.evaluate(() => {
-		// Find the row containing "you" text, walk up to the row, look for nk-amp.
-		const youSpan = Array.from(document.querySelectorAll('span')).find(s => s.textContent === 'you');
-		if (!youSpan) return null;
-		const row = youSpan.closest('[role="button"]');
+		// Find the current-user row via the .cu-row class, then check its
+		// avatar wrapper carries nk-amp.
+		const row = document.querySelector('[role="button"].cu-row');
 		if (!row) return null;
 		const avatar = row.querySelector('.node-avatar');
 		return {

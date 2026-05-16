@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { PropagationForest, PropagationUser, PreviewTarget } from '$lib/mock/propagation';
+	import { sortNodesByPropagation } from '$lib/mock/propagation';
 	import PropagationNode from './PropagationNode.svelte';
 
 	/*
@@ -30,6 +31,11 @@
 	} = $props();
 
 	let hiddenRootsExpanded = $state(false);
+
+	// Sort roots by propagation strength so the strongest origins appear
+	// first. Hidden roots use the same ordering when expanded.
+	const sortedRoots = $derived(sortNodesByPropagation(forest.roots));
+	const sortedHiddenRoots = $derived(sortNodesByPropagation(forest.hiddenRootUsers));
 </script>
 
 <div
@@ -50,9 +56,11 @@
 		</p>
 	</div>
 
-	<!-- Roots — each is its own independent origin tree -->
+	<!-- Roots — each is its own independent origin tree. Sorted by
+	     propagation strength: successful-amplifier → amplifier → deep
+	     → passive. -->
 	<div class="flex flex-col gap-3.5">
-		{#each forest.roots as root (root.id)}
+		{#each sortedRoots as root (root.id)}
 			<PropagationNode
 				user={root}
 				{selectedUserId}
@@ -74,9 +82,9 @@
 	{#if forest.hiddenRootUsers.length > 0}
 		{#if hiddenRootsExpanded}
 			<!-- Revealed hidden roots — rendered exactly like the primary
-			     roots above, with the same gap rhythm. -->
+			     roots above, with the same gap rhythm. Same sort order. -->
 			<div class="mt-3.5 flex flex-col gap-3.5">
-				{#each forest.hiddenRootUsers as root (root.id)}
+				{#each sortedHiddenRoots as root (root.id)}
 					<PropagationNode
 						user={root}
 						{selectedUserId}

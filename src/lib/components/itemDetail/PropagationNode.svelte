@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import type { PropagationUser, PreviewTarget, PropagationEdgeKind } from '$lib/mock/propagation';
+	import { sortNodesByPropagation } from '$lib/mock/propagation';
 	import Self from './PropagationNode.svelte';
 
 	/*
@@ -48,6 +49,11 @@
 	const hasVisibleChildren = $derived(user.children.length > 0);
 	const isSelected = $derived(selectedUserId === user.id);
 
+	// Sort children by propagation strength so the strongest sibling reads
+	// first. Preview nodes go to the END of the sibling group so Dan's
+	// inserted preview stays positionally stable.
+	const sortedChildren = $derived(sortNodesByPropagation(user.children));
+
 	// Derived treatment helpers — each maps a semantic field onto a CSS
 	// variant class defined in app.css. Kept as pure functions so the
 	// classes can compose in the template via the [array] syntax.
@@ -69,7 +75,6 @@
 		if (u.isPreviewNode) return '';
 		switch (u.nodeKind) {
 			case 'successful-amplifier': return 'nk-success';
-			case 'bridge-scout':         return 'nk-bridge';
 			case 'amplifier':            return 'nk-amp';
 			case 'deep-listener':        return 'nk-deep';
 			case 'passive-listener':     return 'nk-passive';
@@ -77,20 +82,19 @@
 		}
 	}
 
+
 	// Branch mass visual cue — successful amplifiers and high-impact scouts
 	// earn a slightly brighter +N readout. No new numbers, no badges.
 	const branchAccented = $derived(
 		(user.highImpact ?? false) || (user.isSuccessfulAmplifier ?? false),
 	);
 
-	// "Hub" parents — successful amplifiers and bridge scouts. Outgoing
-	// edges leaving these get a brightness boost via `.edges-from-hub`
-	// on the children container.
+	// "Hub" parents — successful amplifiers only (bridge styling was removed
+	// in the v2 debug pass). Outgoing edges leaving these get a brightness
+	// boost via `.edges-from-hub` on the children container.
 	const isHubParent = $derived(
 		user.nodeKind === 'successful-amplifier'
-		|| user.isSuccessfulAmplifier === true
-		|| user.nodeKind === 'bridge-scout'
-		|| user.isBridgeScout === true,
+		|| user.isSuccessfulAmplifier === true,
 	);
 
 	// Whether this row should read as a "quiet" lane in scanning — dims
@@ -118,6 +122,16 @@
 		(user.nodeKind === 'successful-amplifier' || user.isSuccessfulAmplifier === true)
 		&& !user.isPreviewNode
 		&& !isSelected,
+	);
+
+	// Amplifier row gets a fainter accent wash — visibly above passive/deep
+	// but clearly below the successful-amplifier hub glow.
+	const isAmplifierRow = $derived(
+		user.nodeKind === 'amplifier'
+		&& !user.isPreviewNode
+		&& !isSelected
+		&& !user.isCurrentUser
+		&& !isSuccessAmplifierRow,
 	);
 
 	// Anonymous placeholder rows for the hidden tail when expanded. They are
@@ -152,16 +166,17 @@
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 	<div
 		class={[
-			'group/row relative w-full flex items-start gap-2 py-1.5 pl-1 pr-2 rounded-md text-left transition-colors duration-150',
+			'group/row relative w-full flex items-start gap-4 py-1.5 pl-1 pr-2 rounded-md text-left transition-colors duration-150 overflow-visible',
 			user.isPreviewNode
 				? 'cursor-default opacity-50'
 				: 'cursor-pointer',
 			!user.isPreviewNode && (isSelected
 				? 'bg-accent/12 ring-1 ring-accent/35'
 				: user.isCurrentUser
-					? 'bg-primary/8 ring-1 ring-primary/22 hover:bg-primary/12 cu-row'
+					? 'bg-primary/14 ring-1 ring-primary/35 hover:bg-primary/18 cu-row'
 					: 'hover:bg-white/4'),
 			isSuccessAmplifierRow && 'sa-row',
+			isAmplifierRow && 'amp-row',
 			isHighImpactRow && 'hi-row',
 			isQuietRow && 'q-row',
 		]}
@@ -191,29 +206,69 @@
 		{/if}
 
 		<!--
-			Avatar wrapper carries the `nk-*` class so the kind-specific halo
-			(rendered via ::after) sits outside the avatar's overflow-hidden
-			boundary. Identity decorations stay on the inner avatar.
+			Avatar wrapper composes BASE kind silhouette with overlay states.
+
+			  Layer 1 — BASE silhouette (from nodeKind):
+			    passive    → no decoration, no motion
+			    deep       → static drop-shadow filled glow (no motion)
+			    amplifier  → ring + outward ripple (TRANSMISSION motion)
+			    success    → double ring + orbit comet (TRANSMISSION motion)
+
+			  Layer 2 — OVERLAY isOrigin (stackable, STATIC):
+			    origin-aura span (z:-1, behind everything)
+			    origin-dot span (top-right)
+			    accent border/ring on inner avatar
+
+			  Layer 3 — OVERLAY isCurrentUser (stackable, STATIC):
+			    primary border/ring on inner avatar (wins over origin)
+			    cu-row left rail + bg on the row
+			    YOU label
+
+			Motion semantics: only the base kind (amp/success) animates.
+			Identity overlays never add their own outward ripple — they're
+			recognized by color (primary/accent), border weight, and label.
+
+			`isolate` creates a stacking context so origin-aura sits at z:-1.
 		-->
 		<div
 			class={[
-				'shrink-0 mt-0.5 relative node-avatar',
+				'shrink-0 mt-0.5 relative overflow-visible node-avatar',
 				!user.isPreviewNode && nodeKindClass(user),
 			]}
 		>
+			{#if user.nodeKind === 'successful-amplifier' && !user.isPreviewNode}
+				<!-- Outward broadcast ripple for successful amplifiers. Slower
+				     and wider than nk-amp::before so it reads as a deeper
+				     transmission wave composing with the orbit comet
+				     (::before) and the double-ring halo (::after). -->
+				<span class="sa-ripple" aria-hidden="true"></span>
+			{/if}
 			<div
 				class={[
-					'w-7 h-7 rounded-full overflow-hidden border',
+					'w-7 h-7 rounded-full overflow-hidden border transition-transform duration-200',
+					/*
+						Avatar border is the only "outline" on the avatar itself.
+						Rings (ring-*) are reserved for transmission kinds (amp /
+						successful-amp via their pseudo halos). Origin and
+						current-user contribute via non-ring markers (root tick,
+						origin dot, cu-row rail, YOU/ORIGIN labels).
+
+						Current-user's primary-tinted border is the allowed
+						"single outline" emphasis for identity. Origin keeps a
+						neutral border so it doesn't read like a transmission
+						ring; origin identity reads via the dot + tick + label.
+					*/
 					user.isPreviewNode
 						? 'border-white/15 border-dashed'
 						: isSelected
-							? 'border-accent/60'
+							? 'border-accent/65'
 							: user.isCurrentUser
-								? 'border-primary/55'
-								: user.isOrigin
-									? 'border-accent/45'
-									: 'border-white/14',
-					!isSelected && !user.isPreviewNode && user.isCurrentUser && 'ring-2 ring-primary/40',
+								? 'border-primary/65'
+								: user.nodeKind === 'passive-listener'
+									? 'border-white/10'
+									: 'border-white/18',
+					user.nodeKind === 'passive-listener' && !user.isPreviewNode && !user.isCurrentUser && 'scale-[0.74]',
+					user.nodeKind === 'deep-listener'    && !user.isPreviewNode && !user.isCurrentUser && 'scale-[0.84]',
 				]}
 			>
 				{#if user.avatar}
@@ -223,7 +278,8 @@
 						class={[
 							'w-full h-full object-cover',
 							user.isPreviewNode && 'grayscale opacity-60',
-							user.nodeKind === 'passive-listener' && !user.isCurrentUser && 'opacity-80',
+							user.nodeKind === 'passive-listener' && !user.isCurrentUser && 'opacity-65 saturate-50',
+							user.nodeKind === 'deep-listener' && !user.isCurrentUser && 'opacity-78 saturate-70',
 						]}
 					/>
 				{:else}
@@ -232,18 +288,16 @@
 				{/if}
 			</div>
 			{#if user.isOrigin && !user.isPreviewNode}
-				<span
-					class="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-accent/85 border border-base-200"
-					aria-hidden="true"
-					title="Origin scout"
-				></span>
+				<!-- Origin marker — a small horizontal accent beam ending
+				     in a dot, sitting just to the LEFT of the avatar. It's
+				     positioned inside .node-avatar so it visually hugs the
+				     avatar (reads as "signal entered the forest at this
+				     node") without altering any avatar surface property
+				     (size, opacity, color, glow, ring, saturation are all
+				     reserved for behavioral nodeKind signals). -->
+				<span class="origin-glyph" aria-hidden="true"></span>
 			{/if}
-			{#if user.isBridgeScout && !user.isPreviewNode}
-				<!-- Secondary orbit marker for bridge scouts — a tiny offset
-				     accent dot that drifts very slowly. Reads as "this scout
-				     pulls from another orbit". -->
-				<span class="bridge-orbit-dot" aria-hidden="true"></span>
-			{/if}
+
 		</div>
 
 		<!--
@@ -261,16 +315,13 @@
 						: isSelected
 							? 'text-accent/95'
 							: user.isCurrentUser
-								? 'text-primary/95'
+								? 'text-primary'
 								: user.nodeKind === 'passive-listener'
-									? 'text-base-content/72'
-									: 'text-base-content/92',
+									? 'text-base-content/58'
+									: 'text-base-content/95',
 				]}>
 					{user.name}
 				</p>
-				{#if user.isCurrentUser && !user.isPreviewNode}
-					<span class="text-[10px] uppercase tracking-widest font-semibold text-primary shrink-0">you</span>
-				{/if}
 				{#if user.isOrigin && !user.isPreviewNode}
 					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
 				{/if}
@@ -280,8 +331,8 @@
 				user.isPreviewNode
 					? 'text-base-content/40 italic'
 					: user.nodeKind === 'passive-listener'
-						? 'text-base-content/45'
-						: 'text-base-content/55',
+						? 'text-base-content/35'
+						: 'text-base-content/60',
 			]}>
 				{user.character}
 			</p>
@@ -339,7 +390,7 @@
 	-->
 	{#if hasVisibleChildren && expanded}
 		<div class={['relative ml-3.5', isHubParent && 'edges-from-hub']}>
-			{#each user.children as child (child.id)}
+			{#each sortedChildren as child (child.id)}
 				<div class="relative pl-5">
 					<span class={['absolute inset-y-0 left-0', edgeLineClass(child.incomingEdgeKind)]} aria-hidden="true"></span>
 					<Self

@@ -363,114 +363,241 @@
 
 .node-avatar { position: relative; }
 
-/* Successful amplifier: stacked accent rings — a HUB. Larger halo
-   than v1, stronger inner/outer ring, slow breathing. Reads as
-   "this scout carried the signal far" without trophy energy. */
-.node-avatar.nk-success::after {
+/*
+   v3: distinct SILHOUETTES — not just glow intensity differences. The
+   four base kinds give the eye four shape languages it can distinguish
+   without reading the debug label:
+
+     passive-listener  → small dim dot                    (~22px)
+     deep-listener     → soft FILLED halo, no ring        (~28px + halo)
+     amplifier         → avatar + single RING with gap    (~36px ring)
+     successful-amp    → avatar + DOUBLE ring + orbit     (~48px outer)
+
+   Origin and current-user are overlays (real <span> elements + inner
+   avatar border/ring). They COMPOSE on top of the base silhouette without
+   replacing it.
+
+   Motion stays slow (3.5–11s). prefers-reduced-motion freezes pulses
+   but keeps static states visible.
+*/
+
+/* ── Deep listener — no decoration, just a slightly larger
+   listener variant ─────────────────────────────────────────────────
+   Deep listener and Passive listener now belong to the same quiet
+   listener family. Deep is only visually distinguished from passive
+   by scale (0.84 vs 0.74), opacity (0.78 vs 0.65), and saturation
+   (0.70 vs 0.50) on the avatar img — all of which are applied via
+   Tailwind utilities in PropagationNode.svelte. No glow, no ring,
+   no animation. Amplifier is the first node kind that visibly
+   emits any energy outward. */
+
+/* ── Amplifier — single transmission ring with visible gap ─────────
+   ::after = the ring (1.5px stroke at offset 4px from avatar)
+   ::before = slow outward ripple                                     */
+.node-avatar.nk-amp::after {
   content: '';
   position: absolute;
   inset: -4px;
   border-radius: 9999px;
   pointer-events: none;
-  border: 1px solid oklch(from var(--color-accent) l c h / 0.55);
-  box-shadow:
-    0 0 0 2px oklch(from var(--color-accent) l c h / 0.18),
-    0 0 10px 0  oklch(from var(--color-accent) l c h / 0.20);
-  animation: nk-success-breathe 11s ease-in-out infinite;
+  border: 1.5px solid oklch(from var(--color-accent) l c h / 0.72);
+  box-shadow: 0 0 10px 0 oklch(from var(--color-accent) l c h / 0.25);
+  animation: nk-amp-breathe 9s ease-in-out infinite;
 }
-@keyframes nk-success-breathe {
+@keyframes nk-amp-breathe {
   0%, 100% {
-    border-color: oklch(from var(--color-accent) l c h / 0.55);
-    box-shadow:
-      0 0 0 2px oklch(from var(--color-accent) l c h / 0.16),
-      0 0 8px 0  oklch(from var(--color-accent) l c h / 0.18);
+    border-color: oklch(from var(--color-accent) l c h / 0.65);
+    box-shadow: 0 0 8px 0 oklch(from var(--color-accent) l c h / 0.20);
   }
   50% {
-    border-color: oklch(from var(--color-accent) l c h / 0.78);
-    box-shadow:
-      0 0 0 3px oklch(from var(--color-accent) l c h / 0.24),
-      0 0 16px 1px oklch(from var(--color-accent) l c h / 0.30);
+    border-color: oklch(from var(--color-accent) l c h / 1);
+    box-shadow: 0 0 16px 1px oklch(from var(--color-accent) l c h / 0.42);
   }
 }
+.node-avatar.nk-amp::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 9999px;
+  pointer-events: none;
+  outline: 1.5px solid oklch(from var(--color-accent) l c h / 0.55);
+  outline-offset: 2px;
+  animation: nk-amp-ripple 5s ease-out infinite;
+  opacity: 0;
+}
+@keyframes nk-amp-ripple {
+  0%   { outline-offset: 2px;  opacity: 0; }
+  8%   { opacity: 0.70; }
+  100% { outline-offset: 12px; opacity: 0; }
+}
 
-/* Bridge scout: dual-tone split ring — primary on one side, accent
-   on the other. Two pseudo-elements with clip-path: each covers half
-   the avatar perimeter. The split is now more saturated. */
-.node-avatar.nk-bridge::before,
-.node-avatar.nk-bridge::after {
+/* ── Successful amplifier — DOUBLE ring + orbit comet ──────────────
+   ::after  = inner ring (border) + outer ring (outline at offset)
+              + soft halo (box-shadow). Two clearly separated rings.
+   ::before = conic-gradient comet sweeping the outermost ring slowly.
+
+   Outline-based outer ring stays a clean stroke (unlike spread
+   box-shadow which would fill solid). */
+.node-avatar.nk-success::after {
   content: '';
   position: absolute;
   inset: -3px;
   border-radius: 9999px;
-  border: 1.75px solid transparent;
   pointer-events: none;
+  border: 1.5px solid oklch(from var(--color-accent) l c h / 0.85);
+  outline: 1.5px solid oklch(from var(--color-accent) l c h / 0.45);
+  outline-offset: 4px;
+  box-shadow: 0 0 16px 1px oklch(from var(--color-accent) l c h / 0.34);
+  animation: nk-success-breathe 9s ease-in-out infinite;
 }
-.node-avatar.nk-bridge::before {
-  border-color: oklch(from var(--color-primary) l c h / 0.70);
-  clip-path: inset(0 50% 0 0);
-}
-.node-avatar.nk-bridge::after {
-  border-color: oklch(from var(--color-accent) l c h / 0.70);
-  clip-path: inset(0 0 0 50%);
+@keyframes nk-success-breathe {
+  0%, 100% {
+    border-color: oklch(from var(--color-accent) l c h / 0.78);
+    outline-offset: 3.5px;
+    outline-color: oklch(from var(--color-accent) l c h / 0.38);
+    box-shadow: 0 0 12px 1px oklch(from var(--color-accent) l c h / 0.26);
+  }
+  50% {
+    border-color: oklch(from var(--color-accent) l c h / 1);
+    outline-offset: 5.5px;
+    outline-color: oklch(from var(--color-accent) l c h / 0.62);
+    box-shadow: 0 0 22px 3px oklch(from var(--color-accent) l c h / 0.45);
+  }
 }
 
-/* Bridge scout secondary orbit: a small offset dot rendered as a real
-   element in the template (see PropagationNode.svelte). The dot itself
-   is styled inline; here we only define its slow drift animation. */
-.bridge-orbit-dot {
+.node-avatar.nk-success::before {
+  content: '';
   position: absolute;
-  bottom: -1px;
-  left: -3px;
+  inset: -11px;
+  border-radius: 9999px;
+  pointer-events: none;
+  /*
+    Orbit conic with a continuous baseline. The previous gradient dropped
+    to 0 alpha at 90° and 270°, which meant the orbit became invisible at
+    those angles. Because every successful-amplifier shares the same CSS
+    animation, all the "dim sides" synchronized — the eye read this
+    coordinated dimness as the LEFT side of every hub being clipped by
+    its container. With baseline alpha 0.40 around the entire ring and a
+    softer peak (0.85 at 180°), the orbit is now fully circular at every
+    rotation: there is no longer a "missing arc" to perceive as a cut.
+  */
+  background: conic-gradient(
+    from 0deg,
+    oklch(from var(--color-accent) l c h / 0.40) 0deg,
+    oklch(from var(--color-accent) l c h / 0.45) 90deg,
+    oklch(from var(--color-accent) l c h / 0.85) 180deg,
+    oklch(from var(--color-accent) l c h / 0.45) 270deg,
+    oklch(from var(--color-accent) l c h / 0.40) 360deg
+  );
+  -webkit-mask: radial-gradient(circle at center, transparent 62%, black 68%, black 92%, transparent 100%);
+          mask: radial-gradient(circle at center, transparent 62%, black 68%, black 92%, transparent 100%);
+  animation: nk-success-orbit 11s linear infinite;
+}
+@keyframes nk-success-orbit {
+  to { transform: rotate(360deg); }
+}
+
+/* Outward broadcast ripple for successful amplifiers. Layered between
+   the orbit comet (::before) and the double-ring halo (::after) by DOM
+   tree order.
+
+   Implementation note: we expand a centered <span> via width/height
+   instead of `outline` + `outline-offset`. Outline with border-radius
+   has spotty browser support — in some engines it renders as a
+   rectangle even though the element is rounded, which produced a
+   row-wide rectangular glow. A real circular border on a centered
+   span scales cleanly and stays circular at every frame.
+
+   Slower, wider, and softer than nk-amp's ripple so the two don't
+   read as the same animation. */
+.sa-ripple {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 100%;
+  height: 100%;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  border: 1.5px solid oklch(from var(--color-accent) l c h / 0.55);
+  pointer-events: none;
+  animation: sa-ripple-out 8s ease-out infinite;
+  opacity: 0;
+  box-sizing: border-box;
+}
+@keyframes sa-ripple-out {
+  0%   { width: 100%; height: 100%; opacity: 0; }
+  10%  { opacity: 0.55; }
+  100% { width: 260%; height: 260%; opacity: 0; }
+}
+
+/* Passive listener: NO halo, NO motion. Inline scale/opacity/saturate
+   on the inner avatar (in the component) do all the work. */
+
+/* ── Origin overlay — INCOMING-SIGNAL glyph next to the avatar ─────
+   Origin is structural ("signal entered the propagation forest at
+   this node"). The glyph is a tiny horizontal accent beam ending in
+   a dot, positioned just to the LEFT of the avatar so it visually
+   hugs the node without altering its surface. The dot at the right
+   end points TOWARD the avatar — reads as an arrival mark, not a
+   UI caret.
+
+   Sits inside .node-avatar's stacking context with z-index:1 so it
+   paints above kind halos (which extend left of the avatar). Static,
+   non-ring, non-animated — origin never emits energy. */
+.origin-glyph {
+  position: absolute;
+  z-index: 1;
+  /*
+    Sits between the chevron and the avatar in the row's chevron→avatar
+    gap (widened from gap-2 to gap-4). At -22 the glyph's dot end is at
+    wrapper-11.5, leaving a small breath against the successful-amplifier
+    orbit ring (inset:-11) on Marco/Alice/Pieter while keeping clear
+    space from the chevron on the left.
+  */
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
   width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background: oklch(from var(--color-accent) l c h / 0.75);
-  box-shadow:
-    0 0 0 1px oklch(from var(--color-base-200) l c h / 1),
-    0 0 4px 0 oklch(from var(--color-accent) l c h / 0.35);
+  height: 1.5px;
+  border-radius: 1px;
+  background: oklch(from var(--color-accent) l c h / 0.85);
+  box-shadow: 0 0 3px 0 oklch(from var(--color-accent) l c h / 0.45);
   pointer-events: none;
-  animation: bridge-orbit-pulse 9s ease-in-out infinite;
 }
-@keyframes bridge-orbit-pulse {
-  0%, 100% { opacity: 0.75; transform: translate(0, 0); }
-  50%      { opacity: 1;    transform: translate(-1px, -1px); }
-}
-
-/* Amplifier: brighter accent ring — clearly more present than
-   listener kinds. */
-.node-avatar.nk-amp::after {
+.origin-glyph::after {
   content: '';
   position: absolute;
-  inset: -2.5px;
+  left: 100%;
+  top: 50%;
+  margin-left: 1px;
+  transform: translateY(-50%);
+  width: 3.5px;
+  height: 3.5px;
   border-radius: 9999px;
-  pointer-events: none;
-  border: 1px solid oklch(from var(--color-accent) l c h / 0.55);
-  box-shadow: 0 0 6px -1px oklch(from var(--color-accent) l c h / 0.18);
+  background: oklch(from var(--color-accent) l c h / 0.95);
+  box-shadow: 0 0 4px 0 oklch(from var(--color-accent) l c h / 0.55);
 }
 
-/* Deep listener: faint warm inner glow + slow breathing.
-   Reads as "resonated here" without amplification energy. */
-.node-avatar.nk-deep::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 9999px;
-  pointer-events: none;
-  box-shadow: inset 0 0 0 1px oklch(from var(--color-base-content) l c h / 0.22);
-  animation: nk-deep-breathe 14s ease-in-out infinite;
-}
-@keyframes nk-deep-breathe {
-  0%, 100% { box-shadow: inset 0 0 0 1px oklch(from var(--color-base-content) l c h / 0.16); }
-  50%      { box-shadow: inset 0 0 0 1px oklch(from var(--color-base-content) l c h / 0.32); }
-}
-
-/* Passive listener: no halo, just slight dimming via inline opacity
-   on the avatar image. Reads as "the signal reached but didn't move". */
+/* Current-user overlay has NO outward motion — identity is conveyed by
+   the primary border + ring on the inner avatar, the cu-row left rail,
+   and the YOU label. Outward ripple is reserved for the base kind so
+   that motion = transmission, not identity. When Dan is amp+you he
+   still gets the amplifier ripple (from nk-amp::before). When Dan is
+   deep+you+origin he stays static. */
 
 @media (prefers-reduced-motion: reduce) {
   .node-avatar.nk-success::after,
-  .node-avatar.nk-deep::after,
-  .bridge-orbit-dot { animation: none !important; }
+  .node-avatar.nk-success::before,
+  .node-avatar.nk-amp::after,
+  .node-avatar.nk-amp::before,
+  .sa-ripple {
+    animation: none !important;
+  }
+  /* Keep faint static states visible so the kind still reads even
+     with motion disabled. */
+  .node-avatar.nk-success::before { opacity: 0.5; }
+  .node-avatar.nk-amp::before     { opacity: 0.5; outline-offset: 5px; }
+  .sa-ripple                      { opacity: 0.45; width: 160%; height: 160%; }
 }
 
 /* Row composition classes -------------------------------------------- */
@@ -493,25 +620,23 @@
   );
 }
 
-/* Successful-amplifier hub glow — a soft radial centered near the
-   avatar so the eye reads "this is a propagation center". */
-.sa-row {
-  background-image: radial-gradient(
-    ellipse 45% 110% at 8% 50%,
-    oklch(from var(--color-accent) l c h / 0.16) 0%,
-    transparent 70%
-  );
-}
+/*
+   Row-level background gradients for amplifier kinds removed.
 
-/* High-impact non-success rows: subtle accent wash from the left.
-   Cheaper than sa-row but distinguishes branches that traveled. */
-.hi-row {
-  background-image: linear-gradient(
-    to right,
-    oklch(from var(--color-accent) l c h / 0.06) 0%,
-    transparent 50%
-  );
-}
+   These classes (sa-row, amp-row, hi-row) previously painted faint
+   accent wash backgrounds that, although subtle, painted within the
+   row's `rounded-md` bounds — creating a visible rounded rectangle
+   "card" silhouette behind each amplifier row. The eye read these
+   rectangles as containment ("the rings are trapped inside a card"),
+   especially around the avatar's transmission glow.
+
+   The class names are kept (the component applies them
+   conditionally) so removing them is a no-op CSS-wise. Amplifier
+   identity now comes entirely from the avatar's rings/ripple/orbit
+   — no row-level tint to compete with the circular transmission
+   language.
+*/
+.sa-row, .amp-row, .hi-row { /* intentionally empty — see comment above */ }
 
 /* Quiet rows: dim everything a touch so the eye drops past them
    when scanning the tree. */

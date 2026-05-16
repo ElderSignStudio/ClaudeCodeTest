@@ -36,8 +36,9 @@ test('Frozen Sun via Marco — preview, amplify, un-amplify cycle', async ({ pag
 	// Preview row should be gone.
 	await expect(page.getByText('Amplify to be included here')).not.toBeVisible();
 
-	// Dan should appear as "you" (not origin). Check at least one "you" label.
-	await expect(page.locator('text=you').first()).toBeVisible();
+	// Dan's row should carry the .cu-row class — the current-user visual
+	// treatment that replaces the old "YOU" text label.
+	await expect(page.locator('[role="button"].cu-row')).toBeVisible();
 
 	await page.screenshot({
 		path: 'tests/screenshots/amp-route-B-amplified.png',
@@ -45,8 +46,7 @@ test('Frozen Sun via Marco — preview, amplify, un-amplify cycle', async ({ pag
 	});
 
 	// (C) Click Dan's row to inspect — Branch Context should reference Marco.
-	// Find the row containing "Dan" with the "you" label and click it.
-	const danRow = page.locator('[role="button"]').filter({ hasText: 'you' }).first();
+	const danRow = page.locator('[role="button"].cu-row');
 	await danRow.click();
 	await expect(page.getByText(/Discovered through/i)).toBeVisible();
 
