@@ -1,32 +1,23 @@
 <script lang="ts">
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
-	import type { PropagationUser, PreviewTarget, PropagationEdgeKind } from '$lib/mock/propagation';
+	import type { PropagationUser, PreviewTarget } from '$lib/mock/propagation';
 	import { sortNodesByPropagation } from '$lib/mock/propagation';
 	import Self from './PropagationNode.svelte';
 
 	/*
 		One row of the propagation tree. Renders this user plus, recursively,
-		its children. Expansion state is LOCAL per node. Selection is global
-		to the page (flowed in via props) and is set on click. Inspector
-		PREVIEW is also global to the page; previews fire on hover so the
-		inspector can dynamically describe whatever the user is currently
-		investigating without committing a selection.
+		its children.
 
-		Tree Visual Language v1:
-		  - `nodeKind` drives a CSS class on the avatar wrapper (`nk-*`)
-		    which adds a kind-specific halo via a pseudo-element. Identity
-		    decorations (origin border, current-user ring, selected border)
-		    still apply to the inner avatar and compose over the halo.
-		  - `incomingEdgeKind` drives a per-child connector class on the
-		    absolute-positioned vertical line bringing the child into its
-		    parent. Each child carries its own segment so siblings can read
-		    differently while still forming a visually connected rail.
-		  - High-impact / successful-amplifier scouts get a brighter `+N`
-		    branch-size readout — branch mass made visible without badges.
+		Visual language scope (post-cleanup):
+		  - Node types: passive / deep / amplifier / successful-amplifier
+		    via `nk-*` classes on the avatar wrapper (kind halos + motion).
+		  - Origin overlay: row-attached `.origin-glyph` + ORIGIN inline label.
+		  - Current-user overlay: `.cu-row` rail + primary avatar border.
 
-		v1 limitation: `hiddenChildren` is just an editorial count. Clicking
-		"+N more" reveals N greyed placeholder rows. Hovering "+N more"
-		previews the cluster's editorial description in the inspector.
+		Tree connectors are intentionally NEUTRAL — a single soft border on
+		each children container, no per-edge semantics. Edge-types, branch /
+		subtree variables, and special-structure styling were all removed in
+		the visual-language cleanup pass; node types are the only layer.
 	*/
 
 	let {
@@ -54,23 +45,6 @@
 	// inserted preview stays positionally stable.
 	const sortedChildren = $derived(sortNodesByPropagation(user.children));
 
-	// Derived treatment helpers — each maps a semantic field onto a CSS
-	// variant class defined in app.css. Kept as pure functions so the
-	// classes can compose in the template via the [array] syntax.
-
-	function edgeLineClass(kind: PropagationEdgeKind | undefined): string {
-		switch (kind) {
-			case 'active':       return 'edge-line edge-active';
-			case 'strong':       return 'edge-line edge-strong';
-			case 'quiet':        return 'edge-line edge-quiet';
-			case 'cross-scene':  return 'edge-line edge-cross-scene';
-			case 'fresh':        return 'edge-line edge-fresh';
-			case 'archival':     return 'edge-line edge-archival';
-			case 'passive':
-			default:             return 'edge-line edge-passive';
-		}
-	}
-
 	function nodeKindClass(u: PropagationUser): string {
 		if (u.isPreviewNode) return '';
 		switch (u.nodeKind) {
@@ -82,61 +56,9 @@
 		}
 	}
 
-
-	// Branch mass visual cue — successful amplifiers and high-impact scouts
-	// earn a slightly brighter +N readout. No new numbers, no badges.
-	const branchAccented = $derived(
-		(user.highImpact ?? false) || (user.isSuccessfulAmplifier ?? false),
-	);
-
-	// "Hub" parents — successful amplifiers only (bridge styling was removed
-	// in the v2 debug pass). Outgoing edges leaving these get a brightness
-	// boost via `.edges-from-hub` on the children container.
-	const isHubParent = $derived(
-		user.nodeKind === 'successful-amplifier'
-		|| user.isSuccessfulAmplifier === true,
-	);
-
-	// Whether this row should read as a "quiet" lane in scanning — dims
-	// the row a touch so the eye drops past it. Applies to passive
-	// listeners that are NOT the current user or a selected node.
-	const isQuietRow = $derived(
-		user.nodeKind === 'passive-listener'
-		&& !user.isPreviewNode
-		&& !user.isCurrentUser
-		&& !isSelected,
-	);
-
-	// High-impact non-success row tint. Successful-amplifier rows get
-	// their own (richer) hub glow via .sa-row.
-	const isHighImpactRow = $derived(
-		(user.highImpact === true || (user.branchSize ?? 0) >= 5)
-		&& user.nodeKind !== 'successful-amplifier'
-		&& !user.isSuccessfulAmplifier
-		&& !user.isPreviewNode
-		&& !isSelected
-		&& !user.isCurrentUser,
-	);
-
-	const isSuccessAmplifierRow = $derived(
-		(user.nodeKind === 'successful-amplifier' || user.isSuccessfulAmplifier === true)
-		&& !user.isPreviewNode
-		&& !isSelected,
-	);
-
-	// Amplifier row gets a fainter accent wash — visibly above passive/deep
-	// but clearly below the successful-amplifier hub glow.
-	const isAmplifierRow = $derived(
-		user.nodeKind === 'amplifier'
-		&& !user.isPreviewNode
-		&& !isSelected
-		&& !user.isCurrentUser
-		&& !isSuccessAmplifierRow,
-	);
-
 	// Anonymous placeholder rows for the hidden tail when expanded. They are
 	// real PropagationUser shapes so the inspector can pick them up; flagged
-	// as quiet/passive so they read as background presence in the tree.
+	// as passive so they read as background presence in the tree.
 	function stubsFor(count: number): PropagationUser[] {
 		return Array.from({ length: count }, (_, i) => ({
 			id: `${user.id}-stub-${i}`,
@@ -149,7 +71,6 @@
 			behaviorNote: 'Editorial topology hint — no individual reach data attached at this depth.',
 			children: [],
 			nodeKind: 'passive-listener' as const,
-			incomingEdgeKind: 'quiet' as const,
 		}));
 	}
 </script>
@@ -175,10 +96,6 @@
 				: user.isCurrentUser
 					? 'bg-primary/14 ring-1 ring-primary/35 hover:bg-primary/18 cu-row'
 					: 'hover:bg-white/4'),
-			isSuccessAmplifierRow && 'sa-row',
-			isAmplifierRow && 'amp-row',
-			isHighImpactRow && 'hi-row',
-			isQuietRow && 'q-row',
 		]}
 		onclick={() => onSelect(user)}
 		onkeydown={(e) => { if (!user.isPreviewNode && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(user); } }}
@@ -206,29 +123,19 @@
 		{/if}
 
 		<!--
-			Avatar wrapper composes BASE kind silhouette with overlay states.
+			Avatar wrapper composes base node kind silhouette with overlay states.
 
 			  Layer 1 — BASE silhouette (from nodeKind):
-			    passive    → no decoration, no motion
-			    deep       → static drop-shadow filled glow (no motion)
-			    amplifier  → ring + outward ripple (TRANSMISSION motion)
-			    success    → double ring + orbit comet (TRANSMISSION motion)
+			    passive    → small, dim, desaturated, no decoration
+			    deep       → quiet listener, no glow, no ring
+			    amplifier  → ring + outward ripple
+			    success    → double ring + outward ripple + orbit comet
 
-			  Layer 2 — OVERLAY isOrigin (stackable, STATIC):
-			    origin-aura span (z:-1, behind everything)
-			    origin-dot span (top-right)
-			    accent border/ring on inner avatar
+			  Layer 2 — Origin overlay (stackable, static):
+			    .origin-glyph (sibling of avatar) + ORIGIN text label
 
-			  Layer 3 — OVERLAY isCurrentUser (stackable, STATIC):
-			    primary border/ring on inner avatar (wins over origin)
-			    cu-row left rail + bg on the row
-			    YOU label
-
-			Motion semantics: only the base kind (amp/success) animates.
-			Identity overlays never add their own outward ripple — they're
-			recognized by color (primary/accent), border weight, and label.
-
-			`isolate` creates a stacking context so origin-aura sits at z:-1.
+			  Layer 3 — Current-user overlay (stackable, static):
+			    primary border on inner avatar + cu-row left rail + bg
 		-->
 		<div
 			class={[
@@ -237,27 +144,13 @@
 			]}
 		>
 			{#if user.nodeKind === 'successful-amplifier' && !user.isPreviewNode}
-				<!-- Outward broadcast ripple for successful amplifiers. Slower
-				     and wider than nk-amp::before so it reads as a deeper
-				     transmission wave composing with the orbit comet
-				     (::before) and the double-ring halo (::after). -->
+				<!-- Outward broadcast ripple for successful amplifiers,
+				     composing with the orbit comet and double-ring halo. -->
 				<span class="sa-ripple" aria-hidden="true"></span>
 			{/if}
 			<div
 				class={[
 					'w-7 h-7 rounded-full overflow-hidden border transition-transform duration-200',
-					/*
-						Avatar border is the only "outline" on the avatar itself.
-						Rings (ring-*) are reserved for transmission kinds (amp /
-						successful-amp via their pseudo halos). Origin and
-						current-user contribute via non-ring markers (root tick,
-						origin dot, cu-row rail, YOU/ORIGIN labels).
-
-						Current-user's primary-tinted border is the allowed
-						"single outline" emphasis for identity. Origin keeps a
-						neutral border so it doesn't read like a transmission
-						ring; origin identity reads via the dot + tick + label.
-					*/
 					user.isPreviewNode
 						? 'border-white/15 border-dashed'
 						: isSelected
@@ -288,24 +181,14 @@
 				{/if}
 			</div>
 			{#if user.isOrigin && !user.isPreviewNode}
-				<!-- Origin marker — a small horizontal accent beam ending
-				     in a dot, sitting just to the LEFT of the avatar. It's
-				     positioned inside .node-avatar so it visually hugs the
-				     avatar (reads as "signal entered the forest at this
-				     node") without altering any avatar surface property
-				     (size, opacity, color, glow, ring, saturation are all
-				     reserved for behavioral nodeKind signals). -->
+				<!-- Origin marker — small horizontal accent beam ending in a
+				     dot, hugging the avatar's left edge. Non-ring shape so it
+				     doesn't compete with transmission rings. -->
 				<span class="origin-glyph" aria-hidden="true"></span>
 			{/if}
-
 		</div>
 
-		<!--
-			Name + character. Preview nodes italicize the character ("Amplify
-			to be included here") so the row reads as an invitation, not a
-			real scout. The viewer's own node gets a "you" micro-label
-			matching the origin/high-impact label cadence.
-		-->
+		<!-- Name + character. Preview nodes italicize the character. -->
 		<div class="min-w-0 flex-1">
 			<div class="flex items-baseline gap-2">
 				<p class={[
@@ -338,21 +221,11 @@
 			</p>
 		</div>
 
-		<!--
-			Branch-size hint on the right edge. Successful amplifiers and
-			high-impact scouts get a brighter accent treatment so the number
-			reads as "this scout helped the signal travel" without becoming
-			a badge.
-		-->
+		<!-- Branch-size hint on the right edge. Neutral readout — no
+		     branch-mass / hub visual weighting (those systems were
+		     removed in the cleanup pass). -->
 		{#if user.branchSize > 0}
-			<span class={[
-				'shrink-0 mt-1.5 text-[10px] font-mono tabular-nums',
-				(user.isSuccessfulAmplifier || user.nodeKind === 'successful-amplifier')
-					? 'text-accent font-semibold'
-					: branchAccented
-						? 'text-accent/85'
-						: 'text-base-content/42',
-			]}>
+			<span class="shrink-0 mt-1.5 text-[10px] font-mono tabular-nums text-base-content/45">
 				+{user.branchSize}
 			</span>
 		{/if}
@@ -383,77 +256,68 @@
 	{/if}
 
 	<!--
-		Children — recursive — only when expanded. Each child wraps in its
-		own `pl-5` container with an absolute-positioned edge line whose
-		variant class derives from `child.incomingEdgeKind`. Stacked, the
-		segments form a connected rail where each section can read differently.
+		Children — recursive — only when expanded. A single neutral border on
+		the children container acts as the tree connector rail. No per-edge
+		semantics; this keeps the tree's structural lines while letting node
+		types do all the visual communication.
 	-->
 	{#if hasVisibleChildren && expanded}
-		<div class={['relative ml-3.5', isHubParent && 'edges-from-hub']}>
+		<div class="relative pl-5 ml-3.5 border-l border-white/8">
 			{#each sortedChildren as child (child.id)}
-				<div class="relative pl-5">
-					<span class={['absolute inset-y-0 left-0', edgeLineClass(child.incomingEdgeKind)]} aria-hidden="true"></span>
-					<Self
-						user={child}
-						{selectedUserId}
-						{onSelect}
-						{onPreview}
-						depth={depth + 1}
-					/>
-				</div>
+				<Self
+					user={child}
+					{selectedUserId}
+					{onSelect}
+					{onPreview}
+					depth={depth + 1}
+				/>
 			{/each}
 
 			<!-- Hidden tail: "+N more" indicator (collapsed) or anonymized stubs (expanded) -->
 			{#if user.hiddenChildren && user.hiddenChildren > 0}
 				{#if !tailExpanded}
-					<div class="relative pl-5">
-						<span class="absolute inset-y-0 left-0 edge-line edge-passive" aria-hidden="true"></span>
-						<button
-							class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
-							onclick={() => { tailExpanded = true; }}
-							onmouseenter={() => onPreview({
-								kind: 'cluster',
-								parent: user,
-								count: user.hiddenChildren ?? 0,
-								label: user.hiddenChildrenLabel ?? 'Quieter listeners',
-								description: user.hiddenChildrenDescription,
-							})}
-							onfocus={() => onPreview({
-								kind: 'cluster',
-								parent: user,
-								count: user.hiddenChildren ?? 0,
-								label: user.hiddenChildrenLabel ?? 'Quieter listeners',
-								description: user.hiddenChildrenDescription,
-							})}
-						>
-							<span class="shrink-0 w-4 h-4"></span>
-							<span class="shrink-0 w-7 h-7 rounded-full border border-dashed border-white/14 flex items-center justify-center text-[10px] font-mono text-base-content/45">
-								+{user.hiddenChildren}
-							</span>
-							<div class="min-w-0 flex-1">
-								<p class="text-[12px] leading-snug truncate text-base-content/68">
-									+{user.hiddenChildren} more
+					<button
+						class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
+						onclick={() => { tailExpanded = true; }}
+						onmouseenter={() => onPreview({
+							kind: 'cluster',
+							parent: user,
+							count: user.hiddenChildren ?? 0,
+							label: user.hiddenChildrenLabel ?? 'Quieter listeners',
+							description: user.hiddenChildrenDescription,
+						})}
+						onfocus={() => onPreview({
+							kind: 'cluster',
+							parent: user,
+							count: user.hiddenChildren ?? 0,
+							label: user.hiddenChildrenLabel ?? 'Quieter listeners',
+							description: user.hiddenChildrenDescription,
+						})}
+					>
+						<span class="shrink-0 w-4 h-4"></span>
+						<span class="shrink-0 w-7 h-7 rounded-full border border-dashed border-white/14 flex items-center justify-center text-[10px] font-mono text-base-content/45">
+							+{user.hiddenChildren}
+						</span>
+						<div class="min-w-0 flex-1">
+							<p class="text-[12px] leading-snug truncate text-base-content/68">
+								+{user.hiddenChildren} more
+							</p>
+							{#if user.hiddenChildrenLabel}
+								<p class="text-[11px] leading-snug truncate text-base-content/45 italic">
+									{user.hiddenChildrenLabel}
 								</p>
-								{#if user.hiddenChildrenLabel}
-									<p class="text-[11px] leading-snug truncate text-base-content/45 italic">
-										{user.hiddenChildrenLabel}
-									</p>
-								{/if}
-							</div>
-						</button>
-					</div>
+							{/if}
+						</div>
+					</button>
 				{:else}
 					{#each stubsFor(user.hiddenChildren) as stub (stub.id)}
-						<div class="relative pl-5">
-							<span class="absolute inset-y-0 left-0 edge-line edge-quiet" aria-hidden="true"></span>
-							<Self
-								user={stub}
-								{selectedUserId}
-								{onSelect}
-								{onPreview}
-								depth={depth + 1}
-							/>
-						</div>
+						<Self
+							user={stub}
+							{selectedUserId}
+							{onSelect}
+							{onPreview}
+							depth={depth + 1}
+						/>
 					{/each}
 				{/if}
 			{/if}
