@@ -6,12 +6,15 @@ test('Zoom into Alice node to inspect clipping', async ({ page }) => {
 	await page.waitForLoadState('networkidle');
 	await page.waitForTimeout(800);
 
-	// Find Alice's row (first row in tree)
-	const aliceRow = page.locator('[role="button"]').filter({ hasText: 'Alice' }).first();
-	const box = await aliceRow.boundingBox();
-	if (!box) throw new Error('Alice row not found');
+	// Capture the first tree row for inspection (whoever that is — the
+	// forest is procedurally generated, so the first-root scout varies
+	// per item).
+	const firstRow = page.locator('section')
+		.filter({ has: page.getByText(/Propagation lineage/i) })
+		.locator('[role="button"]').first();
+	const box = await firstRow.boundingBox();
+	if (!box) throw new Error('First tree row not found');
 
-	// Capture a wide area around Alice's avatar to see clipping context.
 	await page.screenshot({
 		path: 'tests/screenshots/tvl-clip-zoom.png',
 		clip: {
