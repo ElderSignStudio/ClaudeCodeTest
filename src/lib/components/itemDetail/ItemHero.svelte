@@ -2,29 +2,39 @@
 	import { Radio } from 'lucide-svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
 	import type { DetailItem } from '../../../routes/items/[id]/+page';
+	import { formatCount } from '$lib/format';
+	import type { PropagationForest, FameTier } from '$lib/mock/propagation';
 
 	/*
-		Item header / hero section. Kept cinematic but not gigantic — the
-		propagation explorer below is the real focus. Clicking the artwork or
-		title area resets the inspector to global state (per spec: "clicking
-		the hero item section resets selection"). Buttons (Play, Amplify)
+		Item header / hero. The metadata column carries:
+		  - identity block (title, artist · genre, contextLine, seedLocation)
+		  - global metadata strip: fame-tier badge + monthly listeners +
+		    Spotify popularity. Calibrated to feel like archival metadata,
+		    not a dashboard.
+		  - propagation summary: origin note + crossing prose + small
+		    "N origins · M downstream" mono line + scene chips
+		  - actions row (Play, Amplify)
+
+		Clicking the hero resets the inspector to global state. Action buttons
 		stopPropagation so they remain functional without resetting.
 	*/
 
 	let {
 		item,
+		forest,
+		isAmplified,
 		onReset,
+		onToggleAmplify,
 	}: {
 		item: DetailItem;
+		forest: PropagationForest;
+		isAmplified: boolean;
 		onReset: () => void;
+		onToggleAmplify: () => void;
 	} = $props();
 
 	// One-line contextual sub-copy assembled from whichever editorial fields
 	// the source lane provides. Falls back gracefully if all are absent.
-	// Hero contextual sub-copy:
-	//  - Origin Stories items lead with their historical narrative headline.
-	//  - Every other item uses its singular discovery route. Fallback chain
-	//    keeps spread/whisper editorial text available for items that have it.
 	const contextLine = $derived(
 		item.headline
 			?? item.routeNarrative
@@ -32,6 +42,20 @@
 			?? item.whisperHint
 			?? null,
 	);
+
+	// Up to 3 scene chips in the hero — keeps the propagation block compact.
+	const heroScenes = $derived(forest.scenes.slice(0, 3));
+
+	// Fame-tier visual mapping. Tiers map to a colour family + an optional
+	// shimmer hint for the Hot tier. All four read as quiet observations,
+	// never as prestige badges.
+	const tierStyle: Record<FameTier, { border: string; text: string; bg: string; shimmer: boolean }> = {
+		Underground: { border: 'border-base-content/22', text: 'text-base-content/68', bg: 'bg-base-content/4',  shimmer: false },
+		Niche:       { border: 'border-secondary/35',    text: 'text-secondary/82',    bg: 'bg-secondary/8',     shimmer: false },
+		Emerging:    { border: 'border-accent/40',       text: 'text-accent/85',       bg: 'bg-accent/8',        shimmer: false },
+		Hot:         { border: 'border-amber-300/45',    text: 'text-amber-100/92',    bg: 'bg-amber-400/10',    shimmer: true  },
+	};
+	const tier = $derived(tierStyle[item.fameTier]);
 </script>
 
 <div
@@ -86,6 +110,52 @@
 				{#if item.seedLocation}
 					<p class="mt-2 text-[12px] text-base-content/52">First surfaced: {item.seedLocation}</p>
 				{/if}
+
+				<!--
+					Global metadata strip. Fame-tier badge + external metrics.
+					Reads as archival metadata, not a dashboard. The Hot tier
+					gets a faint shimmer pulse (CSS class, reduced-motion aware).
+				-->
+				<div class="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+					<span
+						class={[
+							'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full border',
+							tier.border, tier.text, tier.bg,
+							tier.shimmer && 'fame-hot-shimmer',
+						]}
+					>
+						{item.fameTier}
+					</span>
+					<span class="text-[11px] font-mono text-base-content/52 tabular-nums">{formatCount(item.monthlyListeners)} monthly listeners</span>
+					<span class="text-[10px] text-base-content/30">·</span>
+					<span class="text-[11px] font-mono text-base-content/52 tabular-nums">Popularity {item.spotifyPopularity}/100</span>
+				</div>
+
+				<!--
+					Propagation summary. Clean editorial copy carries the
+					"this signal has a history" message — no duplicate visual
+					diagram (the real tree below carries the structural topology).
+				-->
+				<div class="mt-4 pt-4 border-t border-white/8">
+					<p class="text-[12px] text-base-content/72 leading-snug">
+						{forest.originNote}
+					</p>
+					<p class="mt-1.5 text-[12px] text-base-content/55 leading-snug italic">
+						{forest.crossingNote}
+					</p>
+					<p class="mt-1.5 text-[11px] font-mono text-base-content/40 tabular-nums">
+						{forest.independentOrigins} independent origins · {forest.totalReach} scouts downstream
+					</p>
+					{#if heroScenes.length > 0}
+						<div class="mt-2 flex flex-wrap gap-1.5">
+							{#each heroScenes as scene (scene)}
+								<span class="text-[10px] px-2 py-0.5 rounded-full border border-white/10 text-base-content/55 bg-white/3">
+									{scene}
+								</span>
+							{/each}
+						</div>
+					{/if}
+				</div>
 			</div>
 
 			<!-- ── Actions row ── -->
@@ -99,12 +169,26 @@
 					</svg>
 					Play
 				</button>
+				<!--
+					Amplify toggle. When the current viewer is already in the
+					lineage (or has just amplified) the button reads "Amplified"
+					with a brighter pressed-in styling; clicking removes their
+					node. Click handler stopPropagation so it doesn't bubble
+					into the hero's reset-to-global handler.
+				-->
 				<button
-					class="flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-semibold text-accent border border-accent/46 bg-black/30 hover:bg-accent/16 hover:border-accent/65 transition-all"
-					onclick={(e) => e.stopPropagation()}
+					class={[
+						'flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-semibold transition-all',
+						isAmplified
+							? 'text-accent-content bg-accent/30 border border-accent/65 hover:bg-accent/40 hover:border-accent/82'
+							: 'text-accent border border-accent/46 bg-black/30 hover:bg-accent/16 hover:border-accent/65',
+					]}
+					onclick={(e) => { e.stopPropagation(); onToggleAmplify(); }}
+					aria-pressed={isAmplified}
+					title={isAmplified ? 'Remove your amplification' : 'Amplify this signal'}
 				>
 					<Radio size={12} />
-					Amplify
+					{isAmplified ? 'Amplified' : 'Amplify'}
 				</button>
 			</div>
 		</div>
