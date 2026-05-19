@@ -15,6 +15,24 @@
 /** Editorial novelty tier — how famous the signal felt at a given moment. */
 export type FameTier = 'Underground' | 'Niche' | 'Emerging' | 'Hot';
 
+/*
+	Tree Node Type taxonomy.
+
+	`nodeKind` captures *how this scout received and treated the signal*.
+	The visual language renders these four kinds plus two stackable
+	overlays (origin, current-user). Edge-types, branch/subtree
+	variables, and special-structure styling were all removed in the
+	visual-language cleanup pass — they may be reintroduced later as a
+	separate layer, but for now the tree only speaks node types.
+*/
+
+/** What kind of listening / amplifying behavior this scout demonstrates. */
+export type PropagationNodeKind =
+	| 'passive-listener'      // signal arrived but didn't strongly propagate
+	| 'deep-listener'         // signal resonated deeply; quiet but engaged
+	| 'amplifier'             // intentionally transmitted onward
+	| 'successful-amplifier'; // their transmission carried the signal far
+
 export type PropagationUser = {
 	id: string;
 	name: string;
@@ -69,6 +87,12 @@ export type PropagationUser = {
 	 *  Renders dimmed + italic + non-selectable; the row only invites the
 	 *  user to press the Amplify button. */
 	isPreviewNode?: boolean;
+
+	/** Behavioral category — passive / deep / amplifier / successful-amplifier.
+	 *  This is the only visual-language field on PropagationUser. Edge,
+	 *  branch, and special-structure visual fields were removed in the
+	 *  cleanup pass; they may return later as separate layers. */
+	nodeKind?: PropagationNodeKind;
 };
 
 export type RootBranchSummary = {
@@ -136,6 +160,7 @@ const baseRoots: PropagationUser[] = [
 		depthLevels: 3,
 		biggestSubcascadeName: 'Renan',
 		biggestSubcascadeReach: 5,
+		nodeKind: 'successful-amplifier',
 		children: [
 			{
 				id: 'julia',
@@ -151,6 +176,7 @@ const baseRoots: PropagationUser[] = [
 				fameIndexAtDiscovery: 11,
 				discoveryScore: 2.6,
 				depthLevels: 1,
+				nodeKind: 'amplifier',
 				children: [
 					{
 						id: 'sofia',
@@ -166,6 +192,7 @@ const baseRoots: PropagationUser[] = [
 						fameIndexAtDiscovery: 18,
 						discoveryScore: 1.2,
 						depthLevels: 0,
+						nodeKind: 'deep-listener',
 						children: [],
 					},
 				],
@@ -187,6 +214,7 @@ const baseRoots: PropagationUser[] = [
 				depthLevels: 1,
 				biggestSubcascadeName: 'Drone-leaning cluster',
 				biggestSubcascadeReach: 4,
+				nodeKind: 'amplifier',
 				children: [],
 				hiddenChildren: 4,
 				hiddenChildrenLabel: 'Drone-leaning listeners',
@@ -213,6 +241,7 @@ const baseRoots: PropagationUser[] = [
 		depthLevels: 3,
 		biggestSubcascadeName: 'Pieter',
 		biggestSubcascadeReach: 4,
+		nodeKind: 'successful-amplifier',
 		children: [
 			{
 				id: 'daria',
@@ -228,6 +257,7 @@ const baseRoots: PropagationUser[] = [
 				fameIndexAtDiscovery: 16,
 				discoveryScore: 2.1,
 				depthLevels: 0,
+				nodeKind: 'passive-listener',
 				children: [],
 			},
 			{
@@ -247,6 +277,7 @@ const baseRoots: PropagationUser[] = [
 				depthLevels: 1,
 				biggestSubcascadeName: 'Post-rock crossover',
 				biggestSubcascadeReach: 3,
+				nodeKind: 'successful-amplifier',
 				children: [],
 				hiddenChildren: 3,
 				hiddenChildrenLabel: 'Post-rock-adjacent listeners',
@@ -274,6 +305,7 @@ const baseRoots: PropagationUser[] = [
 		fameIndexAtDiscovery: 3,
 		discoveryScore: 3.8,
 		depthLevels: 1,
+		nodeKind: 'deep-listener',
 		children: [
 			{
 				id: 'mara',
@@ -289,20 +321,18 @@ const baseRoots: PropagationUser[] = [
 				fameIndexAtDiscovery: 6,
 				discoveryScore: 1.8,
 				depthLevels: 0,
+				nodeKind: 'passive-listener',
 				children: [],
 			},
 		],
 	},
-];
-
-/*
-	Hidden root origins — real independent root nodes that sit behind the
-	"+N more independent origins" expander in the tree. These are NOT
-	downstream of marco/alice/dan: each brought the signal in from outside
-	the network on their own. Minimal subtrees by design — they exist to
-	demonstrate quieter origins that still need to be reachable.
-*/
-const hiddenRootUsers: PropagationUser[] = [
+	/*
+		Tomas — pure deep-listener origin scout, visible at root level.
+		He surfaced the signal independently but never amplified onward, so
+		the tree can show what the "origin" overlay reads like on a node
+		that has NO amplification motion. (Previously hidden behind the
+		"+N more origins" expander; promoted for visual calibration.)
+	*/
 	{
 		id: 'tomas',
 		name: 'Tomas',
@@ -318,8 +348,19 @@ const hiddenRootUsers: PropagationUser[] = [
 		fameIndexAtDiscovery: 2,
 		discoveryScore: 4.0,
 		depthLevels: 0,
+		nodeKind: 'deep-listener',
 		children: [],
 	},
+];
+
+/*
+	Hidden root origins — real independent root nodes that sit behind the
+	"+N more independent origins" expander in the tree. These are NOT
+	downstream of marco/alice/dan/tomas: each brought the signal in from
+	outside the network on their own. Minimal subtrees by design — they
+	exist to demonstrate quieter origins that still need to be reachable.
+*/
+const hiddenRootUsers: PropagationUser[] = [
 	{
 		id: 'inga',
 		name: 'Inga',
@@ -335,6 +376,7 @@ const hiddenRootUsers: PropagationUser[] = [
 		fameIndexAtDiscovery: 4,
 		discoveryScore: 3.4,
 		depthLevels: 0,
+		nodeKind: 'passive-listener',
 		children: [],
 	},
 ];
@@ -468,6 +510,42 @@ export function markUserInForest(
 		return { ...user, children: user.children.map(decorate) };
 	}
 	return { ...forest, roots: forest.roots.map(decorate) };
+}
+
+/*
+	Sibling ordering — propagation-strength order so strong nodes lead each
+	sibling group. Used both at the root level (PropagationTree.svelte) and
+	for children of every parent (PropagationNode.svelte). Preview nodes go
+	to the END of the group so Dan's preview/amplify position stays stable
+	visually.
+
+	Primary sort: base nodeKind rank
+	  0 = successful-amplifier
+	  1 = amplifier
+	  2 = deep-listener
+	  3 = passive-listener
+	  4 = no nodeKind set
+	  999 = preview (always last)
+
+	Secondary sort: branchSize descending (bigger reach reads first).
+*/
+export function nodeKindRank(u: PropagationUser): number {
+	if (u.isPreviewNode) return 999;
+	switch (u.nodeKind) {
+		case 'successful-amplifier': return 0;
+		case 'amplifier':            return 1;
+		case 'deep-listener':        return 2;
+		case 'passive-listener':     return 3;
+		default:                     return 4;
+	}
+}
+
+export function sortNodesByPropagation(nodes: PropagationUser[]): PropagationUser[] {
+	return [...nodes].sort((a, b) => {
+		const r = nodeKindRank(a) - nodeKindRank(b);
+		if (r !== 0) return r;
+		return (b.branchSize ?? 0) - (a.branchSize ?? 0);
+	});
 }
 
 /** Returns a new forest with `child` appended to the children of `parentId`. */

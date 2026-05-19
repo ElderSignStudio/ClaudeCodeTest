@@ -36,7 +36,7 @@ test('Empty-downstream placeholder appears only after Amplify, under Dan', async
 	});
 
 	// Click Dan's row — selected + current-user combined state.
-	const danRow = page.locator('[role="button"]').filter({ hasText: 'you' }).first();
+	const danRow = page.locator('[role="button"].cu-row');
 	await danRow.click();
 
 	await page.screenshot({
