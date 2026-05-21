@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
-	import type { PropagationUser, PreviewTarget } from '$lib/mock/propagation';
-	import { sortNodesByPropagation } from '$lib/mock/propagation';
+	import type { PropagationUser, PreviewTarget, BranchActivityState } from '$lib/mock/propagation';
+	import { sortNodesByPropagation, computeBranchActivity } from '$lib/mock/propagation';
 	import Self from './PropagationNode.svelte';
 
 	/*
@@ -26,13 +26,34 @@
 		onSelect,
 		onPreview,
 		depth = 0,
+		branchActivity = undefined,
+		isLast = false,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
 		onSelect: (user: PropagationUser) => void;
 		onPreview: (target: PreviewTarget | null) => void;
 		depth?: number;
+		branchActivity?: BranchActivityState | undefined;
+		/** True when this node is the LAST item rendered in its parent's
+		 *  children container — including any "+N more" tail. Drives the
+		 *  rail segment height: last children draw a short stub that
+		 *  terminates at the elbow midline so the rail never extends past
+		 *  the bottommost child into empty space. */
+		isLast?: boolean;
 	} = $props();
+
+	/* Branch activity for the subtree this node lives in. Root nodes
+	   compute it from their own subtree; descendants inherit it via
+	   the `branchActivity` prop so every node in the same branch
+	   uses the same state for colouring edges and debug labels. */
+	const effectiveActivity = $derived<BranchActivityState | undefined>(
+		depth === 0 ? computeBranchActivity(user) : branchActivity,
+	);
+
+	/* Debug switch — shows DEAD / ALIVE / ACCELERATING labels next to
+	   each root. Flip to false to hide. */
+	const DEBUG_BRANCH_LABELS = true;
 
 	let expanded = $state(true);
 	let tailExpanded = $state(false);
@@ -44,6 +65,126 @@
 	// first. Preview nodes go to the END of the sibling group so Dan's
 	// inserted preview stays positionally stable.
 	const sortedChildren = $derived(sortNodesByPropagation(user.children));
+
+	const hasHiddenTail = $derived(!!(user.hiddenChildren && user.hiddenChildren > 0));
+	const tailStubs = $derived(
+		hasHiddenTail ? stubsFor(user.hiddenChildren ?? 0) : [],
+	);
+
+	/* Shared rail/elbow + particle colour. Single `text-*` class drives
+	   the rail's `bg-current`, the elbow's `border-current`, and the
+	   particle's `currentColor`. Recalibrated to a quiet blue palette:
+	   the edge should read as a faint STRUCTURAL guide, not a UI wire.
+	     dead          → almost invisible neutral
+	     alive         → faint indigo
+	     accelerating  → slightly brighter teal-cyan, still restrained */
+	const railColorClass = $derived(
+		effectiveActivity === 'accelerating'
+			? 'text-accent/55'
+			: effectiveActivity === 'alive'
+				? 'text-primary/35'
+				: 'text-white/8',
+	);
+
+	/* Conduit glow per state. Adds a faint drop-shadow on the rail and
+	   elbow so the conduit reads as gently emitting signal rather than
+	   a flat 1px stroke. Dead branches stay completely matte. */
+	const conduitGlowClass = $derived(
+		effectiveActivity === 'accelerating'
+			? 'conduit-glow-strong'
+			: effectiveActivity === 'alive'
+				? 'conduit-glow-soft'
+				: '',
+	);
+
+	/*
+		Conduit particle schedule. Each non-root child emits signal
+		pulses flowing UPWARD along the edge path. The path extends
+		well past the wrapper top so pulses continue rendering up the
+		long sections of rail that pass through siblings' wrappers,
+		eliminating the dead zone between distant child/parent pairs.
+
+		Every parameter is varied per particle AND per branch via a
+		deterministic hash of `user.id`, so branches never look cloned:
+
+		  flowDelay   — when in the cycle this particle fires
+		  flowDur     — slight cycle-duration variation (drifts phases)
+		  helixAmp    — signed perpendicular amplitude (some above, some below)
+		  helixDelay  — orbit phase offset
+		  helixDur    — orbit cycle length
+		  maxOpacity  — peak brightness
+		  trailScale  — trail length / softness
+
+		Branch-level intensity stays unified: all alive particles draw
+		from "slow/sparse" ranges, all accelerating from "fast/dense".
+	*/
+	type ConduitParticle = {
+		id: number;
+		flowDelay: number;
+		flowDur: number;
+		helixAmp: number;
+		helixDelay: number;
+		helixDur: number;
+		maxOpacity: number;
+		trailScale: number;
+		particleSize: number;
+		headGlow: number;
+	};
+
+	function hash32(s: string): number {
+		let h = 2166136261 >>> 0;
+		for (let i = 0; i < s.length; i++) {
+			h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+		}
+		return h >>> 0;
+	}
+
+	function rand01(seed: number, salt: number): number {
+		const x = Math.imul((seed ^ (salt * 2654435761)) >>> 0, 1597334677);
+		return ((x >>> 0) % 1_000_000) / 1_000_000;
+	}
+
+	const conduitParticles = $derived.by((): ConduitParticle[] => {
+		if (effectiveActivity !== 'alive' && effectiveActivity !== 'accelerating') return [];
+		const seed = hash32(user.id);
+		const r = (i: number) => rand01(seed, i);
+
+		if (effectiveActivity === 'accelerating') {
+			return [0, 1, 2].map((i) => {
+				const ampSign = r(i * 7 + 3) > 0.5 ? 1 : -1;
+				return {
+					id: i,
+					/* base stagger at i*0.45s + up to 0.2s jitter so particles
+					   don't fire on a metronome. */
+					flowDelay: i * 0.45 + r(i * 11 + 1) * 0.2,
+					flowDur:   1.4  + r(i * 13 + 1) * 0.4,    /* 1.4–1.8s cycle */
+					helixAmp:  ampSign * (2.5 + r(i * 17 + 1) * 2.0),  /* ±2.5–4.5px */
+					helixDelay: -r(i * 19 + 1) * 0.35,         /* phase shift */
+					helixDur:   0.30 + r(i * 23 + 1) * 0.18,   /* 0.30–0.48s */
+					maxOpacity: 0.85 + r(i * 29 + 1) * 0.15,   /* 0.85–1.00 */
+					trailScale: 1.05 + r(i * 31 + 1) * 0.50,   /* 1.05–1.55 */
+					particleSize: 4.0 + r(i * 37 + 1) * 1.5,   /* 4.0–5.5px */
+					headGlow:     6.0 + r(i * 41 + 1) * 3.0,   /* 6.0–9.0px */
+				};
+			});
+		}
+
+		/* alive — single pulse, every parameter still varies per branch
+		   so different alive branches look different from each other. */
+		const ampSign = r(3) > 0.5 ? 1 : -1;
+		return [{
+			id: 0,
+			flowDelay: r(7) * 1.4,                       /* 0–1.4s phase */
+			flowDur:   3.0  + r(11) * 0.8,               /* 3.0–3.8s cycle */
+			helixAmp:  ampSign * (1.5 + r(17) * 1.3),    /* ±1.5–2.8px */
+			helixDelay: -r(19) * 0.4,
+			helixDur:   0.45 + r(23) * 0.25,             /* 0.45–0.70s */
+			maxOpacity: 0.70 + r(29) * 0.18,             /* 0.70–0.88 */
+			trailScale: 0.95 + r(31) * 0.40,             /* 0.95–1.35 */
+			particleSize: 3.0 + r(37) * 1.0,             /* 3.0–4.0px */
+			headGlow:     4.0 + r(41) * 2.0,             /* 4.0–6.0px */
+		}];
+	});
 
 	function nodeKindClass(u: PropagationUser): string {
 		if (u.isPreviewNode) return '';
@@ -76,6 +217,78 @@
 </script>
 
 <div class="relative">
+	<!--
+		Parent → child connector. Two segments drawn INSIDE this node's
+		wrapper at x = -20px (the parent children container's pl-5):
+
+		  • Vertical rail: top of the wrapper → either elbow midline
+		    (when this is the last child — terminates the rail on a
+		    node) or the bottom of the wrapper (when there are siblings
+		    below — the next sibling's rail continues immediately under
+		    this one to form a continuous line).
+		  • Horizontal elbow: rail → just past the caret at the avatar's
+		    vertical centre (y = 22px).
+
+		Drawing rails PER CHILD (rather than as a single border-l on the
+		parent container) lets the rail terminate cleanly on the last
+		child instead of overshooting into empty space.
+	-->
+	{#if depth > 0}
+		<!--
+			Vertical rail segment for this child. Uses `bg-current` so a
+			single text-colour class on this span paints the rail.
+			Length:
+			  - Last child: stops at the start of the rounded curve
+			    (h-4 = 16px = avatar centre (22px) − corner radius (6px)).
+			  - Non-last: bottom-0 → spans the full wrapper, continuing
+			    into the next sibling's rail.
+		-->
+		<span
+			class={[
+				'absolute -left-5 top-0 w-px pointer-events-none bg-current',
+				isLast ? 'h-4' : 'bottom-0',
+				railColorClass,
+				conduitGlowClass,
+			]}
+			aria-hidden="true"
+		></span>
+		<!--
+			Rounded elbow into this child's row. A small 24×6 box whose
+			border-bottom-left corner is rounded with radius 6, drawn via
+			border-l + border-b (both using currentColor). The quarter
+			arc takes up the leftmost 6px; the remaining 18px is a
+			straight horizontal segment terminating just past the caret.
+		-->
+		<span
+			class={[
+				'absolute -left-5 top-4 w-6 h-1.5 border-l border-b border-current rounded-bl-md pointer-events-none',
+				railColorClass,
+				conduitGlowClass,
+			]}
+			aria-hidden="true"
+		></span>
+
+		<!--
+			Conduit signal traffic — small pulses flowing UPWARD through
+			the edge (child → parent). The wrapper follows the rail+elbow
+			path via `offset-path`; an inner streak adds subtle helical
+			oscillation perpendicular to the path direction.
+		-->
+		{#each conduitParticles as p (p.id)}
+			<div
+				class={[
+					'conduit-particle',
+					railColorClass,
+					effectiveActivity === 'accelerating' ? 'conduit-fast' : 'conduit-slow',
+				]}
+				style="--flow-delay: {p.flowDelay.toFixed(3)}s; --flow-dur: {p.flowDur.toFixed(3)}s; --helix-amp: {p.helixAmp.toFixed(2)}px; --helix-delay: {p.helixDelay.toFixed(3)}s; --helix-dur: {p.helixDur.toFixed(3)}s; --max-opacity: {p.maxOpacity.toFixed(2)}; --trail-scale: {p.trailScale.toFixed(2)}; --particle-size: {p.particleSize.toFixed(2)}px; --head-glow: {p.headGlow.toFixed(2)}px;"
+				aria-hidden="true"
+			>
+				<span class="conduit-head"></span>
+			</div>
+		{/each}
+	{/if}
+
 	<!--
 		Row: caret + avatar + name + character. The row uses `role="button"`
 		(not a real <button>) so the inner caret can remain a real button
@@ -208,6 +421,20 @@
 				{#if user.isOrigin && !user.isPreviewNode}
 					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
 				{/if}
+				{#if DEBUG_BRANCH_LABELS && depth === 0 && !user.isPreviewNode && effectiveActivity}
+					<!-- Calibration-only label showing the branch's current
+					     activity state. Toggle DEBUG_BRANCH_LABELS in script. -->
+					<span
+						class={[
+							'text-[10px] uppercase tracking-widest font-mono shrink-0',
+							effectiveActivity === 'accelerating' && 'text-warning',
+							effectiveActivity === 'alive' && 'text-primary',
+							effectiveActivity === 'dead' && 'text-base-content/40',
+						]}
+					>
+						{effectiveActivity}
+					</span>
+				{/if}
 			</div>
 			<p class={[
 				'text-[11px] leading-snug truncate',
@@ -262,20 +489,50 @@
 		types do all the visual communication.
 	-->
 	{#if hasVisibleChildren && expanded}
-		<div class="relative pl-5 ml-3.5 border-l border-white/8">
-			{#each sortedChildren as child (child.id)}
+		<!--
+			Children container — no border-l here. Each child draws its
+			own rail segment in its wrapper (see top of this component),
+			so the rail terminates cleanly on the last child instead of
+			extending past it.
+
+			overflow: clip + a small clip-margin contains the conduit
+			particles. Particles travel up a long offset-path (extending
+			well past the wrapper top so deep children populate the long
+			rail above them), but everything outside the children
+			container is clipped — particles stop at the top of this
+			container, which is right below the parent's row. The 6px
+			clip-margin lets the rail and the small helix swirl (up to
+			~4-5px perpendicular) stay visible at the padding-box edges
+			without leaking out further.
+		-->
+		<div class="relative pl-5 ml-3.5 overflow-clip [overflow-clip-margin:6px]">
+			{#each sortedChildren as child, i (child.id)}
 				<Self
 					user={child}
 					{selectedUserId}
 					{onSelect}
 					{onPreview}
 					depth={depth + 1}
+					branchActivity={effectiveActivity}
+					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
 				/>
 			{/each}
 
 			<!-- Hidden tail: "+N more" indicator (collapsed) or anonymized stubs (expanded) -->
-			{#if user.hiddenChildren && user.hiddenChildren > 0}
+			{#if hasHiddenTail}
 				{#if !tailExpanded}
+					<div class="relative">
+						<!-- Rail + rounded elbow for the "+N more" placeholder.
+						     Always the LAST item in the children container, so
+						     the rail stops at the start of the curve. -->
+						<span
+							class={['absolute -left-5 top-0 w-px h-4 pointer-events-none bg-current', railColorClass]}
+							aria-hidden="true"
+						></span>
+						<span
+							class={['absolute -left-5 top-4 w-6 h-1.5 border-l border-b border-current rounded-bl-md pointer-events-none', railColorClass]}
+							aria-hidden="true"
+						></span>
 					<button
 						class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
 						onclick={() => { tailExpanded = true; }}
@@ -309,14 +566,17 @@
 							{/if}
 						</div>
 					</button>
+					</div>
 				{:else}
-					{#each stubsFor(user.hiddenChildren) as stub (stub.id)}
+					{#each tailStubs as stub, i (stub.id)}
 						<Self
 							user={stub}
 							{selectedUserId}
 							{onSelect}
 							{onPreview}
 							depth={depth + 1}
+							branchActivity={effectiveActivity}
+							isLast={i === tailStubs.length - 1}
 						/>
 					{/each}
 				{/if}

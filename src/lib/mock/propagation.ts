@@ -38,6 +38,31 @@ export type PropagationNodeKind =
 	| 'amplifier'             // intentionally transmitted onward
 	| 'successful-amplifier'; // their transmission carried the signal far
 
+/* Branch-level activity — only meaningful at the root of a branch.
+   Drives debug-label rendering and edge-colour styling so the viewer
+   can tell at a glance which branches are propagating actively. */
+export type BranchActivityState = 'dead' | 'alive' | 'accelerating';
+
+/** Walk a branch from its root and classify how alive the propagation
+ *  feels. Heuristic only — based on amplifier counts in the subtree.
+ *    dead         → no amplifications anywhere in the subtree
+ *    alive        → some amplification activity
+ *    accelerating → contains at least one successful-amplifier
+ */
+export function computeBranchActivity(root: PropagationUser): BranchActivityState {
+	let totalAmps = 0;
+	let successCount = 0;
+	const walk = (n: PropagationUser) => {
+		totalAmps += n.amplifications;
+		if (n.nodeKind === 'successful-amplifier') successCount++;
+		for (const c of n.children) walk(c);
+	};
+	walk(root);
+	if (successCount > 0) return 'accelerating';
+	if (totalAmps > 0) return 'alive';
+	return 'dead';
+}
+
 export type PropagationUser = {
 	id: string;
 	name: string;
