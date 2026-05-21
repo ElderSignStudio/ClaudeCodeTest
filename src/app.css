@@ -731,6 +731,13 @@
   offset-anchor: 50% 50%;
   offset-distance: 0%;
   opacity: 0;
+
+  /* Reactive illumination: particles use `screen` blending so their
+     halos ADD light to the dim conduit beneath rather than masking
+     it. The conduit reads as dormant fibre brightening locally where
+     the pulse passes, then fading back to dim. Against the dark
+     section background, screen mode reads as bioluminescent bloom. */
+  mix-blend-mode: screen;
 }
 
 /* Inner head — the visible comet. Centred on the wrapper's origin

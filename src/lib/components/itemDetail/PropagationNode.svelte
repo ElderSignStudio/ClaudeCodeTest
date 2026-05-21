@@ -71,31 +71,43 @@
 		hasHiddenTail ? stubsFor(user.hiddenChildren ?? 0) : [],
 	);
 
-	/* Shared rail/elbow + particle colour. Single `text-*` class drives
-	   the rail's `bg-current`, the elbow's `border-current`, and the
-	   particle's `currentColor`. Recalibrated to a quiet blue palette:
-	   the edge should read as a faint STRUCTURAL guide, not a UI wire.
-	     dead          → almost invisible neutral
-	     alive         → faint indigo
-	     accelerating  → slightly brighter teal-cyan, still restrained */
+	/* Reactive illumination direction.
+
+	   Two separate `text-*` classes — one for the dormant conduit,
+	   one for the bright particle — so dimming the conduit doesn't
+	   also dim the particle (they previously shared one class via
+	   currentColor).
+
+	   railColorClass → drives the SVG rail/elbow strokes. Held at
+	   3–4% alpha so the conduit is nearly invisible against the
+	   dark card; it exists only as a structural trace.
+
+	   particleColorClass → drives the particle's currentColor for
+	   its head fill and box-shadow halos. Held at near-full alpha so
+	   the halo is bright; combined with mix-blend-mode: screen, the
+	   particle's halo additively illuminates the dim conduit (and
+	   surrounding dark background) wherever it passes. */
 	const railColorClass = $derived(
 		effectiveActivity === 'accelerating'
-			? 'text-accent/55'
+			? 'text-accent/8'
 			: effectiveActivity === 'alive'
-				? 'text-primary/35'
-				: 'text-white/8',
+				? 'text-primary/6'
+				: 'text-white/4',
 	);
 
-	/* Conduit glow per state. Adds a faint drop-shadow on the rail and
-	   elbow so the conduit reads as gently emitting signal rather than
-	   a flat 1px stroke. Dead branches stay completely matte. */
-	const conduitGlowClass = $derived(
+	const particleColorClass = $derived(
 		effectiveActivity === 'accelerating'
-			? 'conduit-glow-strong'
+			? 'text-accent/95'
 			: effectiveActivity === 'alive'
-				? 'conduit-glow-soft'
+				? 'text-primary/82'
 				: '',
 	);
+
+	/* Conduit glow disabled — the conduit is dormant; particles
+	   provide the moving illumination via their box-shadow halos +
+	   mix-blend-mode. This keeps the conduit reading as a dark fibre
+	   rather than a glowing UI rail. */
+	const conduitGlowClass = '';
 
 	/*
 		Conduit particle schedule. Each non-root child emits signal
@@ -367,7 +379,7 @@
 			<div
 				class={[
 					'conduit-particle',
-					railColorClass,
+					particleColorClass,
 					effectiveActivity === 'accelerating' ? 'conduit-fast' : 'conduit-slow',
 				]}
 				style="--flow-delay: {p.flowDelay.toFixed(3)}s; --flow-dur: {p.flowDur.toFixed(3)}s; --helix-amp: {p.helixAmp.toFixed(2)}px; --helix-delay: {p.helixDelay.toFixed(3)}s; --helix-dur: {p.helixDur.toFixed(3)}s; --max-opacity: {p.maxOpacity.toFixed(2)}; --trail-scale: {p.trailScale.toFixed(2)}; --particle-size: {p.particleSize.toFixed(2)}px; --head-glow: {p.headGlow.toFixed(2)}px;"
