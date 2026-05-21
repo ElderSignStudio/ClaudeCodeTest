@@ -154,17 +154,17 @@
 				const ampSign = r(i * 7 + 3) > 0.5 ? 1 : -1;
 				return {
 					id: i,
-					/* base stagger at i*0.45s + up to 0.2s jitter so particles
+					/* base stagger at i*0.55s + up to 0.2s jitter so particles
 					   don't fire on a metronome. */
-					flowDelay: i * 0.45 + r(i * 11 + 1) * 0.2,
-					flowDur:   1.4  + r(i * 13 + 1) * 0.4,    /* 1.4–1.8s cycle */
+					flowDelay: i * 0.55 + r(i * 11 + 1) * 0.2,
+					flowDur:   1.75 + r(i * 13 + 1) * 0.45,   /* 1.75–2.20s cycle */
 					helixAmp:  ampSign * (2.5 + r(i * 17 + 1) * 2.0),  /* ±2.5–4.5px */
 					helixDelay: -r(i * 19 + 1) * 0.35,         /* phase shift */
-					helixDur:   0.30 + r(i * 23 + 1) * 0.18,   /* 0.30–0.48s */
+					helixDur:   0.34 + r(i * 23 + 1) * 0.20,   /* 0.34–0.54s */
 					maxOpacity: 0.85 + r(i * 29 + 1) * 0.15,   /* 0.85–1.00 */
-					trailScale: 1.05 + r(i * 31 + 1) * 0.50,   /* 1.05–1.55 */
-					particleSize: 4.0 + r(i * 37 + 1) * 1.5,   /* 4.0–5.5px */
-					headGlow:     6.0 + r(i * 41 + 1) * 3.0,   /* 6.0–9.0px */
+					trailScale: 0.85 + r(i * 31 + 1) * 0.30,   /* 0.85–1.15 */
+					particleSize: 4.0 + r(i * 37 + 1) * 1.4,   /* 4.0–5.4px */
+					headGlow:     4.0 + r(i * 41 + 1) * 2.0,   /* 4.0–6.0px */
 				};
 			});
 		}
@@ -174,15 +174,15 @@
 		const ampSign = r(3) > 0.5 ? 1 : -1;
 		return [{
 			id: 0,
-			flowDelay: r(7) * 1.4,                       /* 0–1.4s phase */
-			flowDur:   3.0  + r(11) * 0.8,               /* 3.0–3.8s cycle */
+			flowDelay: r(7) * 1.6,                       /* 0–1.6s phase */
+			flowDur:   3.7  + r(11) * 0.9,               /* 3.7–4.6s cycle */
 			helixAmp:  ampSign * (1.5 + r(17) * 1.3),    /* ±1.5–2.8px */
 			helixDelay: -r(19) * 0.4,
-			helixDur:   0.45 + r(23) * 0.25,             /* 0.45–0.70s */
+			helixDur:   0.50 + r(23) * 0.28,             /* 0.50–0.78s */
 			maxOpacity: 0.70 + r(29) * 0.18,             /* 0.70–0.88 */
-			trailScale: 0.95 + r(31) * 0.40,             /* 0.95–1.35 */
+			trailScale: 0.78 + r(31) * 0.30,             /* 0.78–1.08 */
 			particleSize: 3.0 + r(37) * 1.0,             /* 3.0–4.0px */
-			headGlow:     4.0 + r(41) * 2.0,             /* 4.0–6.0px */
+			headGlow:     2.5 + r(41) * 1.5,             /* 2.5–4.0px */
 		}];
 	});
 
@@ -246,27 +246,44 @@
 		<span
 			class={[
 				'absolute -left-5 top-0 w-px pointer-events-none bg-current',
-				isLast ? 'h-4' : 'bottom-0',
+				isLast ? 'h-3.5' : 'bottom-0',
 				railColorClass,
 				conduitGlowClass,
 			]}
 			aria-hidden="true"
 		></span>
 		<!--
-			Rounded elbow into this child's row. A small 24×6 box whose
-			border-bottom-left corner is rounded with radius 6, drawn via
-			border-l + border-b (both using currentColor). The quarter
-			arc takes up the leftmost 6px; the remaining 18px is a
-			straight horizontal segment terminating just past the caret.
+			Organic elbow — an SVG path with a single cubic Bezier curve
+			from the rail (top-left) to the row (right-middle). Replaces
+			the previous L-shape "vertical → quarter-arc → horizontal"
+			with one continuous flowing curve, so the conduit reads as
+			a soft stalk rather than a CSS border. Stroke uses
+			currentColor (driven by railColorClass) and inherits the
+			conduit glow filter.
+
+			In viewBox coords (24 × 8), the path is M 0.5 0 C 0.5 8 8 8 24 8.
+			Tangent at start = vertical (joins the rail seamlessly).
+			Tangent at end  = horizontal (lands flat at the row).
 		-->
-		<span
+		<svg
 			class={[
-				'absolute -left-5 top-4 w-6 h-1.5 border-l border-b border-current rounded-bl-md pointer-events-none',
+				'absolute -left-5 top-3.5 pointer-events-none overflow-visible',
 				railColorClass,
 				conduitGlowClass,
 			]}
+			width="24"
+			height="8"
+			viewBox="0 0 24 8"
 			aria-hidden="true"
-		></span>
+		>
+			<path
+				d="M 0.5 0 C 0.5 8 8 8 24 8"
+				stroke="currentColor"
+				stroke-width="1"
+				fill="none"
+				stroke-linecap="round"
+			/>
+		</svg>
 
 		<!--
 			Conduit signal traffic — small pulses flowing UPWARD through
@@ -522,17 +539,22 @@
 			{#if hasHiddenTail}
 				{#if !tailExpanded}
 					<div class="relative">
-						<!-- Rail + rounded elbow for the "+N more" placeholder.
-						     Always the LAST item in the children container, so
-						     the rail stops at the start of the curve. -->
+						<!-- Rail + organic Bezier elbow for the "+N more"
+						     placeholder. Always the LAST item in the children
+						     container, so the rail stops at the start of the curve. -->
 						<span
-							class={['absolute -left-5 top-0 w-px h-4 pointer-events-none bg-current', railColorClass]}
+							class={['absolute -left-5 top-0 w-px h-3.5 pointer-events-none bg-current', railColorClass, conduitGlowClass]}
 							aria-hidden="true"
 						></span>
-						<span
-							class={['absolute -left-5 top-4 w-6 h-1.5 border-l border-b border-current rounded-bl-md pointer-events-none', railColorClass]}
+						<svg
+							class={['absolute -left-5 top-3.5 pointer-events-none overflow-visible', railColorClass, conduitGlowClass]}
+							width="24"
+							height="8"
+							viewBox="0 0 24 8"
 							aria-hidden="true"
-						></span>
+						>
+							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" />
+						</svg>
 					<button
 						class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
 						onclick={() => { tailExpanded = true; }}
