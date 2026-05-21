@@ -757,11 +757,18 @@
      trail BACKWARD along the path direction. Each successive stop
      is further behind, more blurred, and more transparent so the
      trail dissolves smoothly without "blocky dash" artefacts. */
-  /* Shorter, cleaner trail. Tighter offsets and lower blur radii so
-     each stop reads as a distinct fading echo behind the head, not a
-     uniform smear. */
+  /* Firefly halo + cleaner trail. The first three shadows stack at
+     the head position with increasing blur and decreasing opacity —
+     this creates a glowing energy orb (tight bright core → mid
+     halo → wide soft halo) instead of a single blurry smear. The
+     remaining four shadows are the comet trail, each a discrete
+     fading echo behind the head. */
   box-shadow:
-    0 0 var(--head-glow, 3px) 0   currentColor,
+    /* multi-stop halo around the head */
+    0 0 calc(var(--head-glow, 3px) * 0.45) 0 currentColor,
+    0 0 var(--head-glow, 3px) 0   color-mix(in srgb, currentColor 70%, transparent),
+    0 0 calc(var(--head-glow, 3px) * 1.6) 0 color-mix(in srgb, currentColor 30%, transparent),
+    /* comet trail */
     calc(-3px  * var(--trail-scale, 1)) 0 calc(2px * var(--trail-scale, 1)) -0.4px color-mix(in srgb, currentColor 70%, transparent),
     calc(-6px  * var(--trail-scale, 1)) 0 calc(3px * var(--trail-scale, 1)) -0.8px color-mix(in srgb, currentColor 40%, transparent),
     calc(-10px * var(--trail-scale, 1)) 0 calc(3px * var(--trail-scale, 1)) -1.1px color-mix(in srgb, currentColor 18%, transparent),
@@ -774,13 +781,16 @@
    respects the actual painted pixels — for the elbow this means
    the glow traces the L-shape, not a generic rounded rectangle. */
 .conduit-glow-soft {
-  filter: drop-shadow(0 0 3px currentColor);
+  filter:
+    drop-shadow(0 0 2px currentColor)
+    drop-shadow(0 0 5px color-mix(in srgb, currentColor 55%, transparent));
 }
 
 .conduit-glow-strong {
   filter:
-    drop-shadow(0 0 3px currentColor)
-    drop-shadow(0 0 7px color-mix(in srgb, currentColor 65%, transparent));
+    drop-shadow(0 0 2px currentColor)
+    drop-shadow(0 0 5px color-mix(in srgb, currentColor 75%, transparent))
+    drop-shadow(0 0 10px color-mix(in srgb, currentColor 45%, transparent));
 }
 
 .conduit-slow {
@@ -815,27 +825,39 @@
    rail rather than hard-stopping. The `--max-opacity` variable
    lets each particle hit a different peak brightness.
 */
+/*
+   Segment-aware speed. The path consists of a short elbow (~10% of
+   total length, where the curve bends from row up to rail) and a
+   long vertical rail (~90%). With a single linear timing function
+   the elbow would be traversed in 10% of travel time — too fast to
+   read at smaller scales. The intermediate keyframe waypoint forces
+   the particle to spend a larger share of cycle time IN the elbow
+   (~3× the rail's per-unit pace), so the eye can clearly see the
+   pulse rounding the corner before it speeds up through the rail.
+*/
 @keyframes conduit-flow-slow {
-  /* alive: ~3.0–3.8s cycle. Pulse traverses the path over 0%→45%
-     of the cycle (= ~1.35–1.7s travel time), with opacity holding
-     at max through most of the traversal so the pulse is clearly
-     readable. The remaining 55% of the cycle is a quiet gap. */
+  /* alive: cycle 4.0–5.0s. Total travel = 45% of cycle.
+     Elbow phase: 0–22% cycle covers 0–10% of path (~8× slower per-unit
+                  than the rail — the particle clearly eases around the
+                  corner before launching up the rail).
+     Rail  phase: 22–45% cycle covers 10–100% of path. */
   0%   { offset-distance: 0%;    opacity: 0; }
   4%   { opacity: var(--max-opacity, 0.85); }
-  36%  { opacity: var(--max-opacity, 0.85); }
+  22%  { offset-distance: 10%;  opacity: var(--max-opacity, 0.85); }
+  38%  { opacity: var(--max-opacity, 0.85); }
   45%  { offset-distance: 100%; opacity: 0; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 
 @keyframes conduit-flow-fast {
-  /* accelerating: ~1.4–1.8s cycle. Pulse traverses 0%→65% of the
-     cycle (= ~0.9–1.17s travel time). Slower than the old 70%
-     traverse so each pulse is readable; brief ~0.5s rest before
-     this particle restarts. */
+  /* accelerating: cycle 1.85–2.30s. Total travel = 70% of cycle.
+     Elbow phase: 0–28% cycle covers 0–10% of path (~5× slower).
+     Rail  phase: 28–70% cycle covers 10–100% of path. */
   0%   { offset-distance: 0%;    opacity: 0; }
   3%   { opacity: var(--max-opacity, 0.95); }
-  55%  { opacity: var(--max-opacity, 0.95); }
-  65%  { offset-distance: 100%; opacity: 0; }
+  28%  { offset-distance: 10%;  opacity: var(--max-opacity, 0.95); }
+  62%  { opacity: var(--max-opacity, 0.95); }
+  70%  { offset-distance: 100%; opacity: 0; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 
@@ -861,6 +883,7 @@
   .conduit-head { animation: none !important; }
   .conduit-particle { opacity: 0; }
   /* Keep the static glow muted under reduced motion. */
+  .conduit-glow-soft   { filter: drop-shadow(0 0 2px currentColor); }
   .conduit-glow-strong { filter: drop-shadow(0 0 3px currentColor); }
 }
 

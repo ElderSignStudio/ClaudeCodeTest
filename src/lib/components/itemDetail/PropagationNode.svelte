@@ -154,17 +154,17 @@
 				const ampSign = r(i * 7 + 3) > 0.5 ? 1 : -1;
 				return {
 					id: i,
-					/* base stagger at i*0.55s + up to 0.2s jitter so particles
+					/* base stagger at i*0.6s + up to 0.2s jitter so particles
 					   don't fire on a metronome. */
-					flowDelay: i * 0.55 + r(i * 11 + 1) * 0.2,
-					flowDur:   1.75 + r(i * 13 + 1) * 0.45,   /* 1.75–2.20s cycle */
+					flowDelay: i * 0.60 + r(i * 11 + 1) * 0.2,
+					flowDur:   1.85 + r(i * 13 + 1) * 0.45,   /* 1.85–2.30s cycle */
 					helixAmp:  ampSign * (2.5 + r(i * 17 + 1) * 2.0),  /* ±2.5–4.5px */
 					helixDelay: -r(i * 19 + 1) * 0.35,         /* phase shift */
-					helixDur:   0.34 + r(i * 23 + 1) * 0.20,   /* 0.34–0.54s */
-					maxOpacity: 0.85 + r(i * 29 + 1) * 0.15,   /* 0.85–1.00 */
-					trailScale: 0.85 + r(i * 31 + 1) * 0.30,   /* 0.85–1.15 */
-					particleSize: 4.0 + r(i * 37 + 1) * 1.4,   /* 4.0–5.4px */
-					headGlow:     4.0 + r(i * 41 + 1) * 2.0,   /* 4.0–6.0px */
+					helixDur:   0.36 + r(i * 23 + 1) * 0.20,   /* 0.36–0.56s */
+					maxOpacity: 0.88 + r(i * 29 + 1) * 0.12,   /* 0.88–1.00 */
+					trailScale: 0.88 + r(i * 31 + 1) * 0.32,   /* 0.88–1.20 */
+					particleSize: 4.5 + r(i * 37 + 1) * 1.5,   /* 4.5–6.0px */
+					headGlow:     8.5 + r(i * 41 + 1) * 4.0,   /* 8.5–12.5px — strong firefly */
 				};
 			});
 		}
@@ -174,15 +174,15 @@
 		const ampSign = r(3) > 0.5 ? 1 : -1;
 		return [{
 			id: 0,
-			flowDelay: r(7) * 1.6,                       /* 0–1.6s phase */
-			flowDur:   3.7  + r(11) * 0.9,               /* 3.7–4.6s cycle */
+			flowDelay: r(7) * 1.8,                       /* 0–1.8s phase */
+			flowDur:   4.0  + r(11) * 1.0,               /* 4.0–5.0s cycle */
 			helixAmp:  ampSign * (1.5 + r(17) * 1.3),    /* ±1.5–2.8px */
 			helixDelay: -r(19) * 0.4,
-			helixDur:   0.50 + r(23) * 0.28,             /* 0.50–0.78s */
-			maxOpacity: 0.70 + r(29) * 0.18,             /* 0.70–0.88 */
+			helixDur:   0.55 + r(23) * 0.30,             /* 0.55–0.85s */
+			maxOpacity: 0.74 + r(29) * 0.18,             /* 0.74–0.92 */
 			trailScale: 0.78 + r(31) * 0.30,             /* 0.78–1.08 */
-			particleSize: 3.0 + r(37) * 1.0,             /* 3.0–4.0px */
-			headGlow:     2.5 + r(41) * 1.5,             /* 2.5–4.0px */
+			particleSize: 3.5 + r(37) * 1.0,             /* 3.5–4.5px */
+			headGlow:     5.5 + r(41) * 2.5,             /* 5.5–8.0px — visible firefly */
 		}];
 	});
 
@@ -235,35 +235,85 @@
 	-->
 	{#if depth > 0}
 		<!--
-			Vertical rail segment for this child. Uses `bg-current` so a
-			single text-colour class on this span paints the rail.
-			Length:
-			  - Last child: stops at the start of the rounded curve
-			    (h-4 = 16px = avatar centre (22px) − corner radius (6px)).
-			  - Non-last: bottom-0 → spans the full wrapper, continuing
-			    into the next sibling's rail.
+			Vertical rail — drawn as SVG so the stroke can curve subtly
+			and read as an organic stalk rather than a perfectly straight
+			CSS span. The path's centerline sits at wrapper x = -19.5
+			(matching the elbow SVG below) and stretches to fill the
+			wrapper height via preserveAspectRatio="none".
+
+			Two path variants:
+			  - Non-last (rail extends through full wrapper): a subtle
+			    S-curve (±0.5px perpendicular wave) so the stalk feels
+			    slightly hand-drawn instead of pixel-straight.
+			  - Last (short stub up to elbow start): straight line —
+			    a 14px segment is too short to wave meaningfully.
 		-->
-		<span
+		<!--
+			Vertical rail rendered as 3 layered SVG strokes — broad faded
+			glow, mid translucent body, thin bright core. The 3-layer
+			pattern is shared with the elbow below so the stalk reads as
+			ONE continuous stroke at the junction (matching glow profile
+			on both pieces).
+
+			Path is a gentle S-Bezier for non-last (long) rails so the
+			stalk drifts left/right by ~1–2px over its height — subtly
+			hand-drawn rather than ruler-straight. Last/short rails
+			(14px) use a straight path because the wave compresses too
+			tightly at short heights and would jog where it meets the
+			elbow.
+
+			height is bumped 2px past the elbow start so the rail's
+			bottom stroke overlaps the elbow's top, eliminating any
+			sub-pixel seam at the junction.
+		-->
+		<svg
 			class={[
-				'absolute -left-5 top-0 w-px pointer-events-none bg-current',
-				isLast ? 'h-3.5' : 'bottom-0',
+				'absolute pointer-events-none overflow-visible',
 				railColorClass,
 				conduitGlowClass,
 			]}
+			style="left: -21.5px; top: 0; width: 4px; height: {isLast ? '16px' : 'calc(100% + 2px)'};"
+			viewBox="0 0 4 100"
+			preserveAspectRatio="none"
 			aria-hidden="true"
-		></span>
+		>
+			<!-- L1: broad faded glow stroke (widest, lowest opacity) -->
+			<path
+				d={isLast ? 'M 2 0 L 2 100' : 'M 2 0 C 3.2 33 0.8 67 2 100'}
+				stroke="currentColor"
+				stroke-width="3.5"
+				stroke-opacity="0.12"
+				fill="none"
+				stroke-linecap="round"
+				vector-effect="non-scaling-stroke"
+			/>
+			<!-- L2: mid translucent body stroke -->
+			<path
+				d={isLast ? 'M 2 0 L 2 100' : 'M 2 0 C 2.6 33 1.4 67 2 100'}
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-opacity="0.32"
+				fill="none"
+				stroke-linecap="round"
+				vector-effect="non-scaling-stroke"
+			/>
+			<!-- L3: thin bright core stroke -->
+			<path
+				d={isLast ? 'M 2 0 L 2 100' : 'M 2 0 C 2.3 33 1.7 67 2 100'}
+				stroke="currentColor"
+				stroke-width="1"
+				fill="none"
+				stroke-linecap="round"
+				vector-effect="non-scaling-stroke"
+			/>
+		</svg>
 		<!--
-			Organic elbow — an SVG path with a single cubic Bezier curve
-			from the rail (top-left) to the row (right-middle). Replaces
-			the previous L-shape "vertical → quarter-arc → horizontal"
-			with one continuous flowing curve, so the conduit reads as
-			a soft stalk rather than a CSS border. Stroke uses
-			currentColor (driven by railColorClass) and inherits the
-			conduit glow filter.
-
-			In viewBox coords (24 × 8), the path is M 0.5 0 C 0.5 8 8 8 24 8.
-			Tangent at start = vertical (joins the rail seamlessly).
-			Tangent at end  = horizontal (lands flat at the row).
+			Organic elbow — same 3-layer stroke as the rail so the glow,
+			thickness and color profiles are identical across the stalk's
+			straight and curved sections. The cubic Bezier from rail-top
+			to row-end is continuous: tangent vertical at start (joins
+			the rail seamlessly), tangent horizontal at end (lands flat
+			at the row).
 		-->
 		<svg
 			class={[
@@ -276,12 +326,34 @@
 			viewBox="0 0 24 8"
 			aria-hidden="true"
 		>
+			<!-- L1: broad faded glow -->
+			<path
+				d="M 0.5 0 C 0.5 8 8 8 24 8"
+				stroke="currentColor"
+				stroke-width="3.5"
+				stroke-opacity="0.12"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<!-- L2: mid translucent body -->
+			<path
+				d="M 0.5 0 C 0.5 8 8 8 24 8"
+				stroke="currentColor"
+				stroke-width="2"
+				stroke-opacity="0.32"
+				fill="none"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+			/>
+			<!-- L3: thin bright core -->
 			<path
 				d="M 0.5 0 C 0.5 8 8 8 24 8"
 				stroke="currentColor"
 				stroke-width="1"
 				fill="none"
 				stroke-linecap="round"
+				stroke-linejoin="round"
 			/>
 		</svg>
 
@@ -522,7 +594,7 @@
 			~4-5px perpendicular) stay visible at the padding-box edges
 			without leaking out further.
 		-->
-		<div class="relative pl-5 ml-3.5 overflow-clip [overflow-clip-margin:6px]">
+		<div class="relative pl-5 ml-3.5 overflow-clip [overflow-clip-margin:10px]">
 			{#each sortedChildren as child, i (child.id)}
 				<Self
 					user={child}
@@ -539,13 +611,20 @@
 			{#if hasHiddenTail}
 				{#if !tailExpanded}
 					<div class="relative">
-						<!-- Rail + organic Bezier elbow for the "+N more"
-						     placeholder. Always the LAST item in the children
-						     container, so the rail stops at the start of the curve. -->
-						<span
-							class={['absolute -left-5 top-0 w-px h-3.5 pointer-events-none bg-current', railColorClass, conduitGlowClass]}
+						<!-- Rail + elbow for the "+N more" placeholder (always
+						     LAST in container). 3-layer stroke matches the
+						     main conduit so the stalk reads consistently. -->
+						<svg
+							class={['absolute pointer-events-none overflow-visible', railColorClass, conduitGlowClass]}
+							style="left: -21.5px; top: 0; width: 4px; height: 16px;"
+							viewBox="0 0 4 100"
+							preserveAspectRatio="none"
 							aria-hidden="true"
-						></span>
+						>
+							<path d="M 2 0 L 2 100" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+							<path d="M 2 0 L 2 100" stroke="currentColor" stroke-width="2" stroke-opacity="0.32" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+							<path d="M 2 0 L 2 100" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+						</svg>
 						<svg
 							class={['absolute -left-5 top-3.5 pointer-events-none overflow-visible', railColorClass, conduitGlowClass]}
 							width="24"
@@ -553,7 +632,9 @@
 							viewBox="0 0 24 8"
 							aria-hidden="true"
 						>
-							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" />
+							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="2" stroke-opacity="0.32" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
 					<button
 						class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
