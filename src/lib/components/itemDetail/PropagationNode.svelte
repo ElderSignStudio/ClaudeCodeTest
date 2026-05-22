@@ -89,10 +89,10 @@
 	   surrounding dark background) wherever it passes. */
 	const railColorClass = $derived(
 		effectiveActivity === 'accelerating'
-			? 'text-accent/8'
+			? 'text-accent/10'
 			: effectiveActivity === 'alive'
-				? 'text-primary/6'
-				: 'text-white/4',
+				? 'text-primary/8'
+				: 'text-white/5',
 	);
 
 	const particleColorClass = $derived(

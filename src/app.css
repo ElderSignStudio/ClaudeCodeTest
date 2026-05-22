@@ -722,21 +722,17 @@
 
   /* Cubic Bezier matching the SVG elbow exactly. The particle goes:
        row (4, 22)  →  one continuous Bezier curve  →  (-19.5, 14) at
-       rail top  →  straight up to (-19.5, -250) for long-rail flow.
-     Control points (-12, 22) and (-19.5, 22) give vertical tangent at
-     the rail end and horizontal tangent at the row end, matching the
-     drawn elbow path. */
+       rail top  →  straight up to (-19.5, -250) for long-rail flow. */
   offset-path: path('M 4 22 C -12 22 -19.5 22 -19.5 14 L -19.5 -250');
   offset-rotate: auto;
   offset-anchor: 50% 50%;
   offset-distance: 0%;
   opacity: 0;
 
-  /* Reactive illumination: particles use `screen` blending so their
-     halos ADD light to the dim conduit beneath rather than masking
-     it. The conduit reads as dormant fibre brightening locally where
-     the pulse passes, then fading back to dim. Against the dark
-     section background, screen mode reads as bioluminescent bloom. */
+  /* Reactive illumination: the particle's bright radial halo adds
+     light to whatever's below. The dim conduit material gets lifted
+     into visibility in a RADIUS around the particle — like a train
+     headlight illuminating the track around it. */
   mix-blend-mode: screen;
 }
 
@@ -752,34 +748,34 @@
      --trail-scale   — multiplier on the 4-stop trail offsets/blurs
 */
 .conduit-head {
+  /* The "train": a small bright orb centred on the path point. The
+     orb itself is small and sharp; the radial halo around it is the
+     "headlight" that brightens the surrounding dark conduit through
+     the wrapper's mix-blend-mode: screen.
+
+     The halo is a 5-stop radial bloom: tight bright core → near halo
+     → mid → wide → very wide soft fade. The widest stops reach far
+     enough to illuminate the dim conduit material around the
+     particle in a clear radius, before, behind, and to the sides. */
   display: block;
   position: absolute;
-  top:  calc(var(--particle-size, 2.5px) * -0.5);
-  left: calc(var(--particle-size, 2.5px) * -0.5);
-  width:  var(--particle-size, 2.5px);
-  height: var(--particle-size, 2.5px);
+  top:  calc(var(--particle-size, 4px) * -0.5);
+  left: calc(var(--particle-size, 4px) * -0.5);
+  width:  var(--particle-size, 4px);
+  height: var(--particle-size, 4px);
   border-radius: 50%;
   background: currentColor;
-  /* Head halo + 4-stop comet trail. Negative X offsets extend the
-     trail BACKWARD along the path direction. Each successive stop
-     is further behind, more blurred, and more transparent so the
-     trail dissolves smoothly without "blocky dash" artefacts. */
-  /* Firefly halo + cleaner trail. The first three shadows stack at
-     the head position with increasing blur and decreasing opacity —
-     this creates a glowing energy orb (tight bright core → mid
-     halo → wide soft halo) instead of a single blurry smear. The
-     remaining four shadows are the comet trail, each a discrete
-     fading echo behind the head. */
   box-shadow:
-    /* multi-stop halo around the head */
-    0 0 calc(var(--head-glow, 3px) * 0.45) 0 currentColor,
-    0 0 var(--head-glow, 3px) 0   color-mix(in srgb, currentColor 70%, transparent),
-    0 0 calc(var(--head-glow, 3px) * 1.6) 0 color-mix(in srgb, currentColor 30%, transparent),
-    /* comet trail */
-    calc(-3px  * var(--trail-scale, 1)) 0 calc(2px * var(--trail-scale, 1)) -0.4px color-mix(in srgb, currentColor 70%, transparent),
-    calc(-6px  * var(--trail-scale, 1)) 0 calc(3px * var(--trail-scale, 1)) -0.8px color-mix(in srgb, currentColor 40%, transparent),
-    calc(-10px * var(--trail-scale, 1)) 0 calc(3px * var(--trail-scale, 1)) -1.1px color-mix(in srgb, currentColor 18%, transparent),
-    calc(-14px * var(--trail-scale, 1)) 0 calc(4px * var(--trail-scale, 1)) -1.4px color-mix(in srgb, currentColor 8%, transparent);
+    /* tight bright core */
+    0 0 calc(var(--head-glow, 4px) * 0.40) 0 currentColor,
+    /* near halo (still nearly full intensity) */
+    0 0 calc(var(--head-glow, 4px) * 0.90) 0 color-mix(in srgb, currentColor 80%, transparent),
+    /* mid halo */
+    0 0 calc(var(--head-glow, 4px) * 1.60) 0 color-mix(in srgb, currentColor 55%, transparent),
+    /* wide halo — this is what reaches the conduit on either side */
+    0 0 calc(var(--head-glow, 4px) * 2.50) 0 color-mix(in srgb, currentColor 30%, transparent),
+    /* very wide soft fade — atmospheric bloom edge */
+    0 0 calc(var(--head-glow, 4px) * 3.80) 0 color-mix(in srgb, currentColor 14%, transparent);
   transform: translateY(0);
 }
 
