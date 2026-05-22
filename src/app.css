@@ -722,8 +722,17 @@
 
   /* Cubic Bezier matching the SVG elbow exactly. The particle goes:
        row (4, 22)  →  one continuous Bezier curve  →  (-19.5, 14) at
-       rail top  →  straight up to (-19.5, -250) for long-rail flow. */
-  offset-path: path('M 4 22 C -12 22 -19.5 22 -19.5 14 L -19.5 -250');
+       rail top  →  straight up to (-19.5, -500) for long-rail flow.
+
+     The 500px upward extension matters for SPATIAL destination death:
+     Marco's deeper siblings (5th, 6th, +8 more) live far below Marco
+     in their wrapper coords. By extending the path well past even the
+     deepest sibling's wrapper-relative Marco position, ALL particles
+     keep moving toward Marco; the children container's overflow-clip
+     then becomes the SPATIAL death point — particles die because they
+     reached the visual boundary near Marco's row, not because time
+     elapsed. */
+  offset-path: path('M 4 22 C -12 22 -19.5 22 -19.5 14 L -19.5 -500');
   offset-rotate: auto;
   offset-anchor: 50% 50%;
   offset-distance: 0%;
@@ -756,26 +765,33 @@
      The halo is a 5-stop radial bloom: tight bright core → near halo
      → mid → wide → very wide soft fade. The widest stops reach far
      enough to illuminate the dim conduit material around the
-     particle in a clear radius, before, behind, and to the sides. */
+     particle in a clear radius, before, behind, and to the sides.
+
+     Per-particle variability:
+       --head-radius   irregular border-radius (slightly blob-like)
+       --halo-spread   0.8–1.3 multiplier on every halo stop's blur
+                       radius (tight vs diffuse glow character)
+     Combined with --particle-size and --head-glow variation, every
+     particle reads as its own little organism. */
   display: block;
   position: absolute;
   top:  calc(var(--particle-size, 4px) * -0.5);
   left: calc(var(--particle-size, 4px) * -0.5);
   width:  var(--particle-size, 4px);
   height: var(--particle-size, 4px);
-  border-radius: 50%;
+  border-radius: var(--head-radius, 50%);
   background: currentColor;
   box-shadow:
     /* tight bright core */
-    0 0 calc(var(--head-glow, 4px) * 0.40) 0 currentColor,
+    0 0 calc(var(--head-glow, 4px) * 0.40 * var(--halo-spread, 1)) 0 currentColor,
     /* near halo (still nearly full intensity) */
-    0 0 calc(var(--head-glow, 4px) * 0.90) 0 color-mix(in srgb, currentColor 80%, transparent),
+    0 0 calc(var(--head-glow, 4px) * 0.90 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 80%, transparent),
     /* mid halo */
-    0 0 calc(var(--head-glow, 4px) * 1.60) 0 color-mix(in srgb, currentColor 55%, transparent),
+    0 0 calc(var(--head-glow, 4px) * 1.60 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 55%, transparent),
     /* wide halo — this is what reaches the conduit on either side */
-    0 0 calc(var(--head-glow, 4px) * 2.50) 0 color-mix(in srgb, currentColor 30%, transparent),
+    0 0 calc(var(--head-glow, 4px) * 2.50 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 30%, transparent),
     /* very wide soft fade — atmospheric bloom edge */
-    0 0 calc(var(--head-glow, 4px) * 3.80) 0 color-mix(in srgb, currentColor 14%, transparent);
+    0 0 calc(var(--head-glow, 4px) * 3.80 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 14%, transparent);
   transform: translateY(0);
 }
 
@@ -838,29 +854,77 @@
    (~3× the rail's per-unit pace), so the eye can clearly see the
    pulse rounding the corner before it speeds up through the rail.
 */
+/*
+   MOMENTUM-BASED traversal. The particle is not a UI tick travelling
+   at constant speed — it has inertia. Three velocity regimes inside
+   each cycle:
+
+     1. Launch inertia (cycle 0% → ~5%)
+        The particle leaves the source node slowly, as if charging up.
+        offset 0% → ~3%. Low px/s.
+
+     2. Elbow acceleration (cycle ~5% → ~16%)
+        Through the curved elbow the particle gradually picks up
+        speed. offset ~3% → ~9%. Mid px/s — still readable around
+        the corner.
+
+     3. Rail peak velocity (cycle ~16% → ~45% / ~55%)
+        Long vertical rail — peak momentum. offset ~9% → ~95%.
+        Highest px/s in the cycle. This is the "synaptic firing"
+        portion — fluid, fast, electrical.
+
+     4. Destination ease (cycle ~45% / ~55% → end)
+        Subtle deceleration in the final 5% of path before holding at
+        offset 100% and fading. This is the conceptual ease — most
+        particles are SPATIALLY clipped before they ever reach this
+        keyframe segment (clip boundary near the parent row absorbs
+        them mid-rail), but the ease keeps the cycle clean for the
+        rare case where the visible window extends near offset 100%.
+
+   DESTINATION DEATH IS SPATIAL, not temporal. The offset-path extends
+   far past the parent's row (y=-500 in wrapper coords), and the
+   children container's `overflow: clip` + `clip-margin` clips
+   particles at a boundary right at the parent's row. The particle
+   keeps moving at full opacity along the path; the clip absorbs it
+   when it reaches the visual destination. So the particle dies
+   because it REACHED the parent — not because the cycle's opacity
+   timer ran out. The opacity ramp-down at offset 100% only runs for
+   the never-clipped tail and is invisible.
+*/
 @keyframes conduit-flow-slow {
-  /* alive: cycle 4.0–5.0s. Total travel = 45% of cycle.
-     Elbow phase: 0–22% cycle covers 0–10% of path (~8× slower per-unit
-                  than the rail — the particle clearly eases around the
-                  corner before launching up the rail).
-     Rail  phase: 22–45% cycle covers 10–100% of path. */
-  0%   { offset-distance: 0%;    opacity: 0; }
-  4%   { opacity: var(--max-opacity, 0.85); }
-  22%  { offset-distance: 10%;  opacity: var(--max-opacity, 0.85); }
-  38%  { opacity: var(--max-opacity, 0.85); }
-  45%  { offset-distance: 100%; opacity: 0; }
+  /* alive: cycle ~4.5s.
+       Launch  (0%→5%):  offset 0→3%   — slight inertia leaving the node
+       Elbow   (5%→18%): offset 3→9%   — gradual acceleration round the bend
+       Rail    (18%→45%): offset 9→95% — peak momentum on the long vertical
+       Ease    (45%→48%): offset 95→100% — subtle deceleration (off-screen)
+       Hold    (48%→50%): opacity 0 at offset 100%
+       Quiet   (50%→100%): ~2.25s gap before next pulse */
+  0%   { offset-distance: 0%;   opacity: 0; }
+  2%   { opacity: var(--max-opacity, 0.85); }
+  5%   { offset-distance: 3%;   opacity: var(--max-opacity, 0.85); }
+  18%  { offset-distance: 9%;   opacity: var(--max-opacity, 0.85); }
+  45%  { offset-distance: 95%;  opacity: var(--max-opacity, 0.85); }
+  48%  { offset-distance: 100%; opacity: var(--max-opacity, 0.85); }
+  50%  { offset-distance: 100%; opacity: 0; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 
 @keyframes conduit-flow-fast {
-  /* accelerating: cycle 1.85–2.30s. Total travel = 70% of cycle.
-     Elbow phase: 0–28% cycle covers 0–10% of path (~5× slower).
-     Rail  phase: 28–70% cycle covers 10–100% of path. */
-  0%   { offset-distance: 0%;    opacity: 0; }
-  3%   { opacity: var(--max-opacity, 0.95); }
-  28%  { offset-distance: 10%;  opacity: var(--max-opacity, 0.95); }
-  62%  { opacity: var(--max-opacity, 0.95); }
-  70%  { offset-distance: 100%; opacity: 0; }
+  /* accelerating: cycle ~2.0s.
+       Launch  (0%→5%):  offset 0→3%
+       Elbow   (5%→15%): offset 3→9%
+       Rail    (15%→55%): offset 9→95% — peak rail velocity
+       Ease    (55%→58%): offset 95→100% — subtle deceleration (off-screen)
+       Hold    (58%→60%): opacity 0
+       Quiet   (60%→100%): ~0.8s gap before next pulse — short enough that
+                           the 3 staggered particles overlap on the rail */
+  0%   { offset-distance: 0%;   opacity: 0; }
+  2%   { opacity: var(--max-opacity, 0.95); }
+  5%   { offset-distance: 3%;   opacity: var(--max-opacity, 0.95); }
+  15%  { offset-distance: 9%;   opacity: var(--max-opacity, 0.95); }
+  55%  { offset-distance: 95%;  opacity: var(--max-opacity, 0.95); }
+  58%  { offset-distance: 100%; opacity: var(--max-opacity, 0.95); }
+  60%  { offset-distance: 100%; opacity: 0; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 

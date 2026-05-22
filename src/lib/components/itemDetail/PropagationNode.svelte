@@ -87,9 +87,16 @@
 	   the halo is bright; combined with mix-blend-mode: screen, the
 	   particle's halo additively illuminates the dim conduit (and
 	   surrounding dark background) wherever it passes. */
+	/*
+	   Temperature distinction per state:
+	     dead          → desaturated remnant (cool neutral white)
+	     alive         → cool indigo (steady cold transmission)
+	     accelerating  → WARM amber/ember (intensified resonance,
+	                     synaptic firing, heated filament — NOT a
+	                     warning yellow, NOT the whole conduit on fire) */
 	const railColorClass = $derived(
 		effectiveActivity === 'accelerating'
-			? 'text-accent/10'
+			? 'text-[oklch(0.72_0.14_60)]/10'
 			: effectiveActivity === 'alive'
 				? 'text-primary/8'
 				: 'text-white/5',
@@ -97,7 +104,7 @@
 
 	const particleColorClass = $derived(
 		effectiveActivity === 'accelerating'
-			? 'text-accent/95'
+			? 'text-[oklch(0.78_0.16_60)]/95'
 			: effectiveActivity === 'alive'
 				? 'text-primary/82'
 				: '',
@@ -141,6 +148,10 @@
 		trailScale: number;
 		particleSize: number;
 		headGlow: number;
+		/* NEW per-particle shape/halo variability — adds the organic
+		   feel without breaking the cohesion of the system. */
+		headRadius: string;   /* irregular border-radius e.g. "52% 48% 50% 50%" */
+		haloSpread: number;   /* halo radius multiplier 0.8–1.25 (tight vs diffuse) */
 	};
 
 	function hash32(s: string): number {
@@ -161,6 +172,19 @@
 		const seed = hash32(user.id);
 		const r = (i: number) => rand01(seed, i);
 
+		/* Generate an irregular border-radius string — 4 percentage
+		   values that keep the shape ROUNDISH but slightly asymmetric
+		   so the silhouette looks organic, not stamped from a circle.
+		   Each corner percentage drifts from 40–60 (= centered on 50%
+		   = perfect circle). */
+		const makeRadius = (salt: number) => {
+			const c1 = (40 + r(salt + 0) * 20).toFixed(0);
+			const c2 = (40 + r(salt + 1) * 20).toFixed(0);
+			const c3 = (40 + r(salt + 2) * 20).toFixed(0);
+			const c4 = (40 + r(salt + 3) * 20).toFixed(0);
+			return `${c1}% ${c2}% ${c3}% ${c4}%`;
+		};
+
 		if (effectiveActivity === 'accelerating') {
 			return [0, 1, 2].map((i) => {
 				const ampSign = r(i * 7 + 3) > 0.5 ? 1 : -1;
@@ -173,10 +197,12 @@
 					helixAmp:  ampSign * (2.5 + r(i * 17 + 1) * 2.0),  /* ±2.5–4.5px */
 					helixDelay: -r(i * 19 + 1) * 0.35,         /* phase shift */
 					helixDur:   0.36 + r(i * 23 + 1) * 0.20,   /* 0.36–0.56s */
-					maxOpacity: 0.88 + r(i * 29 + 1) * 0.12,   /* 0.88–1.00 */
-					trailScale: 0.88 + r(i * 31 + 1) * 0.32,   /* 0.88–1.20 */
-					particleSize: 4.5 + r(i * 37 + 1) * 1.5,   /* 4.5–6.0px */
-					headGlow:     8.5 + r(i * 41 + 1) * 4.0,   /* 8.5–12.5px — strong firefly */
+					maxOpacity: 0.82 + r(i * 29 + 1) * 0.18,   /* 0.82–1.00 (broader) */
+					trailScale: 0.85 + r(i * 31 + 1) * 0.35,   /* 0.85–1.20 */
+					particleSize: 4.0 + r(i * 37 + 1) * 2.2,   /* 4.0–6.2px (broader) */
+					headGlow:     7.5 + r(i * 41 + 1) * 5.5,   /* 7.5–13.0px (broader) */
+					headRadius:   makeRadius(i * 45 + 1),
+					haloSpread:   0.80 + r(i * 49 + 1) * 0.50, /* 0.80–1.30 (tight vs diffuse) */
 				};
 			});
 		}
@@ -191,10 +217,12 @@
 			helixAmp:  ampSign * (1.5 + r(17) * 1.3),    /* ±1.5–2.8px */
 			helixDelay: -r(19) * 0.4,
 			helixDur:   0.55 + r(23) * 0.30,             /* 0.55–0.85s */
-			maxOpacity: 0.74 + r(29) * 0.18,             /* 0.74–0.92 */
-			trailScale: 0.78 + r(31) * 0.30,             /* 0.78–1.08 */
-			particleSize: 3.5 + r(37) * 1.0,             /* 3.5–4.5px */
-			headGlow:     5.5 + r(41) * 2.5,             /* 5.5–8.0px — visible firefly */
+			maxOpacity: 0.70 + r(29) * 0.22,             /* 0.70–0.92 (broader) */
+			trailScale: 0.75 + r(31) * 0.35,             /* 0.75–1.10 */
+			particleSize: 3.2 + r(37) * 1.6,             /* 3.2–4.8px (broader) */
+			headGlow:     5.0 + r(41) * 3.5,             /* 5.0–8.5px (broader) */
+			headRadius:   makeRadius(80),
+			haloSpread:   0.82 + r(85) * 0.48,           /* 0.82–1.30 */
 		}];
 	});
 
@@ -382,7 +410,7 @@
 					particleColorClass,
 					effectiveActivity === 'accelerating' ? 'conduit-fast' : 'conduit-slow',
 				]}
-				style="--flow-delay: {p.flowDelay.toFixed(3)}s; --flow-dur: {p.flowDur.toFixed(3)}s; --helix-amp: {p.helixAmp.toFixed(2)}px; --helix-delay: {p.helixDelay.toFixed(3)}s; --helix-dur: {p.helixDur.toFixed(3)}s; --max-opacity: {p.maxOpacity.toFixed(2)}; --trail-scale: {p.trailScale.toFixed(2)}; --particle-size: {p.particleSize.toFixed(2)}px; --head-glow: {p.headGlow.toFixed(2)}px;"
+				style="--flow-delay: {p.flowDelay.toFixed(3)}s; --flow-dur: {p.flowDur.toFixed(3)}s; --helix-amp: {p.helixAmp.toFixed(2)}px; --helix-delay: {p.helixDelay.toFixed(3)}s; --helix-dur: {p.helixDur.toFixed(3)}s; --max-opacity: {p.maxOpacity.toFixed(2)}; --trail-scale: {p.trailScale.toFixed(2)}; --particle-size: {p.particleSize.toFixed(2)}px; --head-glow: {p.headGlow.toFixed(2)}px; --head-radius: {p.headRadius}; --halo-spread: {p.haloSpread.toFixed(2)};"
 				aria-hidden="true"
 			>
 				<span class="conduit-head"></span>
@@ -601,12 +629,16 @@
 			well past the wrapper top so deep children populate the long
 			rail above them), but everything outside the children
 			container is clipped — particles stop at the top of this
-			container, which is right below the parent's row. The 6px
-			clip-margin lets the rail and the small helix swirl (up to
-			~4-5px perpendicular) stay visible at the padding-box edges
-			without leaking out further.
+			container, which is right below the parent's row.
+
+			The clip-margin sets the SPATIAL death boundary: particles
+			die because they reach the boundary (~28px above the
+			container top, i.e. right at the parent's row), NOT because
+			time elapsed. This makes every sibling — immediate or
+			deepest — die at the same visual location (the parent's
+			row), so distant children no longer fade mid-rail.
 		-->
-		<div class="relative pl-5 ml-3.5 overflow-clip [overflow-clip-margin:10px]">
+		<div class="relative pl-5 ml-3.5 overflow-clip [overflow-clip-margin:28px]">
 			{#each sortedChildren as child, i (child.id)}
 				<Self
 					user={child}
