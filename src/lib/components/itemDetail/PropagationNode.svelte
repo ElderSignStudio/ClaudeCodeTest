@@ -575,8 +575,12 @@
 		not selectable, not announced by screen readers as interactive.
 	-->
 	{#if user.isCurrentUser && !user.isPreviewNode && user.children.length === 0 && !user.hiddenChildren}
+		<!-- Dashed placeholder line uses ml/pl values chosen so the
+		     border-l sits at the same parent_x as a real rail (≈42.5,
+		     under the parent's avatar) and the inner row content aligns
+		     with where real-child rows would start (parent_x=62). -->
 		<div
-			class="relative pl-5 ml-3.5 border-l border-dashed border-primary/32"
+			class="relative pl-[19.5px] ml-[42.5px] border-l border-dashed border-primary/32"
 			aria-hidden="true"
 		>
 			<div class="flex items-center gap-2 py-1.5 pl-1 pr-2">
@@ -617,8 +621,16 @@
 			time elapsed. This makes every sibling — immediate or
 			deepest — die at the same visual location (the parent's
 			row), so distant children no longer fade mid-rail.
+
+			Padding-left (pl-12 = 48px) is sized so the rail centerline
+			(at child_x=-19.5 in each child wrapper) ends up under the
+			PARENT's avatar instead of under its expand caret. The
+			parent's avatar spans parent_x=36-64; with `pl-12 ml-3.5`
+			the rail lands at parent_x ≈ 42.5 — between the avatar's
+			left edge and its center — so particles visually arrive at
+			the node rather than at the chevron.
 		-->
-		<div class="relative pl-5 ml-3.5 overflow-clip [overflow-clip-margin:28px]">
+		<div class="relative pl-12 ml-3.5 overflow-clip [overflow-clip-margin:28px]">
 			{#each sortedChildren as child, i (child.id)}
 				<Self
 					user={child}
