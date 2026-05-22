@@ -199,8 +199,11 @@
 					helixDur:   0.36 + r(i * 23 + 1) * 0.20,   /* 0.36–0.56s */
 					maxOpacity: 0.82 + r(i * 29 + 1) * 0.18,   /* 0.82–1.00 (broader) */
 					trailScale: 0.85 + r(i * 31 + 1) * 0.35,   /* 0.85–1.20 */
-					particleSize: 4.0 + r(i * 37 + 1) * 2.2,   /* 4.0–6.2px (broader) */
-					headGlow:     7.5 + r(i * 41 + 1) * 5.5,   /* 7.5–13.0px (broader) */
+					/* Wider size/glow range — keep large at the same ceiling
+					   but allow much smaller minimums so some particles read
+					   as faint sparks while others are full headlights. */
+					particleSize: 2.4 + r(i * 37 + 1) * 3.8,   /* 2.4–6.2px */
+					headGlow:     4.0 + r(i * 41 + 1) * 9.0,   /* 4.0–13.0px */
 					headRadius:   makeRadius(i * 45 + 1),
 					haloSpread:   0.80 + r(i * 49 + 1) * 0.50, /* 0.80–1.30 (tight vs diffuse) */
 				};
@@ -219,8 +222,10 @@
 			helixDur:   0.55 + r(23) * 0.30,             /* 0.55–0.85s */
 			maxOpacity: 0.70 + r(29) * 0.22,             /* 0.70–0.92 (broader) */
 			trailScale: 0.75 + r(31) * 0.35,             /* 0.75–1.10 */
-			particleSize: 3.2 + r(37) * 1.6,             /* 3.2–4.8px (broader) */
-			headGlow:     5.0 + r(41) * 3.5,             /* 5.0–8.5px (broader) */
+			/* Wider size/glow range — alive branches now span faint
+			   sparks (1.7px) up to the previous maximum (4.8px). */
+			particleSize: 1.7 + r(37) * 3.1,             /* 1.7–4.8px */
+			headGlow:     2.8 + r(41) * 5.7,             /* 2.8–8.5px */
 			headRadius:   makeRadius(80),
 			haloSpread:   0.82 + r(85) * 0.48,           /* 0.82–1.30 */
 		}];
