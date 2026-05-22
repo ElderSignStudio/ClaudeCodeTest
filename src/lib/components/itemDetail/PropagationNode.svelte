@@ -294,71 +294,72 @@
 			    a 14px segment is too short to wave meaningfully.
 		-->
 		<!--
-			Vertical rail rendered as 3 layered SVG strokes — broad faded
-			glow, mid translucent body, thin bright core. The 3-layer
-			pattern is shared with the elbow below so the stalk reads as
-			ONE continuous stroke at the junction (matching glow profile
-			on both pieces).
+			Rail is drawn in TWO segments to avoid junction thickening
+			where strokes used to stack on each other:
 
-			Path is a gentle S-Bezier for non-last (long) rails so the
-			stalk drifts left/right by ~1–2px over its height — subtly
-			hand-drawn rather than ruler-straight. Last/short rails
-			(14px) use a straight path because the wave compresses too
-			tightly at short heights and would jog where it meets the
-			elbow.
+			  • Top stub (y=0→14): from wrapper top down to the elbow's
+			    start. Drawn for every child.
+			  • Bottom extension (y=20→wrapper bottom): only rendered
+			    for non-last children, so the rail continues down to
+			    meet the next sibling's top stub. Starts at y=20 so it
+			    sits BELOW the elbow's curve zone (the elbow has fully
+			    drifted off the rail centerline by then). Avoiding the
+			    elbow-zone overlap removes the bright "junction bump"
+			    that the previous single-rail render produced.
 
-			height is bumped 2px past the elbow start so the rail's
-			bottom stroke overlaps the elbow's top, eliminating any
-			sub-pixel seam at the junction.
+			Both segments use BUTT linecaps (the default). The previous
+			"round" caps created a half-circle dome at every endpoint —
+			at the elbow's top this pinched the stalk; at the rail's
+			bottom this overlapped the elbow start. Butt caps end the
+			stroke flat exactly at the endpoint, so adjacent segments
+			meet edge-to-edge without compounding alpha.
 		-->
+		<!-- Top stub: y=0 → 14, fixed size (no aspect-ratio stretching
+		     needed at this height). Straight line; the S-curve is only
+		     visually meaningful on long rails. -->
 		<svg
 			class={[
 				'absolute pointer-events-none overflow-visible',
 				railColorClass,
 				conduitGlowClass,
 			]}
-			style="left: -21.5px; top: 0; width: 4px; height: {isLast ? '16px' : 'calc(100% + 2px)'};"
-			viewBox="0 0 4 100"
-			preserveAspectRatio="none"
+			style="left: -21.5px; top: 0; width: 4px; height: 14px;"
+			viewBox="0 0 4 14"
 			aria-hidden="true"
 		>
-			<!-- L1: broad faded glow stroke (widest, lowest opacity) -->
-			<path
-				d={isLast ? 'M 2 0 L 2 100' : 'M 2 0 C 3.2 33 0.8 67 2 100'}
-				stroke="currentColor"
-				stroke-width="3.5"
-				stroke-opacity="0.12"
-				fill="none"
-				stroke-linecap="round"
-				vector-effect="non-scaling-stroke"
-			/>
-			<!-- L2: mid translucent body stroke -->
-			<path
-				d={isLast ? 'M 2 0 L 2 100' : 'M 2 0 C 2.6 33 1.4 67 2 100'}
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-opacity="0.32"
-				fill="none"
-				stroke-linecap="round"
-				vector-effect="non-scaling-stroke"
-			/>
-			<!-- L3: thin bright core stroke -->
-			<path
-				d={isLast ? 'M 2 0 L 2 100' : 'M 2 0 C 2.3 33 1.7 67 2 100'}
-				stroke="currentColor"
-				stroke-width="1"
-				fill="none"
-				stroke-linecap="round"
-				vector-effect="non-scaling-stroke"
-			/>
+			<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" vector-effect="non-scaling-stroke" />
+			<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" vector-effect="non-scaling-stroke" />
+			<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="1"   fill="none"                                vector-effect="non-scaling-stroke" />
 		</svg>
+
+		{#if !isLast}
+			<!-- Bottom extension: y=20 → wrapper bottom. Stretches with
+			     wrapper height via preserveAspectRatio="none" and keeps
+			     the gentle S-curve for organic drift. Meets the next
+			     sibling's top stub flat-to-flat at the wrapper boundary
+			     (no +2px overlap, no double-stack). -->
+			<svg
+				class={[
+					'absolute pointer-events-none overflow-visible',
+					railColorClass,
+					conduitGlowClass,
+				]}
+				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px);"
+				viewBox="0 0 4 100"
+				preserveAspectRatio="none"
+				aria-hidden="true"
+			>
+				<path d="M 2 0 C 3.2 33 0.8 67 2 100" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" vector-effect="non-scaling-stroke" />
+				<path d="M 2 0 C 2.6 33 1.4 67 2 100" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" vector-effect="non-scaling-stroke" />
+				<path d="M 2 0 C 2.3 33 1.7 67 2 100" stroke="currentColor" stroke-width="1"   fill="none"                                vector-effect="non-scaling-stroke" />
+			</svg>
+		{/if}
 		<!--
-			Organic elbow — same 3-layer stroke as the rail so the glow,
-			thickness and color profiles are identical across the stalk's
-			straight and curved sections. The cubic Bezier from rail-top
-			to row-end is continuous: tangent vertical at start (joins
-			the rail seamlessly), tangent horizontal at end (lands flat
-			at the row).
+			Organic elbow — same 3-layer stroke profile as the rail so
+			the glow and thickness match across straight and curved
+			sections. Butt linecaps: the start (rail side) meets the
+			top stub edge-to-edge; the end (avatar side) is hidden
+			behind the avatar circle so flat vs round is invisible.
 		-->
 		<svg
 			class={[
@@ -371,35 +372,9 @@
 			viewBox="0 0 24 8"
 			aria-hidden="true"
 		>
-			<!-- L1: broad faded glow -->
-			<path
-				d="M 0.5 0 C 0.5 8 8 8 24 8"
-				stroke="currentColor"
-				stroke-width="3.5"
-				stroke-opacity="0.12"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			/>
-			<!-- L2: mid translucent body -->
-			<path
-				d="M 0.5 0 C 0.5 8 8 8 24 8"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-opacity="0.32"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			/>
-			<!-- L3: thin bright core -->
-			<path
-				d="M 0.5 0 C 0.5 8 8 8 24 8"
-				stroke="currentColor"
-				stroke-width="1"
-				fill="none"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			/>
+			<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" />
+			<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
+			<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="1"   fill="none" />
 		</svg>
 
 		<!--
@@ -661,18 +636,19 @@
 				{#if !tailExpanded}
 					<div class="relative">
 						<!-- Rail + elbow for the "+N more" placeholder (always
-						     LAST in container). 3-layer stroke matches the
-						     main conduit so the stalk reads consistently. -->
+						     LAST in container). Same butt-capped top-stub
+						     pattern as a normal child — no bottom extension,
+						     no junction overlap with the previous sibling
+						     above. -->
 						<svg
 							class={['absolute pointer-events-none overflow-visible', railColorClass, conduitGlowClass]}
-							style="left: -21.5px; top: 0; width: 4px; height: 16px;"
-							viewBox="0 0 4 100"
-							preserveAspectRatio="none"
+							style="left: -21.5px; top: 0; width: 4px; height: 14px;"
+							viewBox="0 0 4 14"
 							aria-hidden="true"
 						>
-							<path d="M 2 0 L 2 100" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" />
-							<path d="M 2 0 L 2 100" stroke="currentColor" stroke-width="2" stroke-opacity="0.32" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" />
-							<path d="M 2 0 L 2 100" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" vector-effect="non-scaling-stroke" />
+							<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" vector-effect="non-scaling-stroke" />
+							<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" vector-effect="non-scaling-stroke" />
+							<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="1"   fill="none"                                vector-effect="non-scaling-stroke" />
 						</svg>
 						<svg
 							class={['absolute -left-5 top-3.5 pointer-events-none overflow-visible', railColorClass, conduitGlowClass]}
@@ -681,9 +657,9 @@
 							viewBox="0 0 24 8"
 							aria-hidden="true"
 						>
-							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="2" stroke-opacity="0.32" fill="none" stroke-linecap="round" stroke-linejoin="round" />
-							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" />
+							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
+							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="1"   fill="none" />
 						</svg>
 					<button
 						class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
