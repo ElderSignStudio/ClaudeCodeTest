@@ -616,11 +616,21 @@
 			container, which is right below the parent's row.
 
 			The clip-margin sets the SPATIAL death boundary: particles
-			die because they reach the boundary (~28px above the
-			container top, i.e. right at the parent's row), NOT because
-			time elapsed. This makes every sibling — immediate or
-			deepest — die at the same visual location (the parent's
-			row), so distant children no longer fade mid-rail.
+			die because they reach the boundary, NOT because time
+			elapsed. The boundary is tuned so death happens right at
+			the parent avatar's circumference (where the rail meets
+			the bottom of the circle), so particles dissolve at the
+			node's edge and never appear INSIDE it.
+
+			Geometry:
+			  • row height ≈ 45px (text block of 33 + py-1.5 of 12)
+			  • children container's padding-box top sits at parent_y≈45
+			  • parent avatar = 28px circle centered at (parent_x=50,
+			    parent_y=22); at the rail's x (parent_x≈42.5) the
+			    bottom curve of the circle is at parent_y ≈ 33.8.
+			  • clip-margin 10px ⇒ death plane at parent_y ≈ 35,
+			    ~1px BELOW the avatar's circumference at the rail's x.
+			    Particles approach, kiss the node's edge, and vanish.
 
 			Padding-left (pl-12 = 48px) is sized so the rail centerline
 			(at child_x=-19.5 in each child wrapper) ends up under the
@@ -630,7 +640,7 @@
 			left edge and its center — so particles visually arrive at
 			the node rather than at the chevron.
 		-->
-		<div class="relative pl-12 ml-3.5 overflow-clip [overflow-clip-margin:28px]">
+		<div class="relative pl-12 ml-3.5 overflow-clip [overflow-clip-margin:10px]">
 			{#each sortedChildren as child, i (child.id)}
 				<Self
 					user={child}
