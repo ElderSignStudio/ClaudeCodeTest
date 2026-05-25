@@ -721,18 +721,24 @@
   pointer-events: none;
 
   /* Cubic Bezier matching the SVG elbow exactly. The particle goes:
-       row (4, 22)  →  one continuous Bezier curve  →  (-19.5, 14) at
-       rail top  →  straight up to (-19.5, -500) for long-rail flow.
+       row (35, 22) → one continuous Bezier curve → (-19.5, 14) at
+       rail top → straight up to (-19.5, -500) for long-rail flow.
+
+     The start point (35, 22) sits just left of the child's avatar
+     (avatar starts at wrapper x=36), so particles emerge close to
+     the child's node instead of from empty space several pixels away
+     — mirroring the proximity already present at the parent's end of
+     the conduit.
 
      The 500px upward extension matters for SPATIAL destination death:
-     Marco's deeper siblings (5th, 6th, +8 more) live far below Marco
-     in their wrapper coords. By extending the path well past even the
-     deepest sibling's wrapper-relative Marco position, ALL particles
-     keep moving toward Marco; the children container's overflow-clip
-     then becomes the SPATIAL death point — particles die because they
-     reached the visual boundary near Marco's row, not because time
-     elapsed. */
-  offset-path: path('M 4 22 C -12 22 -19.5 22 -19.5 14 L -19.5 -500');
+     deepest siblings (the +8 cluster, etc.) live far below their
+     parent in their own wrapper coords. By extending the path well
+     past even the deepest sibling's wrapper-relative parent position,
+     ALL particles keep moving toward the parent; the children
+     container's overflow-clip then becomes the SPATIAL death point —
+     particles die because they reached the visual boundary at the
+     parent's avatar circumference, not because time elapsed. */
+  offset-path: path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 -500');
   offset-rotate: auto;
   offset-anchor: 50% 50%;
   offset-distance: 0%;
@@ -945,6 +951,94 @@
   100% { transform: translateY(0); }
 }
 
+/* ─── Accelerating-only atmospheric layer ─────────────────── */
+
+/*
+   Trunk breath — barely-perceptible opacity drift along the accelerating
+   conduit. Five irregular waypoints over a 14s cycle so the variation
+   feels like atmospheric drift rather than a regular sine. Range stays
+   inside 0.86–1.00 so the effect is *felt* more than seen.
+
+   Each conduit gets a per-branch random negative animation-delay via
+   the --breath-delay variable, so neighbouring branches don't pulse in
+   unison — the trunk reads as a quiet energy channel that's always been
+   there, not a UI loop.
+*/
+@keyframes conduit-breath {
+  0%   { opacity: 0.94; }
+  17%  { opacity: 1.00; }
+  41%  { opacity: 0.88; }
+  58%  { opacity: 0.97; }
+  79%  { opacity: 0.86; }
+  100% { opacity: 0.94; }
+}
+.conduit-breath {
+  animation: conduit-breath 14s ease-in-out var(--breath-delay, 0s) infinite;
+}
+
+/*
+   Atmospheric aura — a very faint warm presence around the stroke
+   itself. Implemented with two stacked drop-shadows whose blur radii
+   add up to ~40px, at sub-5% alpha. drop-shadow respects the painted
+   path (not the SVG bounding box), so the warmth traces the stalk's
+   shape rather than appearing as a rectangular glow patch.
+
+   Intended to be sub-perceptible — felt as warm dust in darkness, not
+   visible as a glowing aura.
+*/
+.conduit-aura {
+  filter:
+    drop-shadow(0 0 18px color-mix(in srgb, oklch(0.72 0.16 60) 6%, transparent))
+    drop-shadow(0 0 38px color-mix(in srgb, oklch(0.72 0.16 60) 3%, transparent));
+}
+
+/* ─── Node arrival resonance ──────────────────────────────── */
+
+/*
+   One-shot bloom that fires on every child-particle arrival. The element
+   is keyed on `resonanceKey` in the avatar template, so each increment
+   remounts a fresh span and restarts the animation. `forwards` keeps the
+   element at the final (opacity 0) state, so multiple closely-spaced
+   arrivals can re-trigger cleanly without leaving a visible residue.
+
+   Scaled gently from 0.94 → 1.04 so the halo seems to receive an impulse
+   rather than scale as a UI control. Warm and cool variants share the
+   same shape; only the radial gradient color differs.
+*/
+@keyframes resonance-flash {
+  0%   { opacity: 0;    transform: scale(0.94); }
+  25%  { opacity: 1;    transform: scale(1.02); }
+  100% { opacity: 0;    transform: scale(1.04); }
+}
+.resonance-flash {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--resonance-color, oklch(0.78 0.16 60)) 24%, transparent) 0%,
+    transparent 62%
+  );
+  opacity: 0;
+  animation: resonance-flash 0.42s ease-out 1 forwards;
+}
+.resonance-warm { --resonance-color: oklch(0.78 0.16 60); }
+.resonance-cool {
+  --resonance-color: oklch(0.66 0.16 250);
+  /* Alive branches resonate much more faintly than accelerating ones —
+     a quiet "signal received" rather than an energetic bloom. */
+  opacity: 0;
+  animation-duration: 0.55s;
+}
+.resonance-cool {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--resonance-color) 14%, transparent) 0%,
+    transparent 60%
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   .conduit-particle,
   .conduit-head { animation: none !important; }
@@ -952,6 +1046,11 @@
   /* Keep the static glow muted under reduced motion. */
   .conduit-glow-soft   { filter: drop-shadow(0 0 2px currentColor); }
   .conduit-glow-strong { filter: drop-shadow(0 0 3px currentColor); }
+  /* Hold the atmospheric layer at its midpoint — no breathing, no aura,
+     no resonance bloom under reduced motion. */
+  .conduit-breath      { animation: none !important; opacity: 0.94; }
+  .conduit-aura        { filter: none; }
+  .resonance-flash     { animation: none !important; opacity: 0; }
 }
 
 /* ─── Base ───────────────────────────────────────────────── */

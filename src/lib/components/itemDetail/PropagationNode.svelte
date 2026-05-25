@@ -28,6 +28,7 @@
 		depth = 0,
 		branchActivity = undefined,
 		isLast = false,
+		onParticleArrival = undefined,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
@@ -41,6 +42,12 @@
 		 *  terminates at the elbow midline so the rail never extends past
 		 *  the bottommost child into empty space. */
 		isLast?: boolean;
+		/** Fired by THIS node's own conduit particles when each particle
+		 *  visually reaches the parent's avatar (i.e. crosses the spatial
+		 *  clip boundary). Used by the parent to briefly resonate its
+		 *  halo. Wired in the recursive <Self> render below — every
+		 *  parent passes its own resonance handler down. */
+		onParticleArrival?: () => void;
 	} = $props();
 
 	/* Branch activity for the subtree this node lives in. Root nodes
@@ -186,13 +193,30 @@
 		};
 
 		if (effectiveActivity === 'accelerating') {
+			/* Cadence patterns — each accelerating branch picks one of
+			   several stagger shapes via hash so the 3-particle group
+			   reads as emergent rather than evenly metronomic.
+
+			     0 = "clustered front"  → 2 close, 1 lonely-late
+			     1 = "clustered back"   → 1 early, 2 close-late
+			     2 = "lonely middle"    → early, big gap, late (sparse)
+			     3 = "even drift"       → loose stagger, no clustering
+
+			   Tiny per-particle jitter on top keeps even the same
+			   pattern from feeling like a fixed sequence. */
+			const cadencePattern = Math.floor(r(2) * 4);
+			const baseDelays =
+				cadencePattern === 0 ? [0.00, 0.18, 1.25] :
+				cadencePattern === 1 ? [0.00, 0.95, 1.18] :
+				cadencePattern === 2 ? [0.00, 0.70, 1.55] :
+				                       [0.00, 0.55, 1.10];
 			return [0, 1, 2].map((i) => {
 				const ampSign = r(i * 7 + 3) > 0.5 ? 1 : -1;
 				return {
 					id: i,
-					/* base stagger at i*0.6s + up to 0.2s jitter so particles
-					   don't fire on a metronome. */
-					flowDelay: i * 0.60 + r(i * 11 + 1) * 0.2,
+					/* Pattern-driven base delay + small jitter (≤120ms)
+					   so identical patterns still vary between branches. */
+					flowDelay: baseDelays[i] + r(i * 11 + 1) * 0.12,
 					flowDur:   1.85 + r(i * 13 + 1) * 0.45,   /* 1.85–2.30s cycle */
 					helixAmp:  ampSign * (2.5 + r(i * 17 + 1) * 2.0),  /* ±2.5–4.5px */
 					helixDelay: -r(i * 19 + 1) * 0.35,         /* phase shift */
@@ -229,6 +253,95 @@
 			headRadius:   makeRadius(80),
 			haloSpread:   0.82 + r(85) * 0.48,           /* 0.82–1.30 */
 		}];
+	});
+
+	/* Per-branch desynchronisation for the atmospheric trunk breath.
+	   Negative animation-delay starts each conduit at a different phase
+	   of the 14s breath cycle so neighbouring branches never pulse in
+	   unison — the effect reads as ambient drift rather than a UI loop.
+	   Only used when this node is accelerating; alive/dead conduits stay
+	   visually static (the user reserved breath for accelerating only). */
+	const breathDelay = $derived(
+		effectiveActivity === 'accelerating'
+			? -(rand01(hash32(user.id), 5) * 14)
+			: 0,
+	);
+
+	/* Node-arrival resonance.
+
+	   When a child's conduit particle reaches the spatial-clip boundary
+	   (i.e. visually arrives at THIS node's avatar), the child calls
+	   `onChildParticleArrival`, which increments `resonanceKey`. The
+	   {#key} block in the avatar template remounts the .resonance-flash
+	   element, restarting its 400ms one-shot CSS animation — a soft
+	   warm halo bloom that fades back to baseline.
+
+	   The 350ms debounce keeps closely-spaced arrivals from re-triggering
+	   the flash mid-animation; the halo can re-fire as soon as the
+	   previous one is mostly complete. Without this the warm node would
+	   look like a continuous pulse instead of discrete reception events. */
+	let resonanceKey = $state(0);
+	let lastResonanceTime = 0;
+	function onChildParticleArrival() {
+		const now =
+			typeof performance !== 'undefined' ? performance.now() : Date.now();
+		if (now - lastResonanceTime < 350) return;
+		lastResonanceTime = now;
+		resonanceKey++;
+	}
+
+	/* Particle element refs — populated by bind:this on the conduit
+	   particle divs. The arrival-scheduling effect below reads these
+	   to attach animation listeners and schedule per-cycle timers. */
+	let particleEls: HTMLDivElement[] = $state([]);
+
+	/* Schedule arrival pings for THIS node's particles.
+
+	   The CSS particle animation is an infinite loop; native events
+	   fire only at iteration boundaries (`animationstart` at the very
+	   first iteration after `animation-delay`, `animationiteration` at
+	   every subsequent loop). The visible "arrival" (particle crosses
+	   the spatial clip) happens partway INTO each iteration — roughly
+	   12–28% of the cycle depending on sibling depth.
+
+	   So on each iteration boundary we schedule a setTimeout at ~18%
+	   of the cycle to call onParticleArrival. 18% is a midpoint of
+	   the depth-dependent range — close enough that the parent's halo
+	   bloom overlaps the visible arrival rather than firing after the
+	   particle has already been clipped for most of a second. */
+	$effect(() => {
+		if (depth === 0) return;
+		if (effectiveActivity !== 'alive' && effectiveActivity !== 'accelerating') return;
+		if (!onParticleArrival) return;
+
+		const timers: ReturnType<typeof setTimeout>[] = [];
+		const cleanups: Array<() => void> = [];
+
+		particleEls.forEach((el, i) => {
+			const p = conduitParticles[i];
+			if (!el || !p) return;
+			const arrivalMs = p.flowDur * 1000 * 0.18;
+
+			function scheduleNext() {
+				timers.push(
+					setTimeout(() => {
+						onParticleArrival?.();
+					}, arrivalMs),
+				);
+			}
+
+			el.addEventListener('animationstart', scheduleNext);
+			el.addEventListener('animationiteration', scheduleNext);
+			cleanups.push(() => {
+				el.removeEventListener('animationstart', scheduleNext);
+				el.removeEventListener('animationiteration', scheduleNext);
+			});
+		});
+
+		return () => {
+			timers.forEach((t) => clearTimeout(t));
+			cleanups.forEach((c) => c());
+		};
 	});
 
 	function nodeKindClass(u: PropagationUser): string {
@@ -316,14 +429,20 @@
 		-->
 		<!-- Top stub: y=0 → 14, fixed size (no aspect-ratio stretching
 		     needed at this height). Straight line; the S-curve is only
-		     visually meaningful on long rails. -->
+		     visually meaningful on long rails.
+
+		     Accelerating branches add `conduit-breath` (slow opacity
+		     drift — barely perceptible) and `conduit-aura` (faint warm
+		     drop-shadow around the painted strokes). Alive/dead conduits
+		     stay visually static. -->
 		<svg
 			class={[
 				'absolute pointer-events-none overflow-visible',
 				railColorClass,
 				conduitGlowClass,
+				effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
 			]}
-			style="left: -21.5px; top: 0; width: 4px; height: 14px;"
+			style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;"
 			viewBox="0 0 4 14"
 			aria-hidden="true"
 		>
@@ -343,8 +462,9 @@
 					'absolute pointer-events-none overflow-visible',
 					railColorClass,
 					conduitGlowClass,
+					effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
 				]}
-				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px);"
+				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px); --breath-delay: {breathDelay.toFixed(3)}s;"
 				viewBox="0 0 4 100"
 				preserveAspectRatio="none"
 				aria-hidden="true"
@@ -360,21 +480,32 @@
 			sections. Butt linecaps: the start (rail side) meets the
 			top stub edge-to-edge; the end (avatar side) is hidden
 			behind the avatar circle so flat vs round is invisible.
+
+			Geometry: the elbow extends to wrapper x=35 (viewBox x=55)
+			so the conduit reaches nearly to the avatar's left edge
+			(avatar starts at wrapper x=36). The empty gap between
+			conduit and node has been removed; the conduit now reads
+			as structurally connected to each child's node rather than
+			terminating in mid-air several pixels away. The collapse
+			caret (smaller + items-start) sits visually ABOVE this
+			horizontal stretch so the conduit passes beneath it.
 		-->
 		<svg
 			class={[
 				'absolute -left-5 top-3.5 pointer-events-none overflow-visible',
 				railColorClass,
 				conduitGlowClass,
+				effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
 			]}
-			width="24"
+			width="55"
 			height="8"
-			viewBox="0 0 24 8"
+			viewBox="0 0 55 8"
+			style="--breath-delay: {breathDelay.toFixed(3)}s;"
 			aria-hidden="true"
 		>
-			<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" />
-			<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
-			<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="1"   fill="none" />
+			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" />
+			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
+			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="1"   fill="none" />
 		</svg>
 
 		<!--
@@ -383,8 +514,9 @@
 			path via `offset-path`; an inner streak adds subtle helical
 			oscillation perpendicular to the path direction.
 		-->
-		{#each conduitParticles as p (p.id)}
+		{#each conduitParticles as p, i (p.id)}
 			<div
+				bind:this={particleEls[i]}
 				class={[
 					'conduit-particle',
 					particleColorClass,
@@ -427,17 +559,24 @@
 		tabindex={user.isPreviewNode ? undefined : 0}
 		aria-disabled={user.isPreviewNode ? 'true' : undefined}
 	>
-		<!-- Expand/collapse caret — only when there are visible children -->
+		<!-- Expand/collapse caret. Sized to keep the same flex slot
+		     (w-4 h-4) so the row layout is unchanged, but the visible
+		     chevron is smaller (size 9 not 12), top-aligned within the
+		     slot, and rendered in a more muted tone. This reads as a
+		     subtle overlay control floating above the conduit rather
+		     than a feature that interrupts it — the horizontal elbow
+		     beneath now passes cleanly without colliding with the
+		     chevron's bounding glyph. -->
 		{#if hasVisibleChildren}
 			<button
-				class="shrink-0 mt-1 w-4 h-4 flex items-center justify-center text-base-content/45 hover:text-base-content/85 transition-colors"
+				class="shrink-0 mt-1 w-4 h-4 flex items-start justify-center text-base-content/32 hover:text-base-content/75 transition-colors"
 				onclick={(e) => { e.stopPropagation(); expanded = !expanded; }}
 				aria-label={expanded ? 'Collapse branch' : 'Expand branch'}
 			>
 				{#if expanded}
-					<ChevronDown size={12} />
+					<ChevronDown size={9} />
 				{:else}
-					<ChevronRight size={12} />
+					<ChevronRight size={9} />
 				{/if}
 			</button>
 		{:else}
@@ -469,6 +608,27 @@
 				<!-- Outward broadcast ripple for successful amplifiers,
 				     composing with the orbit comet and double-ring halo. -->
 				<span class="sa-ripple" aria-hidden="true"></span>
+			{/if}
+
+			<!-- Arrival resonance: a soft warm bloom that fires once per
+			     child-particle arrival via the {#key} remount trick. Only
+			     accelerating and alive branches resonate; dead branches
+			     stay inert. Alive uses the cool variant (the existing
+			     primary tone) with a much subtler bloom. -->
+			{#if !user.isPreviewNode && (effectiveActivity === 'accelerating' || effectiveActivity === 'alive')}
+				{#key resonanceKey}
+					{#if resonanceKey > 0}
+						<span
+							class={[
+								'resonance-flash',
+								effectiveActivity === 'accelerating'
+									? 'resonance-warm'
+									: 'resonance-cool',
+							]}
+							aria-hidden="true"
+						></span>
+					{/if}
+				{/key}
 			{/if}
 			<div
 				class={[
@@ -650,6 +810,7 @@
 					depth={depth + 1}
 					branchActivity={effectiveActivity}
 					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
+					onParticleArrival={onChildParticleArrival}
 				/>
 			{/each}
 
@@ -661,10 +822,17 @@
 						     LAST in container). Same butt-capped top-stub
 						     pattern as a normal child — no bottom extension,
 						     no junction overlap with the previous sibling
-						     above. -->
+						     above. Picks up the same accelerating-only
+						     breath / aura treatment so the placeholder
+						     reads as part of the same conduit family. -->
 						<svg
-							class={['absolute pointer-events-none overflow-visible', railColorClass, conduitGlowClass]}
-							style="left: -21.5px; top: 0; width: 4px; height: 14px;"
+							class={[
+								'absolute pointer-events-none overflow-visible',
+								railColorClass,
+								conduitGlowClass,
+								effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
+							]}
+							style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;"
 							viewBox="0 0 4 14"
 							aria-hidden="true"
 						>
@@ -673,15 +841,21 @@
 							<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="1"   fill="none"                                vector-effect="non-scaling-stroke" />
 						</svg>
 						<svg
-							class={['absolute -left-5 top-3.5 pointer-events-none overflow-visible', railColorClass, conduitGlowClass]}
-							width="24"
+							class={[
+								'absolute -left-5 top-3.5 pointer-events-none overflow-visible',
+								railColorClass,
+								conduitGlowClass,
+								effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
+							]}
+							width="55"
 							height="8"
-							viewBox="0 0 24 8"
+							viewBox="0 0 55 8"
+							style="--breath-delay: {breathDelay.toFixed(3)}s;"
 							aria-hidden="true"
 						>
-							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" />
-							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
-							<path d="M 0.5 0 C 0.5 8 8 8 24 8" stroke="currentColor" stroke-width="1"   fill="none" />
+							<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" />
+							<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
+							<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="1"   fill="none" />
 						</svg>
 					<button
 						class="w-full flex items-center gap-2 py-1.5 pl-1 pr-2 rounded-md text-left text-base-content/52 hover:text-base-content/85 hover:bg-white/3 transition-colors"
@@ -727,6 +901,7 @@
 							depth={depth + 1}
 							branchActivity={effectiveActivity}
 							isLast={i === tailStubs.length - 1}
+							onParticleArrival={onChildParticleArrival}
 						/>
 					{/each}
 				{/if}
