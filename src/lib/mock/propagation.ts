@@ -38,17 +38,30 @@ export type PropagationNodeKind =
 	| 'amplifier'             // intentionally transmitted onward
 	| 'successful-amplifier'; // their transmission carried the signal far
 
-/* Branch-level activity — only meaningful at the root of a branch.
-   Drives debug-label rendering and edge-colour styling so the viewer
-   can tell at a glance which branches are propagating actively. */
-export type BranchActivityState = 'dead' | 'alive' | 'accelerating';
+/* Branch-level activity — a five-tier spectrum from dormant to runaway
+   ignition. Each node computes its own tier from ITS OWN subtree (not
+   inherited from the root), so a single tree can contain multiple
+   states simultaneously: a quiet alive parent with an accelerating
+   sub-branch, a strong-accelerating subtree cooling into alive side
+   branches, etc.
 
-/** Walk a branch from its root and classify how alive the propagation
- *  feels. Heuristic only — based on amplifier counts in the subtree.
- *    dead         → no amplifications anywhere in the subtree
- *    alive        → some amplification activity
- *    accelerating → contains at least one successful-amplifier
- */
+     dead                → archaeological silence, no propagation
+     alive               → calm circulation, amps but no successful chains
+     accelerating        → momentum emerging, 1 successful amplifier
+     strong-accelerating → cultural pull intensifying, 2-3 successes
+     peak-accelerating   → runaway ignition, 4+ successes downstream
+*/
+export type BranchActivityState =
+	| 'dead'
+	| 'alive'
+	| 'accelerating'
+	| 'strong-accelerating'
+	| 'peak-accelerating';
+
+/** Walk a node's subtree and classify how alive the propagation feels.
+ *  Heuristic only — based on successful-amplifier density and amp counts.
+ *  Each PropagationNode component calls this for ITSELF (not inherited),
+ *  which is what lets the tree contain mixed states at different depths. */
 export function computeBranchActivity(root: PropagationUser): BranchActivityState {
 	let totalAmps = 0;
 	let successCount = 0;
@@ -58,6 +71,8 @@ export function computeBranchActivity(root: PropagationUser): BranchActivityStat
 		for (const c of n.children) walk(c);
 	};
 	walk(root);
+	if (successCount >= 4) return 'peak-accelerating';
+	if (successCount >= 2) return 'strong-accelerating';
 	if (successCount > 0) return 'accelerating';
 	if (totalAmps > 0) return 'alive';
 	return 'dead';
@@ -607,14 +622,191 @@ function buildSparse(ctx: BuilderCtx): ArchetypeResult {
 	};
 }
 
+/* 7. Showcase — hand-tuned forest that exhibits ALL FIVE branch states
+   side by side, plus several mixed-state scenarios. Used as a fixed
+   override for the `frozen-sun` demo item so the visual differentiation
+   between dead/alive/accelerating/strong/peak is always inspectable in
+   one screenshot. Heuristic (in computeBranchActivity):
+     dead         → 0 amps anywhere
+     alive        → some amps, 0 successful-amplifiers
+     accelerating → 1 successful-amplifier
+     strong       → 2-3 successful-amplifiers
+     peak         → 4+ successful-amplifiers */
+function buildShowcase(ctx: BuilderCtx): ArchetypeResult {
+	const successKid = (children: PropagationUser[] = []) =>
+		makeNode(ctx, 'successful-amplifier', { children });
+
+	// ── PEAK origin: 5 successful-amplifiers downstream, dense traffic ──
+	// Internally contains strong + accelerating sub-branches as you descend.
+	const peakRoot = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [
+			successKid([
+				successKid([
+					makeNode(ctx, 'amplifier'),
+					makeNode(ctx, 'deep-listener'),
+				]),
+				makeNode(ctx, 'amplifier', { children: [
+					makeNode(ctx, 'deep-listener'),
+				] }),
+			]),
+			successKid([
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			successKid([
+				makeNode(ctx, 'deep-listener'),
+			]),
+			makeNode(ctx, 'amplifier', { children: [
+				makeNode(ctx, 'passive-listener'),
+			] }),
+			makeNode(ctx, 'deep-listener'),
+		],
+	});
+
+	// ── STRONG origin: exactly 2 successful-amplifiers downstream ──
+	// One of its sub-branches is accelerating (1 success), the other is alive.
+	const strongRoot = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			successKid([
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			successKid([
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'amplifier'),
+			]),
+			makeNode(ctx, 'amplifier', { children: [
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			] }),
+		],
+	});
+
+	// ── ACCELERATING origin: 1 successful-amplifier ──
+	// Sub-branches under that success are alive.
+	const acceleratingRoot = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			successKid([
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			makeNode(ctx, 'deep-listener'),
+			makeNode(ctx, 'passive-listener'),
+		],
+	});
+
+	// ── ALIVE origin: amps but no successful-amplifier ──
+	// Cool, calm, steady. One dead leaf child for mixed-state illustration.
+	const aliveRoot = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			makeNode(ctx, 'deep-listener'),
+			makeNode(ctx, 'amplifier', { children: [
+				makeNode(ctx, 'deep-listener'),
+			] }),
+			makeNode(ctx, 'passive-listener', { amplifications: 0 }),
+		],
+	});
+
+	// ── DEAD origin: 0 amps, only passive listeners ──
+	const deadRoot = makeNode(ctx, 'passive-listener', {
+		isOrigin: true,
+		amplifications: 0,
+		children: [
+			makeNode(ctx, 'passive-listener', { amplifications: 0 }),
+		],
+	});
+
+	return {
+		roots: [peakRoot, strongRoot, acceleratingRoot, aliveRoot, deadRoot],
+		hiddenRootUsers: [],
+	};
+}
+
+/* 8. Strong-spotlight — a single main origin pinned to the strong-
+   accelerating classification (exactly 2 successful-amplifiers in its
+   subtree), surrounded by one calm alive origin and one dead origin for
+   contrast. Used by a couple of specific item ids (see below) so the
+   strong tier can be inspected outside the frozen-sun showcase. */
+function buildStrongSpotlight(ctx: BuilderCtx): ArchetypeResult {
+	const successKid = (children: PropagationUser[] = []) =>
+		makeNode(ctx, 'successful-amplifier', { children });
+
+	const strongRoot = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			successKid([
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			successKid([
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			makeNode(ctx, 'amplifier', { children: [
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			] }),
+			makeNode(ctx, 'deep-listener'),
+		],
+	});
+
+	const aliveOrigin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			makeNode(ctx, 'deep-listener'),
+			makeNode(ctx, 'amplifier', { children: [makeNode(ctx, 'deep-listener')] }),
+			makeNode(ctx, 'passive-listener', { amplifications: 0 }),
+		],
+	});
+
+	const deadOrigin = makeNode(ctx, 'passive-listener', {
+		isOrigin: true,
+		amplifications: 0,
+		children: [makeNode(ctx, 'passive-listener', { amplifications: 0 })],
+	});
+
+	return {
+		roots: [strongRoot, aliveOrigin, deadOrigin],
+		hiddenRootUsers: [],
+	};
+}
+
 const ARCHETYPES = [
-	{ name: 'hub-dominant',  build: buildHubDominant  },
-	{ name: 'fragmented',    build: buildFragmented   },
-	{ name: 'late-bloomer',  build: buildLateBloomer  },
-	{ name: 'deep-chain',    build: buildDeepChain    },
-	{ name: 'bursty',        build: buildBursty       },
-	{ name: 'sparse',        build: buildSparse       },
+	{ name: 'hub-dominant',     build: buildHubDominant     },
+	{ name: 'fragmented',       build: buildFragmented      },
+	{ name: 'late-bloomer',     build: buildLateBloomer     },
+	{ name: 'deep-chain',       build: buildDeepChain       },
+	{ name: 'bursty',           build: buildBursty          },
+	{ name: 'sparse',           build: buildSparse          },
+	{ name: 'showcase',         build: buildShowcase        },
+	{ name: 'strong-spotlight', build: buildStrongSpotlight },
 ] as const;
+
+/* Items whose forest is pinned to a specific archetype for design-system
+   testing. All other items rotate through the procedural archetypes
+   below via their id's hash. */
+const PINNED_ARCHETYPES: Record<string, string> = {
+	'frozen-sun':  'showcase',         /* all five branch states side by side */
+	'iron-coast':  'strong-spotlight', /* dedicated strong-accelerating test */
+	'pale-verge':  'strong-spotlight', /* second strong test (different forest) */
+};
+
+/* Archetype names that should NEVER appear via random rotation —
+   they're reserved for explicit pinning above. Keeps procedural items
+   feeling natural and prevents the showcase/test surfaces from
+   accidentally appearing under arbitrary item ids. */
+const NON_ROTATING_ARCHETYPES = new Set(Object.values(PINNED_ARCHETYPES));
+const ROTATION_ARCHETYPES = ARCHETYPES.filter(
+	(a) => !NON_ROTATING_ARCHETYPES.has(a.name),
+);
 
 /* ─────────────── Source-scout injection ─────────────── */
 
@@ -705,6 +897,16 @@ const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; o
 		crossingNote: 'Tight cluster spread under a single propagator.',
 		originNote: 'Surfaced quietly, then opened into a dense local cluster.',
 	},
+	'showcase': {
+		summary: 'A diagnostic forest spanning the full energy spectrum — runaway propagation, intensifying pull, emerging momentum, calm circulation, and an archaeological remnant — for side-by-side visual comparison.',
+		crossingNote: 'Five origins, five distinct propagation temperatures within one ecosystem.',
+		originNote: 'Hand-tuned diagnostic forest showcasing every branch-activity tier.',
+	},
+	'strong-spotlight': {
+		summary: 'A strong-accelerating propagator dominating a single scene, with a quieter circulating side branch and one archaeological remnant for visual contrast.',
+		crossingNote: 'Two successful amplifiers in the main subtree create sustained pressure without runaway ignition.',
+		originNote: 'Surfaced through a single intensifying connector whose downstream amplifies into a heated cluster.',
+	},
 	'sparse': {
 		summary: 'Quiet across the board — a few origins surfaced the signal but it has not yet propagated.',
 		crossingNote: 'Sparse — almost no onward movement.',
@@ -733,8 +935,13 @@ export function propagationForestFor(
 	const rand = makeRng(seed);
 	const ctx: BuilderCtx = { rand, usedIds: new Set(), usedNames: new Set() };
 
-	const archetypeIdx = seed % ARCHETYPES.length;
-	const archetype = ARCHETYPES[archetypeIdx];
+	/* A handful of item ids are pinned to design-system test surfaces
+	   (see PINNED_ARCHETYPES above). All other items continue to rotate
+	   through the procedural archetypes via their id's hash. */
+	const pinnedName = PINNED_ARCHETYPES[itemId];
+	const archetype = pinnedName
+		? ARCHETYPES.find((a) => a.name === pinnedName)!
+		: ROTATION_ARCHETYPES[seed % ROTATION_ARCHETYPES.length];
 	const built = archetype.build(ctx);
 
 	// Inject the route source scout into the forest if specified.

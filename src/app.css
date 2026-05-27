@@ -392,125 +392,51 @@
    no animation. Amplifier is the first node kind that visibly
    emits any energy outward. */
 
-/* ── Amplifier — single transmission ring with visible gap ─────────
-   ::after = the ring (1.5px stroke at offset 4px from avatar)
-   ::before = slow outward ripple                                     */
+/* ── Amplifier — static transmission ring ──────────────────────────
+   The ring marks the node's IDENTITY (this user is an amplifier).
+   It no longer breathes or emits an idle outward ripple — nodes only
+   react when a particle reaches them (handled by .resonance-flash).
+   The earlier nk-amp-breathe and nk-amp-ripple animations were
+   removed because they pulsed on a fixed cadence independent of
+   actual signal traffic, which broke the "causal transmission" feel
+   the rest of the system is built around. */
 .node-avatar.nk-amp::after {
   content: '';
   position: absolute;
   inset: -4px;
   border-radius: 9999px;
   pointer-events: none;
-  border: 1.5px solid oklch(from var(--color-accent) l c h / 0.72);
-  box-shadow: 0 0 10px 0 oklch(from var(--color-accent) l c h / 0.25);
-  animation: nk-amp-breathe 9s ease-in-out infinite;
-}
-@keyframes nk-amp-breathe {
-  0%, 100% {
-    border-color: oklch(from var(--color-accent) l c h / 0.65);
-    box-shadow: 0 0 8px 0 oklch(from var(--color-accent) l c h / 0.20);
-  }
-  50% {
-    border-color: oklch(from var(--color-accent) l c h / 1);
-    box-shadow: 0 0 16px 1px oklch(from var(--color-accent) l c h / 0.42);
-  }
-}
-.node-avatar.nk-amp::before {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: 9999px;
-  pointer-events: none;
-  outline: 1.5px solid oklch(from var(--color-accent) l c h / 0.55);
-  outline-offset: 2px;
-  animation: nk-amp-ripple 5s ease-out infinite;
-  opacity: 0;
-}
-@keyframes nk-amp-ripple {
-  0%   { outline-offset: 2px;  opacity: 0; }
-  8%   { opacity: 0.70; }
-  100% { outline-offset: 12px; opacity: 0; }
+  border: 1.5px solid oklch(from var(--color-accent) l c h / 0.78);
+  box-shadow: 0 0 10px 0 oklch(from var(--color-accent) l c h / 0.28);
 }
 
-/* ── Successful amplifier — DOUBLE ring + orbit comet ──────────────
-   ::after  = inner ring (border) + outer ring (outline at offset)
-              + soft halo (box-shadow). Two clearly separated rings.
-   ::before = conic-gradient comet sweeping the outermost ring slowly.
-
-   Outline-based outer ring stays a clean stroke (unlike spread
-   box-shadow which would fill solid). */
+/* ── Successful amplifier — static DOUBLE ring ─────────────────────
+   Identity marker: this user is a successful amplifier (their
+   transmission carried the signal far). Two static rings + a soft
+   halo communicate that role visually; the previous nk-success-breathe
+   and orbiting comet were idle decorations that pulsed/rotated on a
+   timer with no relationship to actual traffic. Removed so the node's
+   only visible activity is the resonance flash on particle arrival. */
 .node-avatar.nk-success::after {
   content: '';
   position: absolute;
   inset: -3px;
   border-radius: 9999px;
   pointer-events: none;
-  border: 1.5px solid oklch(from var(--color-accent) l c h / 0.85);
-  outline: 1.5px solid oklch(from var(--color-accent) l c h / 0.45);
+  border: 1.5px solid oklch(from var(--color-accent) l c h / 0.88);
+  outline: 1.5px solid oklch(from var(--color-accent) l c h / 0.50);
   outline-offset: 4px;
   box-shadow: 0 0 16px 1px oklch(from var(--color-accent) l c h / 0.34);
-  animation: nk-success-breathe 9s ease-in-out infinite;
-}
-@keyframes nk-success-breathe {
-  0%, 100% {
-    border-color: oklch(from var(--color-accent) l c h / 0.78);
-    outline-offset: 3.5px;
-    outline-color: oklch(from var(--color-accent) l c h / 0.38);
-    box-shadow: 0 0 12px 1px oklch(from var(--color-accent) l c h / 0.26);
-  }
-  50% {
-    border-color: oklch(from var(--color-accent) l c h / 1);
-    outline-offset: 5.5px;
-    outline-color: oklch(from var(--color-accent) l c h / 0.62);
-    box-shadow: 0 0 22px 3px oklch(from var(--color-accent) l c h / 0.45);
-  }
 }
 
-.node-avatar.nk-success::before {
-  content: '';
-  position: absolute;
-  inset: -11px;
-  border-radius: 9999px;
-  pointer-events: none;
-  /*
-    Orbit conic with a continuous baseline. The previous gradient dropped
-    to 0 alpha at 90° and 270°, which meant the orbit became invisible at
-    those angles. Because every successful-amplifier shares the same CSS
-    animation, all the "dim sides" synchronized — the eye read this
-    coordinated dimness as the LEFT side of every hub being clipped by
-    its container. With baseline alpha 0.40 around the entire ring and a
-    softer peak (0.85 at 180°), the orbit is now fully circular at every
-    rotation: there is no longer a "missing arc" to perceive as a cut.
-  */
-  background: conic-gradient(
-    from 0deg,
-    oklch(from var(--color-accent) l c h / 0.40) 0deg,
-    oklch(from var(--color-accent) l c h / 0.45) 90deg,
-    oklch(from var(--color-accent) l c h / 0.85) 180deg,
-    oklch(from var(--color-accent) l c h / 0.45) 270deg,
-    oklch(from var(--color-accent) l c h / 0.40) 360deg
-  );
-  -webkit-mask: radial-gradient(circle at center, transparent 62%, black 68%, black 92%, transparent 100%);
-          mask: radial-gradient(circle at center, transparent 62%, black 68%, black 92%, transparent 100%);
-  animation: nk-success-orbit 11s linear infinite;
-}
-@keyframes nk-success-orbit {
-  to { transform: rotate(360deg); }
-}
-
-/* Outward broadcast ripple for successful amplifiers. Layered between
-   the orbit comet (::before) and the double-ring halo (::after) by DOM
-   tree order.
-
-   Implementation note: we expand a centered <span> via width/height
-   instead of `outline` + `outline-offset`. Outline with border-radius
-   has spotty browser support — in some engines it renders as a
-   rectangle even though the element is rounded, which produced a
-   row-wide rectangular glow. A real circular border on a centered
-   span scales cleanly and stays circular at every frame.
-
-   Slower, wider, and softer than nk-amp's ripple so the two don't
-   read as the same animation. */
+/* Outward broadcast ripple for successful amplifiers — INERT.
+   The element is still rendered (the .sa-ripple span is unconditionally
+   added by the template for successful-amplifier nodes) but its
+   periodic outward expansion was removed: it had no causal relationship
+   to actual signal traffic and pulsed on a fixed cadence that competed
+   with the resonance-flash on real arrivals. opacity:0 keeps it
+   invisible; we leave the rule rather than ripping the element from
+   the template so the visual-language scaffolding stays intact. */
 .sa-ripple {
   position: absolute;
   left: 50%;
@@ -521,14 +447,8 @@
   border-radius: 9999px;
   border: 1.5px solid oklch(from var(--color-accent) l c h / 0.55);
   pointer-events: none;
-  animation: sa-ripple-out 8s ease-out infinite;
   opacity: 0;
   box-sizing: border-box;
-}
-@keyframes sa-ripple-out {
-  0%   { width: 100%; height: 100%; opacity: 0; }
-  10%  { opacity: 0.55; }
-  100% { width: 260%; height: 260%; opacity: 0; }
 }
 
 /* Passive listener: NO halo, NO motion. Inline scale/opacity/saturate
@@ -834,6 +754,14 @@
   animation: conduit-orbit var(--helix-dur, 0.38s) ease-in-out var(--helix-delay, 0s) infinite;
 }
 
+/* Peak white-hot particles use a slightly longer visible portion of
+   the cycle (68% vs 58%) so the rare ignition stays on screen long
+   enough to register before dissolving. Higher specificity than the
+   plain .conduit-fast rule above so it overrides cleanly. */
+.conduit-particle-white.conduit-fast {
+  animation: conduit-flow-fast-white var(--flow-dur, 1.5s) linear var(--flow-delay, 0s) infinite;
+}
+
 /*
    For each keyframe, offset-distance progresses uniformly from 0% to
    100% over the traversal portion of the cycle. Opacity ramps in
@@ -897,40 +825,61 @@
    timer ran out. The opacity ramp-down at offset 100% only runs for
    the never-clipped tail and is invisible.
 */
+/*
+   LINEAR offset-distance progression — single waypoint from 0% to
+   100% over the visible portion of the cycle. The earlier multi-
+   waypoint "momentum" profile gave the particle artificial inertia
+   (slow elbow → fast rail), but because offset-distance is arc-length
+   parameterised, that translated into visible PHYSICAL speed jumps
+   at the curve-to-straight transition.
+
+   Linear progression keeps perceived velocity CONSTANT across the
+   entire path — horizontal elbow, curved bend, and long vertical rail
+   are all traversed at the same px/s within a single particle's life.
+   The elbow takes proportionally less time than before (because it is
+   shorter in pixels) but the particle never speeds up; the conduit
+   reads as one continuous channel rather than two stitched animations.
+
+   Opacity still ramps in quickly (0%→3%) and drops out at the end of
+   the visible portion so particles don't pop into existence or stall.
+*/
 @keyframes conduit-flow-slow {
-  /* alive: cycle ~4.5s.
-       Launch  (0%→5%):  offset 0→3%   — slight inertia leaving the node
-       Elbow   (5%→18%): offset 3→9%   — gradual acceleration round the bend
-       Rail    (18%→45%): offset 9→95% — peak momentum on the long vertical
-       Ease    (45%→48%): offset 95→100% — subtle deceleration (off-screen)
-       Hold    (48%→50%): opacity 0 at offset 100%
-       Quiet   (50%→100%): ~2.25s gap before next pulse */
   0%   { offset-distance: 0%;   opacity: 0; }
-  2%   { opacity: var(--max-opacity, 0.85); }
-  5%   { offset-distance: 3%;   opacity: var(--max-opacity, 0.85); }
-  18%  { offset-distance: 9%;   opacity: var(--max-opacity, 0.85); }
-  45%  { offset-distance: 95%;  opacity: var(--max-opacity, 0.85); }
+  3%   { opacity: var(--max-opacity, 0.85); }
   48%  { offset-distance: 100%; opacity: var(--max-opacity, 0.85); }
   50%  { offset-distance: 100%; opacity: 0; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 
 @keyframes conduit-flow-fast {
-  /* accelerating: cycle ~2.0s.
-       Launch  (0%→5%):  offset 0→3%
-       Elbow   (5%→15%): offset 3→9%
-       Rail    (15%→55%): offset 9→95% — peak rail velocity
-       Ease    (55%→58%): offset 95→100% — subtle deceleration (off-screen)
-       Hold    (58%→60%): opacity 0
-       Quiet   (60%→100%): ~0.8s gap before next pulse — short enough that
-                           the 3 staggered particles overlap on the rail */
   0%   { offset-distance: 0%;   opacity: 0; }
-  2%   { opacity: var(--max-opacity, 0.95); }
-  5%   { offset-distance: 3%;   opacity: var(--max-opacity, 0.95); }
-  15%  { offset-distance: 9%;   opacity: var(--max-opacity, 0.95); }
-  55%  { offset-distance: 95%;  opacity: var(--max-opacity, 0.95); }
+  3%   { opacity: var(--max-opacity, 0.95); }
   58%  { offset-distance: 100%; opacity: var(--max-opacity, 0.95); }
   60%  { offset-distance: 100%; opacity: 0; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* Peak white-hot variant. Two deliberate departures from the
+   shared linear progression used by amber/cyan:
+
+   (a) Visible portion extended to 78% of cycle (was 68%) — the rare
+       ignition lingers on the conduit even longer.
+
+   (b) The path's elbow segment is traversed ~25% slower than the
+       rail, via a 3-waypoint mapping rather than a single linear
+       step. The elbow occupies the first 12% of arc length; it now
+       gets 12% of cycle time, while the remaining 88% of arc length
+       gets only 66% of cycle time → rail velocity ÷ elbow velocity ≈
+       1.33, so the white visibly slows around the intersection.
+       Movement is still LINEAR within each segment (no easing); the
+       speed change is a clean step at the corner, applied only to
+       white particles. */
+@keyframes conduit-flow-fast-white {
+  0%   { offset-distance: 0%;   opacity: 0; }
+  3%   { opacity: var(--max-opacity, 0.95); }
+  12%  { offset-distance: 12%;  opacity: var(--max-opacity, 0.95); } /* end of elbow — slower segment */
+  78%  { offset-distance: 100%; opacity: var(--max-opacity, 0.95); }
+  80%  { offset-distance: 100%; opacity: 0; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 
@@ -978,18 +927,92 @@
 
 /*
    Atmospheric aura — a very faint warm presence around the stroke
-   itself. Implemented with two stacked drop-shadows whose blur radii
-   add up to ~40px, at sub-5% alpha. drop-shadow respects the painted
-   path (not the SVG bounding box), so the warmth traces the stalk's
-   shape rather than appearing as a rectangular glow patch.
+   itself. Implemented with stacked drop-shadows whose blur radii
+   widen and intensity scales with branch state (accelerating / strong
+   / peak). drop-shadow respects the painted path (not the SVG bounding
+   box), so the warmth traces the stalk's shape rather than appearing
+   as a rectangular glow patch.
 
-   Intended to be sub-perceptible — felt as warm dust in darkness, not
-   visible as a glowing aura.
+   Variants are NOT additive — they all set `filter:`. Pick exactly one
+   based on the branch's energy tier; the PropagationNode template
+   selects via `atmosphereClasses` derived in script.
 */
+/* Aura variants — small, STATIC drop-shadows.
+
+   Earlier versions stacked drop-shadows with blurs up to 120 px and
+   used `calc(... + var(--heat) * ...%)` for the alpha so the warmth
+   tracked the thermal-memory state. With 80+ conduit SVGs on screen
+   and `--heat` changing every 100 ms per Self, the compositor was
+   re-rendering a hundred ~100 px-blurred drop-shadows ten times a
+   second — that's what was dropping frames in the Marco peak subtree.
+
+   New approach: cap each variant at two layers and at most 20 px
+   blur, with FIXED alpha (no calc). This keeps the warm radiation
+   feel against the dark card but stays inside the compositor's
+   inexpensive blur budget. Thermal memory is removed altogether
+   (see PropagationNode); the aura is now the only atmospheric layer
+   and it's static. */
 .conduit-aura {
   filter:
-    drop-shadow(0 0 18px color-mix(in srgb, oklch(0.72 0.16 60) 6%, transparent))
-    drop-shadow(0 0 38px color-mix(in srgb, oklch(0.72 0.16 60) 3%, transparent));
+    drop-shadow(0 0 5px  color-mix(in srgb, oklch(0.72 0.16 60) 12%, transparent))
+    drop-shadow(0 0 14px color-mix(in srgb, oklch(0.72 0.16 60)  6%, transparent));
+}
+.conduit-aura-strong {
+  filter:
+    drop-shadow(0 0 6px  color-mix(in srgb, oklch(0.74 0.16 60) 16%, transparent))
+    drop-shadow(0 0 18px color-mix(in srgb, oklch(0.74 0.16 60)  8%, transparent));
+}
+.conduit-aura-peak {
+  filter:
+    drop-shadow(0 0 7px  color-mix(in srgb, oklch(0.78 0.17 62) 22%, transparent))
+    drop-shadow(0 0 20px color-mix(in srgb, oklch(0.78 0.17 62) 11%, transparent));
+}
+
+/* ─── Peak-only: rare white-hot particle head ────────────── */
+
+/*
+   Peak-Accelerating particles occasionally roll into the white-hot
+   colour tag (~5%). For those, the head is given a tighter, brighter
+   look: an inner near-white core ringed by a small warm bloom so the
+   spark reads as overheated rather than just bright. The colour
+   inheritance still flows from the wrapper's inline `color:` (so the
+   particle's primary tone IS white), this class just augments the
+   shadow stack for that specific tag.
+*/
+.conduit-particle-white .conduit-head {
+  /* Plasma-like layered halo for peak's rare white-hot particles.
+
+     Two FIXED-RADIUS hard white core layers come FIRST (2px and 6px)
+     — these don't scale with --head-glow, so the bright white centre
+     reads consistently white before the amber halo widens. Without
+     these fixed cores, large head-glow values made the amber outer
+     layers dominate the eye and the particle read as amber-orange
+     instead of white-hot.
+
+     After the hard cores: a compressed double-white scaled core,
+     then a saturated amber bleed, three widening warm fades, and an
+     atmospheric edge. The white sits larger and slower than amber
+     (see scheduler) so this stack has time to read as overloaded
+     energy rather than a fast spark. */
+  box-shadow:
+    /* hard bright white cores (fixed radius — independent of glow scale) */
+    0 0 2px 0 currentColor,
+    0 0 6px 0 currentColor,
+    /* compressed double-white core — reads as overheated plasma */
+    0 0 calc(var(--head-glow, 4px) * 0.28 * var(--halo-spread, 1)) 0 currentColor,
+    0 0 calc(var(--head-glow, 4px) * 0.55 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 90%, oklch(0.84 0.16 62) 10%),
+    /* saturated warm bleed where the white transitions to amber */
+    0 0 calc(var(--head-glow, 4px) * 1.10 * var(--halo-spread, 1)) 0 color-mix(in srgb, oklch(0.82 0.16 62) 58%, transparent),
+    /* widening warm halo */
+    0 0 calc(var(--head-glow, 4px) * 2.00 * var(--halo-spread, 1)) 0 color-mix(in srgb, oklch(0.80 0.16 60) 34%, transparent),
+    /* wide warm fade */
+    0 0 calc(var(--head-glow, 4px) * 3.20 * var(--halo-spread, 1)) 0 color-mix(in srgb, oklch(0.78 0.16 60) 18%, transparent),
+    /* atmospheric edge — warmth contaminating surrounding space.
+       Alpha trimmed from 8% to 6% (~25% reduction) to take the largest
+       blur radius off the compositor's hot path when several whites
+       are visible simultaneously. The outer ring is still felt; just
+       costs less to paint. */
+    0 0 calc(var(--head-glow, 4px) * 4.80 * var(--halo-spread, 1)) 0 color-mix(in srgb, oklch(0.76 0.16 60) 6%, transparent);
 }
 
 /* ─── Node arrival resonance ──────────────────────────────── */
@@ -1024,19 +1047,79 @@
   animation: resonance-flash 0.42s ease-out 1 forwards;
 }
 .resonance-warm { --resonance-color: oklch(0.78 0.16 60); }
+
+/* Microscopic ignition flare — fires when a white-hot particle crosses
+   the elbow corner of its conduit (peak branches only, via JS scheduler).
+   A 12px circle positioned at the rail-top junction in the child
+   wrapper's coordinates (wrapper x = -19.5, y = 14 → element top-left
+   at -25.5, 8). Screen-blended so it brightens whatever it passes over
+   without becoming an opaque dot. Animation is intentionally extremely
+   short (~120 ms total) and peaks at low opacity (0.18) — the user
+   should perceive it as an "ignition kiss" near the intersection,
+   never as a bloom or pulse. */
+@keyframes elbow-flare {
+  0%   { opacity: 0;    transform: scale(0.70); }
+  35%  { opacity: 1;    transform: scale(1.00); }
+  100% { opacity: 0;    transform: scale(1.15); }
+}
+.elbow-flare {
+  position: absolute;
+  left: -25.5px;
+  top: 8px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(
+    circle,
+    oklch(0.985 0.015 80 / 0.18) 0%,
+    oklch(0.985 0.015 80 / 0.10) 35%,
+    transparent 75%
+  );
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: elbow-flare 0.12s ease-out 1 forwards;
+}
+
 .resonance-cool {
   --resonance-color: oklch(0.66 0.16 250);
   /* Alive branches resonate much more faintly than accelerating ones —
      a quiet "signal received" rather than an energetic bloom. */
   opacity: 0;
   animation-duration: 0.55s;
-}
-.resonance-cool {
   background: radial-gradient(
     circle,
     color-mix(in srgb, var(--resonance-color) 14%, transparent) 0%,
     transparent 60%
   );
+}
+
+/* Strong-accelerating: brighter warm bloom, slightly larger reach.
+   Reads as a more confident impulse than baseline accelerating. */
+.resonance-strong {
+  --resonance-color: oklch(0.80 0.17 60);
+  inset: -4px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--resonance-color) 32%, transparent) 0%,
+    transparent 65%
+  );
+  animation-duration: 0.45s;
+}
+
+/* Peak-accelerating: near-white center with warm bleed — reads as
+   an ignition rather than a soft glow. Quickest decay so closely
+   spaced arrivals stack into a "firing" feel rather than mush. */
+.resonance-peak {
+  --resonance-color: oklch(0.92 0.10 65);
+  inset: -5px;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--resonance-color) 42%, transparent) 0%,
+    color-mix(in srgb, oklch(0.80 0.16 60) 22%, transparent) 38%,
+    transparent 70%
+  );
+  animation-duration: 0.40s;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1048,9 +1131,12 @@
   .conduit-glow-strong { filter: drop-shadow(0 0 3px currentColor); }
   /* Hold the atmospheric layer at its midpoint — no breathing, no aura,
      no resonance bloom under reduced motion. */
-  .conduit-breath      { animation: none !important; opacity: 0.94; }
-  .conduit-aura        { filter: none; }
-  .resonance-flash     { animation: none !important; opacity: 0; }
+  .conduit-breath        { animation: none !important; opacity: 0.94; }
+  .conduit-aura,
+  .conduit-aura-strong,
+  .conduit-aura-peak     { filter: none; }
+  .resonance-flash       { animation: none !important; opacity: 0; }
+  .elbow-flare           { animation: none !important; opacity: 0; }
 }
 
 /* ─── Base ───────────────────────────────────────────────── */

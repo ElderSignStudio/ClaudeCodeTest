@@ -26,16 +26,16 @@
 		onSelect,
 		onPreview,
 		depth = 0,
-		branchActivity = undefined,
 		isLast = false,
 		onParticleArrival = undefined,
+		branchRootActivity = undefined,
+		whiteAnchorId = undefined,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
 		onSelect: (user: PropagationUser) => void;
 		onPreview: (target: PreviewTarget | null) => void;
 		depth?: number;
-		branchActivity?: BranchActivityState | undefined;
 		/** True when this node is the LAST item rendered in its parent's
 		 *  children container — including any "+N more" tail. Drives the
 		 *  rail segment height: last children draw a short stub that
@@ -48,15 +48,67 @@
 		 *  halo. Wired in the recursive <Self> render below — every
 		 *  parent passes its own resonance handler down. */
 		onParticleArrival?: () => void;
+		/** The activity classification of the BRANCH ROOT (origin). Each
+		 *  origin (depth=0) computes its own; descendants inherit it via
+		 *  this prop so the whole subtree of e.g. a peak-accelerating
+		 *  origin renders with peak parameters — 5 slots, 18% white roll,
+		 *  etc. Without this, only the origin itself would be peak and
+		 *  the rest of the subtree would render as lower tiers. */
+		branchRootActivity?: BranchActivityState | undefined;
+		/** Deterministic safety net for peak-origin subtrees: the origin
+		 *  hash-picks ONE descendant id from its visible subtree. That
+		 *  descendant's first particle slot is forced white. Other slots
+		 *  in the subtree roll whites at the normal 18% rate, so most
+		 *  branches show several whites; this guarantees the rare case
+		 *  of all slots rolling non-white still yields at least one
+		 *  visible ignition somewhere in the subtree. */
+		whiteAnchorId?: string | undefined;
 	} = $props();
 
-	/* Branch activity for the subtree this node lives in. Root nodes
-	   compute it from their own subtree; descendants inherit it via
-	   the `branchActivity` prop so every node in the same branch
-	   uses the same state for colouring edges and debug labels. */
+	/* Branch activity is computed ONCE at the origin (depth 0) and
+	   inherited by all descendants via `branchRootActivity`. This means
+	   the whole subtree of a peak-accelerating origin renders with
+	   peak parameters (5 slots, 18% white roll, etc.), so white-hot
+	   ignition events can appear distributed anywhere in the subtree
+	   rather than only on the origin's own conduit (which doesn't
+	   exist — depth 0 doesn't draw a conduit). Different origins still
+	   classify independently, so a tree with a peak origin alongside an
+	   alive origin alongside a dead origin still reads as five distinct
+	   propagation temperatures. */
 	const effectiveActivity = $derived<BranchActivityState | undefined>(
-		depth === 0 ? computeBranchActivity(user) : branchActivity,
+		depth === 0 ? computeBranchActivity(user) : branchRootActivity,
 	);
+
+	/* White-hot ignition safety anchor.
+
+	   When THIS node is a peak-accelerating ORIGIN (depth 0), pick one
+	   descendant id from its visible subtree using a stable hash of the
+	   origin's id. That descendant's first particle slot is forced to
+	   white in conduitParticles below. The other slots in the subtree
+	   roll whites normally (18% per slot), so most peak branches show
+	   several whites — the anchor is just a SAFETY NET guaranteeing
+	   that even the unluckiest random distribution still contains at
+	   least one visible ignition somewhere in the subtree.
+
+	   Descendants receive the anchor id via the `whiteAnchorId` prop
+	   and pass it further down recursively. Only the matched descendant
+	   acts on it. Different peak origins place the anchor in different
+	   locations (the hash is salted with the origin's id), so the
+	   guaranteed ignition isn't always on the same conduit. */
+	const computedWhiteAnchorId = $derived.by((): string | undefined => {
+		if (depth !== 0) return whiteAnchorId;
+		if (effectiveActivity !== 'peak-accelerating') return undefined;
+		const ids: string[] = [];
+		const walk = (node: PropagationUser) => {
+			for (const c of node.children) {
+				ids.push(c.id);
+				walk(c);
+			}
+		};
+		walk(user);
+		if (ids.length === 0) return undefined;
+		return ids[hash32(user.id + '|white-anchor') % ids.length];
+	});
 
 	/* Debug switch — shows DEAD / ALIVE / ACCELERATING labels next to
 	   each root. Flip to false to hide. */
@@ -95,26 +147,45 @@
 	   particle's halo additively illuminates the dim conduit (and
 	   surrounding dark background) wherever it passes. */
 	/*
-	   Temperature distinction per state:
-	     dead          → desaturated remnant (cool neutral white)
-	     alive         → cool indigo (steady cold transmission)
-	     accelerating  → WARM amber/ember (intensified resonance,
-	                     synaptic firing, heated filament — NOT a
-	                     warning yellow, NOT the whole conduit on fire) */
+	   Conduit stroke color per state. The conduit itself stays cool
+	   (cyan-indigo) for the calmer half of the spectrum and warms only
+	   at the higher tiers — alive/accelerating still read as cool-blue
+	   cultural circulation; warmth emerges into the conduit only as
+	   the branch heats up.
+
+	     dead         → desaturated white remnant, very dim
+	     alive        → cool indigo at ~8% alpha
+	     accelerating → cool indigo slightly brighter (~10%) — particles
+	                    bring the first hint of amber, not the line
+	     strong       → amber tint enters the conduit itself (~13%)
+	     peak         → saturated amber tint (~18%)
+	*/
 	const railColorClass = $derived(
-		effectiveActivity === 'accelerating'
-			? 'text-[oklch(0.72_0.14_60)]/10'
-			: effectiveActivity === 'alive'
-				? 'text-primary/8'
-				: 'text-white/5',
+		effectiveActivity === 'peak-accelerating'
+			? 'text-[oklch(0.76_0.16_60)]/18'
+			: effectiveActivity === 'strong-accelerating'
+				? 'text-[oklch(0.73_0.13_55)]/13'
+				: effectiveActivity === 'accelerating'
+					? 'text-primary/10'
+					: effectiveActivity === 'alive'
+						? 'text-primary/8'
+						: 'text-white/5',
 	);
 
-	const particleColorClass = $derived(
-		effectiveActivity === 'accelerating'
-			? 'text-[oklch(0.78_0.16_60)]/95'
-			: effectiveActivity === 'alive'
-				? 'text-primary/82'
-				: '',
+	/*
+	   Atmosphere class per state — breath modulates conduit opacity slowly,
+	   aura adds a faint warm drop-shadow halo. Both scale with intensity.
+	   Aura variants are NOT additive (they set the same filter property);
+	   pick one based on state.
+	*/
+	const atmosphereClasses = $derived(
+		effectiveActivity === 'peak-accelerating'
+			? 'conduit-breath conduit-aura-peak'
+			: effectiveActivity === 'strong-accelerating'
+				? 'conduit-breath conduit-aura-strong'
+				: effectiveActivity === 'accelerating'
+					? 'conduit-breath conduit-aura'
+					: '',
 	);
 
 	/* Conduit glow disabled — the conduit is dormant; particles
@@ -144,8 +215,16 @@
 		Branch-level intensity stays unified: all alive particles draw
 		from "slow/sparse" ranges, all accelerating from "fast/dense".
 	*/
+	type ParticleColorTag = 'cyan' | 'amber' | 'white';
 	type ConduitParticle = {
 		id: number;
+		/* CSS color string (oklch) applied inline to the particle wrapper.
+		   The .conduit-head element reads currentColor for its fill and
+		   box-shadow halos, so each particle in the same branch can carry
+		   its own colour — cyan for cultural circulation, amber for
+		   acceleration energy, near-white for rare peak ignitions. */
+		color: string;
+		colorTag: ParticleColorTag;
 		flowDelay: number;
 		flowDur: number;
 		helixAmp: number;
@@ -155,10 +234,10 @@
 		trailScale: number;
 		particleSize: number;
 		headGlow: number;
-		/* NEW per-particle shape/halo variability — adds the organic
-		   feel without breaking the cohesion of the system. */
+		/* Per-particle shape/halo variability — adds the organic feel
+		   without breaking the cohesion of the system. */
 		headRadius: string;   /* irregular border-radius e.g. "52% 48% 50% 50%" */
-		haloSpread: number;   /* halo radius multiplier 0.8–1.25 (tight vs diffuse) */
+		haloSpread: number;   /* halo radius multiplier 0.6–1.3 (tight vs diffuse) */
 	};
 
 	function hash32(s: string): number {
@@ -175,15 +254,17 @@
 	}
 
 	const conduitParticles = $derived.by((): ConduitParticle[] => {
-		if (effectiveActivity !== 'alive' && effectiveActivity !== 'accelerating') return [];
+		if (
+			effectiveActivity === undefined ||
+			effectiveActivity === 'dead'
+		) return [];
+
 		const seed = hash32(user.id);
 		const r = (i: number) => rand01(seed, i);
 
 		/* Generate an irregular border-radius string — 4 percentage
 		   values that keep the shape ROUNDISH but slightly asymmetric
-		   so the silhouette looks organic, not stamped from a circle.
-		   Each corner percentage drifts from 40–60 (= centered on 50%
-		   = perfect circle). */
+		   so the silhouette looks organic, not stamped from a circle. */
 		const makeRadius = (salt: number) => {
 			const c1 = (40 + r(salt + 0) * 20).toFixed(0);
 			const c2 = (40 + r(salt + 1) * 20).toFixed(0);
@@ -192,79 +273,310 @@
 			return `${c1}% ${c2}% ${c3}% ${c4}%`;
 		};
 
-		if (effectiveActivity === 'accelerating') {
+		/* ─── Per-state config ─────────────────────────────────── */
+		/* Density (particle count), cycle range, colour distribution,
+		   and per-state cadence patterns. The cadence patterns are the
+		   only thing branched at runtime — everything else falls out of
+		   a single shared loop below. Cyan/amber/white shares must sum
+		   to 1 and are used as cumulative thresholds against a uniform
+		   roll per particle. */
+		let count: number;
+		let cycleMin: number;
+		let cycleMax: number;
+		let cyanShare: number;
+		let amberShare: number;
+		let whiteShare: number;
+		let baseDelays: number[];
+		const cadencePattern = Math.floor(r(2) * 4);
+
+		if (effectiveActivity === 'alive') {
+			/* Patient drift, the tree's resting metabolic state. Now
+			   2 particle slots per branch so alive reads as persistent
+			   quiet circulation rather than occasional inactivity. The
+			   two particles are STRONGLY DESYNCED: second particle
+			   launches ~half a cycle after the first, so at any moment
+			   typically only ONE of them is visible. Cycle widened to
+			   5.0-7.0s for slightly more breath. */
+			count = 2;
+			cycleMin = 5.0;
+			cycleMax = 7.0;
+			cyanShare = 1.0; amberShare = 0.0; whiteShare = 0.0;
+			baseDelays = [
+				r(7) * 0.5,           /* particle A: 0.0–0.5s */
+				2.8 + r(8) * 1.2,     /* particle B: 2.8–4.0s (≈ half-cycle later) */
+			];
+		} else if (effectiveActivity === 'accelerating') {
 			/* Cadence patterns — each accelerating branch picks one of
-			   several stagger shapes via hash so the 3-particle group
-			   reads as emergent rather than evenly metronomic.
+			   several stagger shapes via hash so the group reads as
+			   emergent rather than evenly metronomic.
+			     0 = clustered front (two close, one lonely-late)
+			     1 = clustered back  (one early, two close-late)
+			     2 = lonely middle   (early, big gap, late — sparse)
+			     3 = even drift      (loose stagger, no clustering)
 
-			     0 = "clustered front"  → 2 close, 1 lonely-late
-			     1 = "clustered back"   → 1 early, 2 close-late
-			     2 = "lonely middle"    → early, big gap, late (sparse)
-			     3 = "even drift"       → loose stagger, no clustering
-
-			   Tiny per-particle jitter on top keeps even the same
-			   pattern from feeling like a fixed sequence. */
-			const cadencePattern = Math.floor(r(2) * 4);
-			const baseDelays =
-				cadencePattern === 0 ? [0.00, 0.18, 1.25] :
-				cadencePattern === 1 ? [0.00, 0.95, 1.18] :
-				cadencePattern === 2 ? [0.00, 0.70, 1.55] :
-				                       [0.00, 0.55, 1.10];
-			return [0, 1, 2].map((i) => {
-				const ampSign = r(i * 7 + 3) > 0.5 ? 1 : -1;
-				return {
-					id: i,
-					/* Pattern-driven base delay + small jitter (≤120ms)
-					   so identical patterns still vary between branches. */
-					flowDelay: baseDelays[i] + r(i * 11 + 1) * 0.12,
-					flowDur:   1.85 + r(i * 13 + 1) * 0.45,   /* 1.85–2.30s cycle */
-					helixAmp:  ampSign * (2.5 + r(i * 17 + 1) * 2.0),  /* ±2.5–4.5px */
-					helixDelay: -r(i * 19 + 1) * 0.35,         /* phase shift */
-					helixDur:   0.36 + r(i * 23 + 1) * 0.20,   /* 0.36–0.56s */
-					maxOpacity: 0.82 + r(i * 29 + 1) * 0.18,   /* 0.82–1.00 (broader) */
-					trailScale: 0.85 + r(i * 31 + 1) * 0.35,   /* 0.85–1.20 */
-					/* Wider size/glow range — keep large at the same ceiling
-					   but allow much smaller minimums so some particles read
-					   as faint sparks while others are full headlights. */
-					particleSize: 2.4 + r(i * 37 + 1) * 3.8,   /* 2.4–6.2px */
-					headGlow:     4.0 + r(i * 41 + 1) * 9.0,   /* 4.0–13.0px */
-					headRadius:   makeRadius(i * 45 + 1),
-					haloSpread:   0.80 + r(i * 49 + 1) * 0.50, /* 0.80–1.30 (tight vs diffuse) */
-				};
-			});
+			   Dynamic slot count — 80% of accelerating branches keep the
+			   3-slot baseline; 20% bump to 4 slots so the cohort varies
+			   subtly across the tree without changing the overall feel.
+			   Amber share also nudges from 15% to 20% so amber feels a
+			   touch more present without dominating cyan. */
+			const fourSlotBranch = r(95) < 0.20;
+			count = fourSlotBranch ? 4 : 3;
+			cycleMin = 1.55;
+			cycleMax = 1.92;
+			cyanShare = 0.80; amberShare = 0.20; whiteShare = 0.0;
+			baseDelays = fourSlotBranch
+				? (cadencePattern === 0 ? [0.00, 0.18, 0.85, 1.25] :
+				   cadencePattern === 1 ? [0.00, 0.55, 0.95, 1.18] :
+				   cadencePattern === 2 ? [0.00, 0.45, 0.95, 1.55] :
+				                          [0.00, 0.40, 0.80, 1.30])
+				: (cadencePattern === 0 ? [0.00, 0.18, 1.25] :
+				   cadencePattern === 1 ? [0.00, 0.95, 1.18] :
+				   cadencePattern === 2 ? [0.00, 0.70, 1.55] :
+				                          [0.00, 0.55, 1.10]);
+		} else if (effectiveActivity === 'strong-accelerating') {
+			/* 3 particles (down from 4) — strong now caps at the same
+			   slot budget as accelerating so an inherited strong subtree
+			   doesn't oversaturate the DOM. Amber still clearly
+			   dominates (75%), cyan up slightly (25%) to keep the
+			   cultural substrate readable underneath. The cycle base
+			   stays the same; the amber speed multiplier below pushes
+			   the effective amber cycle to 2.0-3.6s so the branch feels
+			   powerful but not frantic. */
+			count = 3;
+			cycleMin = 1.17;
+			cycleMax = 1.50;
+			cyanShare = 0.25; amberShare = 0.75; whiteShare = 0.0;
+			baseDelays =
+				cadencePattern === 0 ? [0.00, 0.18, 1.10] :
+				cadencePattern === 1 ? [0.00, 0.80, 1.18] :
+				cadencePattern === 2 ? [0.00, 0.55, 1.30] :
+				                       [0.00, 0.40, 0.85];
+		} else {
+			/* peak-accelerating: 3 particles (down from 5) so a whole
+			   inherited peak subtree doesn't blanket the page in particle
+			   DOM. Whites are rare visible ignition events: 6% per slot
+			   ≈ 0.18 expected per branch, plus the anchored guarantee.
+			   Cyan bumped from 15% to 22% so the cultural substrate
+			   stays visible underneath the amber — peak should not read
+			   as "orange mode". */
+			count = 3;
+			cycleMin = 1.00;
+			cycleMax = 1.40;
+			cyanShare = 0.22; amberShare = 0.72; whiteShare = 0.06;
+			baseDelays =
+				cadencePattern === 0 ? [0.00, 0.18, 1.05] :
+				cadencePattern === 1 ? [0.00, 0.70, 1.05] :
+				cadencePattern === 2 ? [0.00, 0.40, 0.95] :
+				                       [0.00, 0.16, 1.05]; /* twin-launch variant — softened from 0.08 to 0.16 so the doubled feel is less machine-gun */
 		}
 
-		/* alive — single pulse, every parameter still varies per branch
-		   so different alive branches look different from each other. */
-		const ampSign = r(3) > 0.5 ? 1 : -1;
-		return [{
-			id: 0,
-			flowDelay: r(7) * 1.8,                       /* 0–1.8s phase */
-			flowDur:   4.0  + r(11) * 1.0,               /* 4.0–5.0s cycle */
-			helixAmp:  ampSign * (1.5 + r(17) * 1.3),    /* ±1.5–2.8px */
-			helixDelay: -r(19) * 0.4,
-			helixDur:   0.55 + r(23) * 0.30,             /* 0.55–0.85s */
-			maxOpacity: 0.70 + r(29) * 0.22,             /* 0.70–0.92 (broader) */
-			trailScale: 0.75 + r(31) * 0.35,             /* 0.75–1.10 */
-			/* Wider size/glow range — alive branches now span faint
-			   sparks (1.7px) up to the previous maximum (4.8px). */
-			particleSize: 1.7 + r(37) * 3.1,             /* 1.7–4.8px */
-			headGlow:     2.8 + r(41) * 5.7,             /* 2.8–8.5px */
-			headRadius:   makeRadius(80),
-			haloSpread:   0.82 + r(85) * 0.48,           /* 0.82–1.30 */
-		}];
+		/* ─── Build particles ──────────────────────────────────── */
+		const particles = Array.from({ length: count }, (_, i): ConduitParticle => {
+			/* Per-particle colour roll. Whites are checked first
+			   (smallest share), then amber, then cyan as the default.
+			   Slot 0 is forced white when THIS node is the
+			   hash-picked anchor descendant of a peak-accelerating
+			   origin — see computedWhiteAnchorId above. Other slots
+			   still roll normally; whites can also appear naturally on
+			   any peak-subtree branch via the 18% per-slot probability. */
+			let colorTag: ParticleColorTag;
+			if (computedWhiteAnchorId === user.id && i === 0) {
+				colorTag = 'white';
+			} else {
+				const roll = r(i * 7 + 100);
+				if (roll < whiteShare) colorTag = 'white';
+				else if (roll < whiteShare + amberShare) colorTag = 'amber';
+				else colorTag = 'cyan';
+			}
+
+			const color =
+				/* White hue 80° and chroma 0.015 — reads near-white first,
+				   warm second. The earlier 0.04 chroma at hue 70° tipped
+				   the centre toward amber rather than holding white. */
+				colorTag === 'white' ? 'oklch(0.985 0.015 80 / 1.00)' :
+				colorTag === 'amber' ? 'oklch(0.78 0.16 60 / 0.95)' :
+				                      'oklch(0.68 0.20 265 / 0.85)';
+
+			/* Size, glow and halo spread per colour.
+			   Whites read as compressed bright sparks (tight halo, larger
+			     and slower in peak — see speedMultiplier below).
+			   Ambers are fuller headlights (mid halo).
+			   Cyans use a 3-TIER WEIGHTED distribution so the full size
+			   range — from tiny to large "carrier" — is always present
+			   across the cohort. Carriers are the largest tier but appear
+			   only in the rare 15% slot; the other 85% of cyans split
+			   between tiny (55%) and medium (30%). This replaces the
+			   earlier binary carrier-or-normal split, which made too
+			   many alive particles read as the same medium size. */
+			let particleSize: number, headGlow: number, haloSpread: number;
+			if (colorTag === 'white') {
+				/* Slightly larger and brighter than before: 4.0–6.0 px
+				   diameter and 10–18 px head glow lifts core luminance
+				   without changing the overall density. Halo spread
+				   stays relatively tight (0.75–1.10) so the warmth
+				   doesn't outshine the white centre. */
+				particleSize = 4.0 + r(i * 37 + 1) * 2.0;  /* 4.0–6.0px */
+				headGlow     = 10.0 + r(i * 41 + 1) * 8.0; /* 10–18px */
+				haloSpread   = 0.75 + r(i * 49 + 1) * 0.35;/* 0.75–1.10 */
+			} else if (colorTag === 'amber') {
+				particleSize = 2.4 + r(i * 37 + 1) * 3.8;  /* 2.4–6.2px */
+				headGlow     = 4.0 + r(i * 41 + 1) * 9.0;  /* 4–13px */
+				haloSpread   = 0.80 + r(i * 49 + 1) * 0.50;/* 0.80–1.30 */
+			} else {
+				/* cyan — 3-tier weighted size distribution.
+				   Rebalanced to reduce the previous overproduction of
+				   tiny pinprick particles: tiny share trimmed from 55%
+				   to 40%, medium widened from 30% to 40%, large carrier
+				   bumped from 15% to 20%. Tier RANGES also widened so
+				   each tier sits at a more confident, luminous size. */
+				const sizeTier = r(i * 53 + 1);
+				if (sizeTier < 0.40) {
+					/* tiny (40%) — small sparks, still present in every cohort */
+					particleSize = 1.8 + r(i * 37 + 1) * 1.6;  /* 1.8–3.4px */
+					headGlow     = 2.5 + r(i * 41 + 1) * 3.0;  /* 2.5–5.5px */
+					haloSpread   = 0.75 + r(i * 49 + 1) * 0.30;
+				} else if (sizeTier < 0.80) {
+					/* medium (40%) */
+					particleSize = 3.8 + r(i * 37 + 1) * 2.0;  /* 3.8–5.8px */
+					headGlow     = 3.5 + r(i * 41 + 1) * 4.5;  /* 3.5–8.0px */
+					haloSpread   = 0.85 + r(i * 49 + 1) * 0.40;
+				} else {
+					/* large carrier (20%) — luminous "signal packets" */
+					particleSize = 6.0 + r(i * 37 + 1) * 2.5;  /* 6.0–8.5px */
+					headGlow     = 5.5 + r(i * 41 + 1) * 4.5;  /* 5.5–10.0px */
+					haloSpread   = 0.95 + r(i * 49 + 1) * 0.40;
+				}
+			}
+
+			/* Colour-driven cycle multiplier. The cyan/amber speed split is
+			   the system's emotional spine:
+
+			     CYAN = cultural substrate. Drifts at ALIVE SPEED regardless
+			     of branch state. Multipliers below put cyan cycles into
+			     the ~4.5-6.3s range even in fast warm-tier branches, so
+			     cyan reads as slow background drift no matter how energised
+			     the branch is.
+
+			     AMBER = momentum. Speed varies by state:
+			       - accelerating → uniform 1.25× slower than the base
+			         cycle, so amber feels like measured pulses rather
+			         than hyperactive bursts.
+			       - strong → per-particle 1.24×–2.13× variability:
+			         effective amber cycle 1.45–3.20s. Slower than before
+			         so the branch reads as pressure/density rather than
+			         frantic motion.
+			       - peak → 1.20×–1.25× (effective 1.20–1.75s): slightly
+			         slower than the raw base so peak doesn't feel
+			         machine-gun fast.
+
+			     WHITE = overloaded plasma in peak only. 1.70× slower
+			     (effective 1.70–2.40s) extends visible time so the rare
+			     ignition reads as dense, dangerous and unstable rather
+			     than fast spark.
+			*/
+			let speedMultiplier: number;
+			if (colorTag === 'white') {
+				/* Peak white-hot: 2.80 + small jitter over 1.0-1.4s base
+				   yields effective 2.80-4.20s. Much slower than before so
+				   the rare ignition feels dense, unstable, and overcharged
+				   rather than a darting spark. */
+				speedMultiplier = 2.80 + r(i * 79 + 1) * 0.20;
+			} else if (colorTag === 'cyan') {
+				speedMultiplier =
+					effectiveActivity === 'peak-accelerating'   ? 4.5 :
+					effectiveActivity === 'strong-accelerating' ? 3.7 :
+					effectiveActivity === 'accelerating'        ? 3.2 :
+					1.0; /* alive cyan uses its native 5.0-7.0s cycle */
+			} else {
+				/* amber */
+				if (effectiveActivity === 'strong-accelerating') {
+					/* Per-particle variability 1.71×–2.40× over base
+					   1.17–1.50s → effective 2.00–3.60s. Slower than
+					   before so strong feels powerful and accumulating
+					   rather than frantic; the variability still gives
+					   per-particle bursts of slightly faster amber. */
+					speedMultiplier = 1.71 + r(i * 71 + 1) * 0.69;
+				} else if (effectiveActivity === 'accelerating') {
+					speedMultiplier = 1.25;
+				} else if (effectiveActivity === 'peak-accelerating') {
+					/* 1.85-2.35 over base 1.0-1.4s → effective 1.85-3.29s.
+					   Velocity ~305-540 px/s. Slower than the previous
+					   1.65-2.10 pass — peak now reads as sustained
+					   pressure rather than rapid-fire amber, even as the
+					   subtree inherits across many conduits. */
+					speedMultiplier = 1.85 + r(i * 71 + 1) * 0.50;
+				} else {
+					speedMultiplier = 1.0;
+				}
+			}
+
+			const ampSign = r(i * 7 + 3) > 0.5 ? 1 : -1;
+			const helixAmp = effectiveActivity === 'alive'
+				? ampSign * (1.5 + r(i * 17 + 1) * 1.3)   /* ±1.5–2.8px */
+				: ampSign * (2.3 + r(i * 17 + 1) * 2.2);   /* ±2.3–4.5px */
+			const helixDur = effectiveActivity === 'alive'
+				? 0.55 + r(i * 23 + 1) * 0.30              /* 0.55–0.85s */
+				: 0.36 + r(i * 23 + 1) * 0.22;             /* 0.36–0.58s */
+
+			return {
+				id: i,
+				color,
+				colorTag,
+				flowDelay: baseDelays[i] + r(i * 11 + 1) * 0.12,
+				flowDur:   (cycleMin + r(i * 13 + 1) * (cycleMax - cycleMin)) * speedMultiplier,
+				helixAmp,
+				helixDelay: -r(i * 19 + 1) * 0.35,
+				helixDur,
+				maxOpacity: 0.78 + r(i * 29 + 1) * 0.22,
+				trailScale: 0.85 + r(i * 31 + 1) * 0.35,
+				particleSize,
+				headGlow,
+				headRadius: makeRadius(i * 45 + 1),
+				haloSpread,
+			};
+		});
+
+		/* ─── Peak tandem launch ────────────────────────────────
+		   ~35% of peak branches that have BOTH a white slot and an
+		   amber slot get their amber companion's launch realigned
+		   to fire 0.06-0.18 s after the white. The two particles
+		   keep their own velocities, colours and rendering — only
+		   the amber's INITIAL animation-delay is shifted so the
+		   first visible white launch reads as "ignition emerging
+		   from amber turbulence". Subsequent cycles drift naturally
+		   because the two particles run on different cycle lengths
+		   (white ~3 s, amber ~1.5 s); the tandem reappears every
+		   time the cycles coincidentally re-align. */
+		if (effectiveActivity === 'peak-accelerating' && r(99) < 0.35) {
+			const whiteIdx = particles.findIndex((p) => p.colorTag === 'white');
+			if (whiteIdx >= 0) {
+				const amberIdx = particles.findIndex(
+					(p, idx) => p.colorTag === 'amber' && idx !== whiteIdx,
+				);
+				if (amberIdx >= 0) {
+					const tandemOffset = 0.06 + r(101) * 0.12; /* 0.06–0.18 s */
+					particles[amberIdx].flowDelay =
+						particles[whiteIdx].flowDelay + tandemOffset;
+				}
+			}
+		}
+
+		return particles;
 	});
 
 	/* Per-branch desynchronisation for the atmospheric trunk breath.
 	   Negative animation-delay starts each conduit at a different phase
 	   of the 14s breath cycle so neighbouring branches never pulse in
 	   unison — the effect reads as ambient drift rather than a UI loop.
-	   Only used when this node is accelerating; alive/dead conduits stay
-	   visually static (the user reserved breath for accelerating only). */
+	   Used by any of the three accelerating tiers (accelerating /
+	   strong / peak); alive and dead conduits stay visually static. */
+	const isWarmTier = $derived(
+		effectiveActivity === 'accelerating' ||
+		effectiveActivity === 'strong-accelerating' ||
+		effectiveActivity === 'peak-accelerating',
+	);
 	const breathDelay = $derived(
-		effectiveActivity === 'accelerating'
-			? -(rand01(hash32(user.id), 5) * 14)
-			: 0,
+		isWarmTier ? -(rand01(hash32(user.id), 5) * 14) : 0,
 	);
 
 	/* Node-arrival resonance.
@@ -295,6 +607,14 @@
 	   to attach animation listeners and schedule per-cycle timers. */
 	let particleEls: HTMLDivElement[] = $state([]);
 
+	/* Microscopic ignition flare — fires once each time a white-hot
+	   particle crosses the elbow/intersection in this branch's conduit.
+	   The {#key flareKey} block in the template remounts a tiny .elbow-
+	   flare span, replaying a sub-150ms one-shot animation. Visible only
+	   on conduits that can carry whites (peak branches and the forced-
+	   white first child of a peak origin). */
+	let flareKey = $state(0);
+
 	/* Schedule arrival pings for THIS node's particles.
 
 	   The CSS particle animation is an infinite loop; native events
@@ -311,7 +631,10 @@
 	   particle has already been clipped for most of a second. */
 	$effect(() => {
 		if (depth === 0) return;
-		if (effectiveActivity !== 'alive' && effectiveActivity !== 'accelerating') return;
+		if (
+			effectiveActivity === undefined ||
+			effectiveActivity === 'dead'
+		) return;
 		if (!onParticleArrival) return;
 
 		const timers: ReturnType<typeof setTimeout>[] = [];
@@ -321,13 +644,27 @@
 			const p = conduitParticles[i];
 			if (!el || !p) return;
 			const arrivalMs = p.flowDur * 1000 * 0.18;
+			const isWhite = p.colorTag === 'white';
+			/* White particles cross the elbow exit at ~12% of cycle
+			   under the white-only keyframe; fire the ignition flare
+			   when they're roughly mid-elbow (cycle 10%). */
+			const flareMs = isWhite ? p.flowDur * 1000 * 0.10 : 0;
 
 			function scheduleNext() {
+				/* Parent halo resonance fires at the arrival moment. */
 				timers.push(
 					setTimeout(() => {
 						onParticleArrival?.();
 					}, arrivalMs),
 				);
+				/* White-only: microscopic ignition flare at the elbow. */
+				if (isWhite) {
+					timers.push(
+						setTimeout(() => {
+							flareKey++;
+						}, flareMs),
+					);
+				}
 			}
 
 			el.addEventListener('animationstart', scheduleNext);
@@ -440,7 +777,7 @@
 				'absolute pointer-events-none overflow-visible',
 				railColorClass,
 				conduitGlowClass,
-				effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
+				atmosphereClasses,
 			]}
 			style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;"
 			viewBox="0 0 4 14"
@@ -462,7 +799,7 @@
 					'absolute pointer-events-none overflow-visible',
 					railColorClass,
 					conduitGlowClass,
-					effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
+					atmosphereClasses,
 				]}
 				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px); --breath-delay: {breathDelay.toFixed(3)}s;"
 				viewBox="0 0 4 100"
@@ -495,7 +832,7 @@
 				'absolute -left-5 top-3.5 pointer-events-none overflow-visible',
 				railColorClass,
 				conduitGlowClass,
-				effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
+				atmosphereClasses,
 			]}
 			width="55"
 			height="8"
@@ -509,6 +846,19 @@
 		</svg>
 
 		<!--
+			Microscopic ignition flare — fires when a white-hot particle
+			crosses the elbow corner. Positioned at the rail-top junction
+			(wrapper coords -19.5, 14), 12px diameter, screen-blended.
+			Each increment of flareKey remounts via the {#key} block,
+			restarting the ~120ms one-shot animation. No-op when the
+			branch has no whites (flareKey stays 0). -->
+		{#key flareKey}
+			{#if flareKey > 0}
+				<span class="elbow-flare" aria-hidden="true"></span>
+			{/if}
+		{/key}
+
+		<!--
 			Conduit signal traffic — small pulses flowing UPWARD through
 			the edge (child → parent). The wrapper follows the rail+elbow
 			path via `offset-path`; an inner streak adds subtle helical
@@ -519,10 +869,13 @@
 				bind:this={particleEls[i]}
 				class={[
 					'conduit-particle',
-					particleColorClass,
-					effectiveActivity === 'accelerating' ? 'conduit-fast' : 'conduit-slow',
+					/* Faster cycle class for warm tiers (cycle ≤ 2.3s); alive
+					   uses the slower variant. The class only flips animation
+					   timing — duration/delay are still driven by --flow-* vars. */
+					isWarmTier ? 'conduit-fast' : 'conduit-slow',
+					p.colorTag === 'white' && 'conduit-particle-white',
 				]}
-				style="--flow-delay: {p.flowDelay.toFixed(3)}s; --flow-dur: {p.flowDur.toFixed(3)}s; --helix-amp: {p.helixAmp.toFixed(2)}px; --helix-delay: {p.helixDelay.toFixed(3)}s; --helix-dur: {p.helixDur.toFixed(3)}s; --max-opacity: {p.maxOpacity.toFixed(2)}; --trail-scale: {p.trailScale.toFixed(2)}; --particle-size: {p.particleSize.toFixed(2)}px; --head-glow: {p.headGlow.toFixed(2)}px; --head-radius: {p.headRadius}; --halo-spread: {p.haloSpread.toFixed(2)};"
+				style="color: {p.color}; --flow-delay: {p.flowDelay.toFixed(3)}s; --flow-dur: {p.flowDur.toFixed(3)}s; --helix-amp: {p.helixAmp.toFixed(2)}px; --helix-delay: {p.helixDelay.toFixed(3)}s; --helix-dur: {p.helixDur.toFixed(3)}s; --max-opacity: {p.maxOpacity.toFixed(2)}; --trail-scale: {p.trailScale.toFixed(2)}; --particle-size: {p.particleSize.toFixed(2)}px; --head-glow: {p.headGlow.toFixed(2)}px; --head-radius: {p.headRadius}; --halo-spread: {p.haloSpread.toFixed(2)};"
 				aria-hidden="true"
 			>
 				<span class="conduit-head"></span>
@@ -610,20 +963,26 @@
 				<span class="sa-ripple" aria-hidden="true"></span>
 			{/if}
 
-			<!-- Arrival resonance: a soft warm bloom that fires once per
-			     child-particle arrival via the {#key} remount trick. Only
-			     accelerating and alive branches resonate; dead branches
-			     stay inert. Alive uses the cool variant (the existing
-			     primary tone) with a much subtler bloom. -->
-			{#if !user.isPreviewNode && (effectiveActivity === 'accelerating' || effectiveActivity === 'alive')}
+			<!-- Arrival resonance: a soft bloom that fires once per
+			     child-particle arrival via the {#key} remount trick.
+			     Dead branches stay inert. Variants scale with state:
+			       alive   → quiet cool bloom (cyan, very subtle)
+			       accel   → warm amber bloom (current baseline)
+			       strong  → brighter warm amber bloom
+			       peak    → near-white warm bloom, occasional ignition feel -->
+			{#if !user.isPreviewNode && effectiveActivity && effectiveActivity !== 'dead'}
 				{#key resonanceKey}
 					{#if resonanceKey > 0}
 						<span
 							class={[
 								'resonance-flash',
-								effectiveActivity === 'accelerating'
-									? 'resonance-warm'
-									: 'resonance-cool',
+								effectiveActivity === 'peak-accelerating'
+									? 'resonance-peak'
+									: effectiveActivity === 'strong-accelerating'
+										? 'resonance-strong'
+										: effectiveActivity === 'accelerating'
+											? 'resonance-warm'
+											: 'resonance-cool',
 							]}
 							aria-hidden="true"
 						></span>
@@ -696,12 +1055,14 @@
 					<span
 						class={[
 							'text-[10px] uppercase tracking-widest font-mono shrink-0',
-							effectiveActivity === 'accelerating' && 'text-warning',
-							effectiveActivity === 'alive' && 'text-primary',
-							effectiveActivity === 'dead' && 'text-base-content/40',
+							effectiveActivity === 'peak-accelerating'    && 'text-[oklch(0.92_0.10_70)]',
+							effectiveActivity === 'strong-accelerating'  && 'text-[oklch(0.80_0.18_55)]',
+							effectiveActivity === 'accelerating'         && 'text-warning',
+							effectiveActivity === 'alive'                && 'text-primary',
+							effectiveActivity === 'dead'                 && 'text-base-content/40',
 						]}
 					>
-						{effectiveActivity}
+						{effectiveActivity.replace('-', ' ')}
 					</span>
 				{/if}
 			</div>
@@ -808,9 +1169,10 @@
 					{onSelect}
 					{onPreview}
 					depth={depth + 1}
-					branchActivity={effectiveActivity}
 					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
 					onParticleArrival={onChildParticleArrival}
+					branchRootActivity={effectiveActivity}
+					whiteAnchorId={computedWhiteAnchorId}
 				/>
 			{/each}
 
@@ -830,7 +1192,7 @@
 								'absolute pointer-events-none overflow-visible',
 								railColorClass,
 								conduitGlowClass,
-								effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
+								atmosphereClasses,
 							]}
 							style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;"
 							viewBox="0 0 4 14"
@@ -845,7 +1207,7 @@
 								'absolute -left-5 top-3.5 pointer-events-none overflow-visible',
 								railColorClass,
 								conduitGlowClass,
-								effectiveActivity === 'accelerating' && 'conduit-breath conduit-aura',
+								atmosphereClasses,
 							]}
 							width="55"
 							height="8"
@@ -899,9 +1261,10 @@
 							{onSelect}
 							{onPreview}
 							depth={depth + 1}
-							branchActivity={effectiveActivity}
 							isLast={i === tailStubs.length - 1}
 							onParticleArrival={onChildParticleArrival}
+							branchRootActivity={effectiveActivity}
+							whiteAnchorId={computedWhiteAnchorId}
 						/>
 					{/each}
 				{/if}
