@@ -1068,39 +1068,6 @@
 }
 .resonance-warm { --resonance-color: oklch(0.78 0.16 60); }
 
-/* Microscopic ignition flare — fires when a white-hot particle crosses
-   the elbow corner of its conduit (peak branches only, via JS scheduler).
-   A 12px circle positioned at the rail-top junction in the child
-   wrapper's coordinates (wrapper x = -19.5, y = 14 → element top-left
-   at -25.5, 8). Screen-blended so it brightens whatever it passes over
-   without becoming an opaque dot. Animation is intentionally extremely
-   short (~120 ms total) and peaks at low opacity (0.18) — the user
-   should perceive it as an "ignition kiss" near the intersection,
-   never as a bloom or pulse. */
-@keyframes elbow-flare {
-  0%   { opacity: 0;    transform: scale(0.70); }
-  35%  { opacity: 1;    transform: scale(1.00); }
-  100% { opacity: 0;    transform: scale(1.15); }
-}
-.elbow-flare {
-  position: absolute;
-  left: -25.5px;
-  top: 8px;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: radial-gradient(
-    circle,
-    oklch(0.985 0.015 80 / 0.18) 0%,
-    oklch(0.985 0.015 80 / 0.10) 35%,
-    transparent 75%
-  );
-  mix-blend-mode: screen;
-  opacity: 0;
-  animation: elbow-flare 0.12s ease-out 1 forwards;
-}
-
 .resonance-cool {
   --resonance-color: oklch(0.66 0.16 250);
   /* Alive branches resonate much more faintly than accelerating ones —
@@ -1299,7 +1266,6 @@
   .resonance-flash       { animation: none !important; opacity: 0; }
   .conduit-entry-flash,
   .conduit-entry-filament { animation: none !important; opacity: 0; }
-  .elbow-flare           { animation: none !important; opacity: 0; }
 }
 
 /* ─── Base ───────────────────────────────────────────────── */

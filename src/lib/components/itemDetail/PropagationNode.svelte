@@ -629,14 +629,6 @@
 	   arrival at the parent). */
 	let wrapperEl: HTMLDivElement | null = $state(null);
 
-	/* Microscopic ignition flare — fires once each time a white-hot
-	   particle crosses the elbow/intersection in this branch's conduit.
-	   The {#key flareKey} block in the template remounts a tiny .elbow-
-	   flare span, replaying a sub-150ms one-shot animation. Visible only
-	   on conduits that can carry whites (peak branches and the forced-
-	   white first child of a peak origin). */
-	let flareKey = $state(0);
-
 	/* Schedule arrival pings for THIS node's particles.
 
 	   The CSS particle animation is an infinite loop; native events
@@ -703,10 +695,6 @@
 			const p = conduitParticles[i];
 			if (!el || !p) return;
 			const isWhite = p.colorTag === 'white';
-			/* White particles cross the elbow exit at ~12% of cycle
-			   under the white-only keyframe; fire the ignition flare
-			   when they're roughly mid-elbow (cycle 10%). */
-			const flareMs = isWhite ? p.flowDur * 1000 * 0.10 : 0;
 
 			function scheduleNext(e: AnimationEvent) {
 				/* Filter to the particle's FLOW animation only.
@@ -751,14 +739,6 @@
 						onParticleArrival?.();
 					}, arrivalMs),
 				);
-				/* White-only: microscopic ignition flare at the elbow. */
-				if (isWhite) {
-					timers.push(
-						setTimeout(() => {
-							flareKey++;
-						}, flareMs),
-					);
-				}
 			}
 
 			el.addEventListener('animationstart', scheduleNext);
@@ -938,19 +918,6 @@
 			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
 			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="1"   fill="none" />
 		</svg>
-
-		<!--
-			Microscopic ignition flare — fires when a white-hot particle
-			crosses the elbow corner. Positioned at the rail-top junction
-			(wrapper coords -19.5, 14), 12px diameter, screen-blended.
-			Each increment of flareKey remounts via the {#key} block,
-			restarting the ~120ms one-shot animation. No-op when the
-			branch has no whites (flareKey stays 0). -->
-		{#key flareKey}
-			{#if flareKey > 0}
-				<span class="elbow-flare" aria-hidden="true"></span>
-			{/if}
-		{/key}
 
 		<!--
 			Conduit signal traffic — small pulses flowing UPWARD through
