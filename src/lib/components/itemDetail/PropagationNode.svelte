@@ -510,10 +510,24 @@
 				}
 			}
 
+			/* Orbit amplitude expresses branch-state personality without
+			   any new visual layer: tighter on alive (calm hugging the
+			   conduit), progressively wider as energy climbs, widest on
+			   peak. Per-particle random magnitude within each band gives
+			   the swarm slight variation; signed sign-bit randomises
+			   orbit handedness particle-by-particle. White-hots in peak
+			   get a slightly higher ceiling than the surrounding amber
+			   so they read as the most overloaded. */
 			const ampSign = r(i * 7 + 3) > 0.5 ? 1 : -1;
-			const helixAmp = effectiveActivity === 'alive'
-				? ampSign * (1.5 + r(i * 17 + 1) * 1.3)   /* ±1.5–2.8px */
-				: ampSign * (2.3 + r(i * 17 + 1) * 2.2);   /* ±2.3–4.5px */
+			const ampRand = r(i * 17 + 1);
+			const ampMagnitude =
+				colorTag === 'white'                          ? 3.2 + ampRand * 0.6  /* ±3.2–3.8 px */ :
+				effectiveActivity === 'peak-accelerating'     ? 3.0 + ampRand * 0.6  /* ±3.0–3.6 px */ :
+				effectiveActivity === 'strong-accelerating'   ? 2.6 + ampRand * 0.4  /* ±2.6–3.0 px */ :
+				effectiveActivity === 'accelerating'          ? 2.0 + ampRand * 0.4  /* ±2.0–2.4 px */ :
+				effectiveActivity === 'alive'                 ? 1.4 + ampRand * 0.4  /* ±1.4–1.8 px */ :
+				                                                 0;                  /* dead — no orbit */
+			const helixAmp = ampSign * ampMagnitude;
 			const helixDur = effectiveActivity === 'alive'
 				? 0.55 + r(i * 23 + 1) * 0.30              /* 0.55–0.85s */
 				: 0.36 + r(i * 23 + 1) * 0.22;             /* 0.36–0.58s */
