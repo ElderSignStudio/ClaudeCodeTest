@@ -721,6 +721,247 @@
   transform: translateY(0);
 }
 
+/* ─── Thermal trail ──────────────────────────────────────────
+
+   A short directional wake behind each particle. Causally tied to
+   the particle's position because it is a CHILD of the particle
+   wrapper — the wrapper's `offset-path` animation positions both
+   head and trail; `offset-rotate: auto` aligns the trail with the
+   path tangent so "behind" in the wrapper's local -X frame
+   resolves to "behind in path direction" at every point along the
+   curve. The trail bends through the elbow with the particle.
+
+   Gradient: brightest at the right edge (current particle
+   position, freshly deposited) fading to transparent at the left
+   (older, decayed). Combined with the wrapper's
+   `mix-blend-mode: screen`, this lifts the dark conduit
+   underneath only in the small strip the particle just traversed
+   — the visible thermal wake.
+
+   Depth illusion sync: the head perpendicular-oscillates via
+   `conduit-orbit` (translateY +amp / 0 / -amp / 0 over one
+   `--helix-dur`). The brain reads that as the head spiralling
+   around the conduit — sometimes in front, sometimes behind. A
+   flat-opacity trail would contradict that read because the
+   illumination would appear constant even when the head is
+   "occluded." So the trail runs `conduit-trail-depth` in lockstep
+   with the head's orbit (same `--helix-dur`, same `--helix-delay`,
+   same ease-in-out): opacity is max at the orbit's +amp extreme
+   (head in front), drops near zero at -amp (head behind),
+   intermediate at centerline crossings. The result reads as
+   current flowing through infrastructure that the head sometimes
+   occludes — not a comet tail layered above the conduit.
+
+   Zero JS, zero filter recompiles, zero per-frame DOM writes. The
+   particle's existing offset-path animation drives position; the
+   helix vars drive depth phase. */
+.conduit-trail {
+  position: absolute;
+  /* Anchor right edge AT the wrapper origin (= particle/head
+     centre). Extend leftward into local -X. */
+  top: -0.5px;
+  left: calc(-14px * var(--trail-scale, 1));
+  width: calc(14px * var(--trail-scale, 1));
+  height: 1px;
+  pointer-events: none;
+  border-radius: 999px;
+  /* Amber/warm-tier default. Bright zone compressed toward the
+     right (just behind the particle) so the wake reads as a brief
+     illuminated SEGMENT of the conduit rather than a long comet
+     tail. The 0–60% range stays near-transparent — the eye
+     perceives the trail as a filament that briefly glowed where
+     the particle just was. */
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in oklab, currentColor 14%, transparent) 65%,
+    color-mix(in oklab, currentColor 52%, transparent) 100%
+  );
+  filter: blur(0.35px);
+  /* Base opacity; the depth-phase animation overrides during
+     the helix cycle. `--max-opacity` is already per-particle. */
+  opacity: var(--max-opacity, 1);
+}
+
+/* Cyan/alive trails are barely perceptible — they suggest low-level
+   current without producing distinct visible events. Amber/peak
+   should dominate the visual hierarchy. */
+.conduit-slow .conduit-trail {
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in oklab, currentColor 5%, transparent) 70%,
+    color-mix(in oklab, currentColor 16%, transparent) 100%
+  );
+}
+
+/* White-hot anchors — thinner and slightly shorter than before so
+   they read as ENERGIZED WIRE rather than spark. Gradient still
+   dramatic; peak brightness pulled back slightly so the highlight
+   merges into the particle head's halo rather than reading as a
+   second bright object. */
+.conduit-particle-white .conduit-trail {
+  top: -0.7px;
+  left: calc(-18px * var(--trail-scale, 1));
+  width: calc(18px * var(--trail-scale, 1));
+  height: 1.4px;
+  background: linear-gradient(
+    to right,
+    transparent 0%,
+    color-mix(in oklab, currentColor 30%, transparent) 50%,
+    color-mix(in oklab, currentColor 76%, transparent) 100%
+  );
+  filter: blur(0.4px);
+}
+
+/* ─── Conduit bloom ──────────────────────────────────────────
+
+   Soft radial glow centered on the wrapper origin — i.e. the path
+   point, the conduit's centerline. The bloom does NOT follow the
+   head's helix orbit (the head moves perpendicular to the path
+   via translateY in `conduit-orbit`; the wrapper stays AT the
+   path). So as the head spirals around, the bloom remains on the
+   conduit material, reading as the conduit briefly waking up
+   under the moving energy.
+
+   Wider than the conduit's painted width (~3.5 px) but very soft,
+   so it lifts the conduit material in a halo rather than appearing
+   as a distinct object. mix-blend-mode: screen is inherited from
+   the parent .conduit-particle wrapper, so the bloom additively
+   brightens whatever conduit material is underneath.
+
+   State hierarchy:
+     cyan/alive : tiny, extremely soft — subliminal current
+     amber      : moderate, visibly warm — flow legible
+     white-hot  : large, dramatic — the conduit is on fire here
+
+   Depth-synced via the existing `conduit-trail-depth*` animations,
+   so when the head is at -amp (perceived "behind"), the bloom
+   fades together with the trail. The conduit then reads as briefly
+   dark — current is occluded by the head/conduit relationship. */
+.conduit-bloom {
+  position: absolute;
+  /* Centred on the wrapper origin (= path point). The wrapper has
+     `offset-rotate: auto`, so the box's long axis (width / local X)
+     automatically aligns with the path tangent — the bloom reads
+     as a short illuminated SEGMENT of cable rather than a free-
+     floating orb. */
+  top: -1.75px;
+  left: -10px;
+  width: 20px;
+  height: 3.5px;
+  pointer-events: none;
+  border-radius: 50%;
+  /* Plateau-shaped radial gradient: a uniform soft zone in the
+     centre (0%–25%) rather than a peak, so the eye reads a HEATED
+     SEGMENT instead of a glowing dot. The first two stops are
+     nearly the same alpha so brightness doesn't spike at the
+     centre — it just IS the segment, then fades. */
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklab, currentColor 26%, transparent) 0%,
+    color-mix(in oklab, currentColor 25%, transparent) 25%,
+    color-mix(in oklab, currentColor 12%, transparent) 60%,
+    transparent 100%
+  );
+  /* Base opacity; depth-phase animation overrides during cycles. */
+  opacity: var(--max-opacity, 1);
+}
+
+/* Cyan/alive bloom — barely there. Suggests current rather than
+   producing visible events. */
+.conduit-slow .conduit-bloom {
+  top: -1px;
+  left: -6.5px;
+  width: 13px;
+  height: 2px;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklab, currentColor 9%, transparent) 0%,
+    color-mix(in oklab, currentColor 8%, transparent) 30%,
+    color-mix(in oklab, currentColor 3%, transparent) 70%,
+    transparent 100%
+  );
+}
+
+/* White-hot bloom — long, narrow, bright. Plateau-shaped so the
+   conduit reads as a clearly heated SEGMENT without a single
+   focal bright dot. Stays dramatic via the high plateau alpha
+   and the slow outer falloff. */
+.conduit-particle-white .conduit-bloom {
+  top: -2.25px;
+  left: -13px;
+  width: 26px;
+  height: 4.5px;
+  background: radial-gradient(
+    ellipse at center,
+    color-mix(in oklab, currentColor 48%, transparent) 0%,
+    color-mix(in oklab, currentColor 46%, transparent) 28%,
+    color-mix(in oklab, currentColor 22%, transparent) 60%,
+    transparent 100%
+  );
+}
+
+/* Depth-phase opacity. Runs in lockstep with `conduit-orbit` via
+   identical --helix-dur / --helix-delay vars, so phase 25% (head
+   at +amp, perceived "in front") = trail peak; phase 72–80%
+   (head near -amp, perceived "behind") = trail at trough.
+
+   The dim region is intentionally a PLATEAU (72%–80%) rather than
+   a single 75% sample so the trail visibly DWELLS in the faded
+   state for a perceptible moment rather than flickering through
+   it. Intermediate keyframes on the descent (35/50/60) and the
+   ascent (88/100/15) draw out the fade-out and fade-in so the
+   transition reads as gradual rather than a quick valley. */
+@keyframes conduit-trail-depth {
+  0%   { opacity: calc(var(--max-opacity, 1) * 0.45); }
+  15%  { opacity: calc(var(--max-opacity, 1) * 0.80); }
+  25%  { opacity: calc(var(--max-opacity, 1) * 1.00); }
+  35%  { opacity: calc(var(--max-opacity, 1) * 0.80); }
+  50%  { opacity: calc(var(--max-opacity, 1) * 0.45); }
+  60%  { opacity: calc(var(--max-opacity, 1) * 0.20); }
+  72%  { opacity: calc(var(--max-opacity, 1) * 0.06); }
+  80%  { opacity: calc(var(--max-opacity, 1) * 0.06); }
+  88%  { opacity: calc(var(--max-opacity, 1) * 0.20); }
+  100% { opacity: calc(var(--max-opacity, 1) * 0.45); }
+}
+
+/* Whites stay more visible at the "behind" extreme because the
+   incandescent material is harder to fully occlude in the mental
+   model — keeps them dramatic per the user's preference. Same
+   plateau shape so the fade is perceptibly gradual; trough higher
+   than non-white. */
+@keyframes conduit-trail-depth-white {
+  0%   { opacity: calc(var(--max-opacity, 1) * 0.60); }
+  15%  { opacity: calc(var(--max-opacity, 1) * 0.88); }
+  25%  { opacity: calc(var(--max-opacity, 1) * 1.00); }
+  35%  { opacity: calc(var(--max-opacity, 1) * 0.88); }
+  50%  { opacity: calc(var(--max-opacity, 1) * 0.58); }
+  60%  { opacity: calc(var(--max-opacity, 1) * 0.30); }
+  72%  { opacity: calc(var(--max-opacity, 1) * 0.14); }
+  80%  { opacity: calc(var(--max-opacity, 1) * 0.14); }
+  88%  { opacity: calc(var(--max-opacity, 1) * 0.30); }
+  100% { opacity: calc(var(--max-opacity, 1) * 0.60); }
+}
+
+/* Bind the depth animation to the same helix timing the head
+   uses. Selectors mirror `.conduit-slow .conduit-head` /
+   `.conduit-fast .conduit-head` rules so trail/bloom and head
+   animate in phase. Bloom and trail share the same keyframes so
+   they fade together. */
+.conduit-slow .conduit-trail,
+.conduit-slow .conduit-bloom {
+  animation: conduit-trail-depth var(--helix-dur, 0.55s) ease-in-out var(--helix-delay, 0s) infinite;
+}
+.conduit-fast .conduit-trail,
+.conduit-fast .conduit-bloom {
+  animation: conduit-trail-depth var(--helix-dur, 0.38s) ease-in-out var(--helix-delay, 0s) infinite;
+}
+.conduit-particle-white .conduit-trail,
+.conduit-particle-white .conduit-bloom {
+  animation: conduit-trail-depth-white var(--helix-dur, 0.38s) ease-in-out var(--helix-delay, 0s) infinite;
+}
+
 /* Conduit glow. Applied to the rail span (1px filled rect) and the
    elbow span (border-bottom-left rounded corner). drop-shadow
    respects the actual painted pixels — for the elbow this means
@@ -1254,6 +1495,11 @@
   .conduit-particle,
   .conduit-head { animation: none !important; }
   .conduit-particle { opacity: 0; }
+  /* Trail and bloom are children of .conduit-particle; the parent's
+     opacity:0 already hides them, but cap visibility explicitly so
+     they never paint. */
+  .conduit-trail,
+  .conduit-bloom { opacity: 0 !important; }
   /* Keep the static glow muted under reduced motion. */
   .conduit-glow-soft   { filter: drop-shadow(0 0 2px currentColor); }
   .conduit-glow-strong { filter: drop-shadow(0 0 3px currentColor); }

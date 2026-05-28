@@ -939,6 +939,23 @@
 				style="color: {p.color}; --flow-delay: {p.flowDelay.toFixed(3)}s; --flow-dur: {p.flowDur.toFixed(3)}s; --helix-amp: {p.helixAmp.toFixed(2)}px; --helix-delay: {p.helixDelay.toFixed(3)}s; --helix-dur: {p.helixDur.toFixed(3)}s; --max-opacity: {p.maxOpacity.toFixed(2)}; --trail-scale: {p.trailScale.toFixed(2)}; --particle-size: {p.particleSize.toFixed(2)}px; --head-glow: {p.headGlow.toFixed(2)}px; --head-radius: {p.headRadius}; --halo-spread: {p.haloSpread.toFixed(2)};"
 				aria-hidden="true"
 			>
+				<!-- Conduit bloom: a soft radial glow centered on the
+				     wrapper origin (= the path point). Stays anchored on
+				     the conduit centerline even when the head orbits off
+				     to ±helix-amp, so it reads as the conduit ITSELF
+				     briefly blooming where the current is — not as a
+				     halo attached to the moving head. Depth-synced via
+				     the same animation the trail uses. -->
+				<span class="conduit-bloom"></span>
+				<!-- Thermal trail: extends BEHIND the head in the wrapper's
+				     local -X direction. Because the wrapper has
+				     `offset-rotate: auto`, the trail's local "behind"
+				     resolves to "behind in path direction" at every point
+				     along the rail+elbow — so the wake correctly bends
+				     through the elbow with the particle. Pure CSS;
+				     position is driven entirely by the particle's
+				     existing `offset-path` animation. -->
+				<span class="conduit-trail"></span>
 				<span class="conduit-head"></span>
 			</div>
 		{/each}
