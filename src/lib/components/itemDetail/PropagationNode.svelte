@@ -583,29 +583,51 @@
 
 	   When a child's conduit particle reaches the spatial-clip boundary
 	   (i.e. visually arrives at THIS node's avatar), the child calls
-	   `onChildParticleArrival`, which increments `resonanceKey`. The
-	   {#key} block in the avatar template remounts the .resonance-flash
-	   element, restarting its 400ms one-shot CSS animation — a soft
-	   warm halo bloom that fades back to baseline.
+	   `onChildParticleArrival`, which pushes a new flash entry onto a
+	   queue. Each entry renders its OWN .resonance-flash <span> via the
+	   {#each} block in the avatar template, so multiple closely-spaced
+	   arrivals each play their own 400-ms one-shot animation and
+	   overlap visually.
 
-	   The 350ms debounce keeps closely-spaced arrivals from re-triggering
-	   the flash mid-animation; the halo can re-fire as soon as the
-	   previous one is mostly complete. Without this the warm node would
-	   look like a continuous pulse instead of discrete reception events. */
-	let resonanceKey = $state(0);
-	let lastResonanceTime = 0;
+	   This replaces the earlier debounced single-flash model — that
+	   approach dropped most arrivals when a peak parent received ~7-8
+	   per second from its subtree, which made the halo look like it
+	   was blinking unrelated to particles. With the queue, every
+	   arrival becomes a flash; the user's expectation of "one particle
+	   = one blink" holds at every density. */
+	type FlashEntry = { id: number };
+	let resonanceFlashes: FlashEntry[] = $state([]);
+	let nextFlashId = 0;
+	const FLASH_TTL_MS = 600;
+	const MAX_CONCURRENT_FLASHES = 4;
 	function onChildParticleArrival() {
-		const now =
-			typeof performance !== 'undefined' ? performance.now() : Date.now();
-		if (now - lastResonanceTime < 350) return;
-		lastResonanceTime = now;
-		resonanceKey++;
+		const id = nextFlashId++;
+		/* Cap concurrent flashes per node — keeps the DOM cheap even
+		   if a peak parent receives a burst of simultaneous arrivals.
+		   Older entries get evicted so the newest arrivals are always
+		   represented. */
+		let next = [...resonanceFlashes, { id }];
+		if (next.length > MAX_CONCURRENT_FLASHES) {
+			next = next.slice(-MAX_CONCURRENT_FLASHES);
+		}
+		resonanceFlashes = next;
+		setTimeout(() => {
+			resonanceFlashes = resonanceFlashes.filter((f) => f.id !== id);
+		}, FLASH_TTL_MS);
 	}
 
 	/* Particle element refs — populated by bind:this on the conduit
 	   particle divs. The arrival-scheduling effect below reads these
 	   to attach animation listeners and schedule per-cycle timers. */
 	let particleEls: HTMLDivElement[] = $state([]);
+
+	/* Ref to THIS node's outer <div class="relative">. Used by the
+	   arrival-timing math below to read offsetTop within the parent's
+	   children container — that's how deep this sibling sits in its
+	   parent's vertical stack, which determines the offset-distance
+	   along the path at which the particle gets clipped (its visual
+	   arrival at the parent). */
+	let wrapperEl: HTMLDivElement | null = $state(null);
 
 	/* Microscopic ignition flare — fires once each time a white-hot
 	   particle crosses the elbow/intersection in this branch's conduit.
@@ -640,17 +662,89 @@
 		const timers: ReturnType<typeof setTimeout>[] = [];
 		const cleanups: Array<() => void> = [];
 
+		/* ── Arrival-timing geometry ─────────────────────────────
+		   The particle clips (visually arrives at the parent) at a
+		   path offset that depends on how far this sibling sits below
+		   its parent's row. We compute the clip-offset fraction here
+		   so resonance fires when the particle ACTUALLY arrives, not
+		   at a fixed-ratio approximation.
+
+		   The offset-path is:
+		     M 35 22 C 12.5 22 -19.5 22 -19.5 14   (Bezier, ~70 px arc)
+		     L -19.5 -500                            (rail, 514 px)
+		   Total ≈ 584 px.
+
+		   In this child's wrapper coords, the clip plane is at
+		     child_y = -(wrapper.offsetTop + clipMargin)
+		   where wrapper.offsetTop is this child's vertical position
+		   within its parent's children container (= 0 for the first
+		   sibling, ~one row-height for the second, etc.) and
+		   clipMargin = 10 px (set on the children container).
+
+		   The distance along the path from start (35, 22) to that
+		   clip point lies entirely on the straight portion:
+		     offsetPx = bezier_len + (14 - clip_y)
+		              = 70 + 14 + offsetTop + 10
+		              = 94 + offsetTop
+		   ...so the clip-offset fraction is (94 + offsetTop) / 584.
+
+		   Then we map that offset fraction to a CYCLE fraction using
+		   each animation's offset→cycle progression:
+		     conduit-flow-slow (alive):       cycle 0-48% ⇒ offset 0-100% linear
+		     conduit-flow-fast (warm-tier):   cycle 0-58% ⇒ offset 0-100% linear
+		     conduit-flow-fast-white (peak):  cycle 0-12% ⇒ offset 0-12%
+		                                       cycle 12-78% ⇒ offset 12-100%
+		   so the elbow-slowdown is honoured for whites too. */
+		const PATH_TOTAL_PX     = 584;
+		const PATH_TO_RAIL_TOP  = 84;  /* bezier_len (70) + rail-top y (14) */
+		const CLIP_MARGIN_PX    = 10;
+
 		particleEls.forEach((el, i) => {
 			const p = conduitParticles[i];
 			if (!el || !p) return;
-			const arrivalMs = p.flowDur * 1000 * 0.18;
 			const isWhite = p.colorTag === 'white';
 			/* White particles cross the elbow exit at ~12% of cycle
 			   under the white-only keyframe; fire the ignition flare
 			   when they're roughly mid-elbow (cycle 10%). */
 			const flareMs = isWhite ? p.flowDur * 1000 * 0.10 : 0;
 
-			function scheduleNext() {
+			function scheduleNext(e: AnimationEvent) {
+				/* Filter to the particle's FLOW animation only.
+				   animationstart and animationiteration BUBBLE per the
+				   CSS Animations spec, so without this guard the inner
+				   .conduit-head's `conduit-orbit` (helix wobble at
+				   0.36-0.85 s cycle) would also fire scheduleNext —
+				   causing the parent halo to resonate on every helix
+				   oscillation rather than on actual particle arrivals. */
+				const name = e.animationName;
+				if (
+					name !== 'conduit-flow-slow' &&
+					name !== 'conduit-flow-fast' &&
+					name !== 'conduit-flow-fast-white'
+				) return;
+
+				/* Read offsetTop fresh on every iteration — if a sibling
+				   above us got collapsed/expanded, our position in the
+				   container will have changed. */
+				const offsetTop = wrapperEl?.offsetTop ?? 0;
+				const clipOffsetPx = PATH_TO_RAIL_TOP + offsetTop + CLIP_MARGIN_PX;
+				const clipOffsetFraction = Math.min(1, clipOffsetPx / PATH_TOTAL_PX);
+				const clipOffsetPct = clipOffsetFraction * 100;
+
+				let arrivalCycleFraction: number;
+				if (isWhite) {
+					if (clipOffsetPct <= 12) {
+						arrivalCycleFraction = clipOffsetPct / 100;
+					} else {
+						arrivalCycleFraction = (12 + (clipOffsetPct - 12) * 66 / 88) / 100;
+					}
+				} else {
+					const visibleCycleFraction = effectiveActivity === 'alive' ? 0.48 : 0.58;
+					arrivalCycleFraction = clipOffsetFraction * visibleCycleFraction;
+				}
+
+				const arrivalMs = p.flowDur * 1000 * arrivalCycleFraction;
+
 				/* Parent halo resonance fires at the arrival moment. */
 				timers.push(
 					setTimeout(() => {
@@ -711,7 +805,7 @@
 	}
 </script>
 
-<div class="relative">
+<div class="relative" bind:this={wrapperEl}>
 	<!--
 		Parent → child connector. Two segments drawn INSIDE this node's
 		wrapper at x = -20px (the parent children container's pl-5):
@@ -963,31 +1057,30 @@
 				<span class="sa-ripple" aria-hidden="true"></span>
 			{/if}
 
-			<!-- Arrival resonance: a soft bloom that fires once per
-			     child-particle arrival via the {#key} remount trick.
-			     Dead branches stay inert. Variants scale with state:
+			<!-- Arrival resonance — one .resonance-flash span per queued
+			     entry, so each child-particle arrival plays its own
+			     400-ms bloom independently. Dead branches stay inert.
+			     Variants scale with branch state:
 			       alive   → quiet cool bloom (cyan, very subtle)
-			       accel   → warm amber bloom (current baseline)
+			       accel   → warm amber bloom
 			       strong  → brighter warm amber bloom
 			       peak    → near-white warm bloom, occasional ignition feel -->
 			{#if !user.isPreviewNode && effectiveActivity && effectiveActivity !== 'dead'}
-				{#key resonanceKey}
-					{#if resonanceKey > 0}
-						<span
-							class={[
-								'resonance-flash',
-								effectiveActivity === 'peak-accelerating'
-									? 'resonance-peak'
-									: effectiveActivity === 'strong-accelerating'
-										? 'resonance-strong'
-										: effectiveActivity === 'accelerating'
-											? 'resonance-warm'
-											: 'resonance-cool',
-							]}
-							aria-hidden="true"
-						></span>
-					{/if}
-				{/key}
+				{#each resonanceFlashes as flash (flash.id)}
+					<span
+						class={[
+							'resonance-flash',
+							effectiveActivity === 'peak-accelerating'
+								? 'resonance-peak'
+								: effectiveActivity === 'strong-accelerating'
+									? 'resonance-strong'
+									: effectiveActivity === 'accelerating'
+										? 'resonance-warm'
+										: 'resonance-cool',
+						]}
+						aria-hidden="true"
+					></span>
+				{/each}
 			{/if}
 			<div
 				class={[
