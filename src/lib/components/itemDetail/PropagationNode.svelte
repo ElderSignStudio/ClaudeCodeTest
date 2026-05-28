@@ -1210,6 +1210,48 @@
 	{/if}
 
 	<!--
+		Conduit-entry flashes + inner conductive filaments. Same queue
+		as the avatar resonance — one of each per arrival — rendered as
+		a vertical strip on the trunk just below this node's row.
+
+		The flash gives the wider, softer presence of energised conduit
+		material. The filament — a sibling (not nested) so the flash's
+		blur doesn't compound onto it — reads as the sharper conductive
+		core, anchored at the top of the strip where the conduit meets
+		the node. Together they read as "compressed pressure feeding
+		into a relay", not "light projected behind an avatar". -->
+	{#if hasVisibleChildren && expanded && effectiveActivity && effectiveActivity !== 'dead'}
+		{#each resonanceFlashes as flash (flash.id)}
+			<span
+				class={[
+					'conduit-entry-flash',
+					effectiveActivity === 'peak-accelerating'
+						? 'conduit-entry-peak'
+						: effectiveActivity === 'strong-accelerating'
+							? 'conduit-entry-strong'
+							: effectiveActivity === 'accelerating'
+								? 'conduit-entry-warm'
+								: 'conduit-entry-cool',
+				]}
+				aria-hidden="true"
+			></span>
+			<span
+				class={[
+					'conduit-entry-filament',
+					effectiveActivity === 'peak-accelerating'
+						? 'conduit-entry-filament-peak'
+						: effectiveActivity === 'strong-accelerating'
+							? 'conduit-entry-filament-strong'
+							: effectiveActivity === 'accelerating'
+								? 'conduit-entry-filament-warm'
+								: 'conduit-entry-filament-cool',
+				]}
+				aria-hidden="true"
+			></span>
+		{/each}
+	{/if}
+
+	<!--
 		Children — recursive — only when expanded. A single neutral border on
 		the children container acts as the tree connector rail. No per-edge
 		semantics; this keeps the tree's structural lines while letting node

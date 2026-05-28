@@ -1028,18 +1028,38 @@
    rather than scale as a UI control. Warm and cool variants share the
    same shape; only the radial gradient color differs.
 */
+/* Default attack profile — quick attack (25% of duration) then long
+   smooth decay. Used by alive / accelerating / strong variants. Peak
+   gets its own sharper-attack keyframe below. */
 @keyframes resonance-flash {
   0%   { opacity: 0;    transform: scale(0.94); }
   25%  { opacity: 1;    transform: scale(1.02); }
   100% { opacity: 0;    transform: scale(1.04); }
 }
+
+/* Peak-specific attack — ultra-short overexposed ignition (peaks
+   around 70 ms regardless of total duration) followed by a longer
+   warm-decay tail. The fast attack reads as an electrical strike;
+   the extended tail reads as residual radiation entering the node. */
+@keyframes resonance-peak-flash {
+  0%   { opacity: 0;    transform: scale(0.85); }
+  13%  { opacity: 1;    transform: scale(1.00); }  /* ~70 ms attack in 520 ms */
+  35%  { opacity: 0.55; transform: scale(1.04); }  /* electrical strike done */
+  100% { opacity: 0;    transform: scale(1.10); }  /* residual radiation faded */
+}
+
 .resonance-flash {
   position: absolute;
   inset: -3px;
   border-radius: 50%;
   pointer-events: none;
+  /* Radial centre biased downward (60% from top) so the brightest
+     part of the halo sits on the INCOMING-conduit side of the node.
+     The trunk feeds the avatar from below, so reading the bloom as
+     "fed from below" makes the impact feel causal rather than
+     decorative. ~10% asymmetric bias — felt, not seen. */
   background: radial-gradient(
-    circle,
+    circle at 50% 60%,
     color-mix(in srgb, var(--resonance-color, oklch(0.78 0.16 60)) 24%, transparent) 0%,
     transparent 62%
   );
@@ -1086,40 +1106,181 @@
   /* Alive branches resonate much more faintly than accelerating ones —
      a quiet "signal received" rather than an energetic bloom. */
   opacity: 0;
-  animation-duration: 0.55s;
+  animation-duration: 0.50s;
   background: radial-gradient(
-    circle,
+    circle at 50% 60%,
     color-mix(in srgb, var(--resonance-color) 14%, transparent) 0%,
     transparent 60%
   );
 }
 
 /* Strong-accelerating: brighter warm bloom, slightly larger reach.
-   Reads as a more confident impulse than baseline accelerating. */
+   Decay extended (0.45 → 0.48s) so the impulse feels more weighted
+   than baseline accelerating without changing attack speed. */
 .resonance-strong {
   --resonance-color: oklch(0.80 0.17 60);
   inset: -4px;
   background: radial-gradient(
-    circle,
+    circle at 50% 60%,
     color-mix(in srgb, var(--resonance-color) 32%, transparent) 0%,
     transparent 65%
   );
-  animation-duration: 0.45s;
+  animation-duration: 0.48s;
 }
 
-/* Peak-accelerating: near-white center with warm bleed — reads as
-   an ignition rather than a soft glow. Quickest decay so closely
-   spaced arrivals stack into a "firing" feel rather than mush. */
+/* Peak-accelerating: incandescent peach/gold center reading as
+   physical heat rather than neutral white — pure white tended to
+   visually merge with the cyan halo language already present.
+   Uses the resonance-peak-flash keyframe (above) for an ultra-short
+   electrical-strike attack, then a longer warm decay tail (total
+   0.52s vs the previous 0.40s) so peak feels consequential and
+   weighty without losing snap. */
 .resonance-peak {
-  --resonance-color: oklch(0.92 0.10 65);
   inset: -5px;
   background: radial-gradient(
-    circle,
-    color-mix(in srgb, var(--resonance-color) 42%, transparent) 0%,
-    color-mix(in srgb, oklch(0.80 0.16 60) 22%, transparent) 38%,
-    transparent 70%
+    circle at 50% 60%,
+    oklch(0.985 0.005 75 / 0.55) 0%,    /* near-white hot spike */
+    oklch(0.92 0.05 70 / 0.38) 22%,      /* incandescent peach/gold */
+    oklch(0.82 0.14 60 / 0.22) 48%,      /* warm amber bleed */
+    transparent 72%
   );
-  animation-duration: 0.40s;
+  animation-name: resonance-peak-flash;
+  animation-duration: 0.52s;
+}
+
+/* ─── Conduit-entry flash ─────────────────────────────────────
+   Companion to the avatar resonance: when a particle arrives, the
+   LAST ~32 px of the incoming conduit segment briefly energises,
+   so the user reads "energy traveled through the conduit and
+   entered the node" instead of "the node blinked".
+
+   Positioned in the parent's wrapper, just below the row, centred
+   on the trunk's x coordinate. The linear gradient is heavily
+   concentrated in the TOP ~30-40% of the strip and decays fast
+   toward the bottom, so the brightening reads as a SHORT energised
+   conduit segment right at the entry point — not a vertical light
+   pillar behind the node.
+
+   Sub-quarter-second total duration, fast attack (~40 ms),
+   opacity-only animation, light blur. No filter recalc cost. */
+@keyframes conduit-entry-flash {
+  0%   { opacity: 0; }
+  18%  { opacity: 1; }   /* ~40 ms attack in 220 ms */
+  100% { opacity: 0; }
+}
+.conduit-entry-flash {
+  position: absolute;
+  left: 36.5px;          /* trunk centerline 42.5 − half-width 6 */
+  top: 32px;             /* just below the parent row */
+  width: 12px;
+  height: 32px;          /* tightened from 52 — concentrated, not volumetric */
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    transparent 55%,                                                                       /* explicit nothing below mid-strip */
+    color-mix(in srgb, var(--entry-color, oklch(0.78 0.16 60)) 15%, transparent) 75%,
+    color-mix(in srgb, var(--entry-color, oklch(0.78 0.16 60)) 32%, transparent) 100%      /* mass at the entry point */
+  );
+  filter: blur(1.2px);   /* sharper, less atmospheric */
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: conduit-entry-flash 220ms ease-out 1 forwards;
+}
+.conduit-entry-cool   { --entry-color: oklch(0.66 0.16 250); }
+.conduit-entry-warm   { --entry-color: oklch(0.78 0.16 60); }
+/* Strong: slightly brighter top stop (15→18, 32→42) so strong reads
+   as "high-voltage" against accelerating's "active flow" — without
+   adding noise below mid-strip. */
+.conduit-entry-strong {
+  --entry-color: oklch(0.80 0.17 60);
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    transparent 55%,
+    color-mix(in srgb, var(--entry-color) 18%, transparent) 75%,
+    color-mix(in srgb, var(--entry-color) 42%, transparent) 100%
+  );
+}
+/* Peak: keep its full intensity, just compress the gradient mass
+   upward in line with the new tightened geometry. The pale-
+   incandescent hot tip at the top mirrors the avatar resonance's
+   centre colour. */
+.conduit-entry-peak {
+  --entry-color: oklch(0.92 0.05 70);
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    transparent 50%,
+    oklch(0.92 0.05 70 / 0.30) 75%,
+    oklch(0.92 0.05 70 / 0.55) 92%,
+    oklch(0.985 0.005 75 / 0.65) 100%
+  );
+}
+
+/* ─── Conduit-entry filament ──────────────────────────────────
+   Inner conductive core sitting INSIDE the existing conduit-entry
+   flash but rendered as a sibling (not a child) so the parent's
+   filter:blur doesn't compound onto it — the filament needs to read
+   sharper than the surrounding flash, like a heated copper core
+   inside an insulating sheath.
+
+   4 px wide × 5 px tall, anchored at the top of the flash strip
+   (right where the conduit meets the node). Light 0.5 px blur so
+   it has presence without being a hard pixel-edged line. Reuses
+   the same `conduit-entry-flash` keyframe so it attacks and decays
+   in lockstep with its parent strip. */
+.conduit-entry-filament {
+  position: absolute;
+  left: 40.5px;          /* trunk centerline 42.5 − half-width 2 */
+  top: 32px;             /* aligned with parent flash top */
+  width: 4px;
+  height: 5px;
+  border-radius: 1.5px;
+  filter: blur(0.5px);
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: conduit-entry-flash 220ms ease-out 1 forwards;
+  /* Default warm filament; per-state variants override below. */
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    oklch(0.78 0.16 60 / 0.55) 100%
+  );
+}
+/* Alive — soft indigo filament, very restrained */
+.conduit-entry-filament-cool {
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    oklch(0.66 0.16 250 / 0.42) 100%
+  );
+}
+/* Accelerating — slightly brighter than baseline warm */
+.conduit-entry-filament-warm {
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    oklch(0.78 0.16 60 / 0.58) 100%
+  );
+}
+/* Strong — denser amber, reads as higher voltage */
+.conduit-entry-filament-strong {
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    oklch(0.80 0.17 60 / 0.72) 100%
+  );
+}
+/* Peak — pale incandescent body capped by a near-white tip at the
+   node-conduit junction, mirroring the avatar resonance's hot core */
+.conduit-entry-filament-peak {
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    oklch(0.92 0.05 70 / 0.60) 55%,
+    oklch(0.985 0.005 75 / 0.80) 100%
+  );
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1136,6 +1297,8 @@
   .conduit-aura-strong,
   .conduit-aura-peak     { filter: none; }
   .resonance-flash       { animation: none !important; opacity: 0; }
+  .conduit-entry-flash,
+  .conduit-entry-filament { animation: none !important; opacity: 0; }
   .elbow-flare           { animation: none !important; opacity: 0; }
 }
 
