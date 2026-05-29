@@ -658,7 +658,16 @@
      container's overflow-clip then becomes the SPATIAL death point —
      particles die because they reached the visual boundary at the
      parent's avatar circumference, not because time elapsed. */
-  offset-path: path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 -500');
+  /* Offset-path is sized at runtime by the root PropagationNode
+     (depth 0) — it measures the deepest descendant's offsetTop on
+     mount via ResizeObserver, computes the path length needed to
+     reach every conduit's clip plane, and writes the full path()
+     value to `--conduit-path` on the root element. CSS variable
+     inheritance carries it down to every particle. The fallback
+     below matches the 800-px baseline (offsetTop reach ≈706 px)
+     and is used only before the root measures or in tests that
+     render particles outside a measured tree. */
+  offset-path: var(--conduit-path, path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 -716'));
   offset-rotate: auto;
   offset-anchor: 50% 50%;
   offset-distance: 0%;
@@ -1084,19 +1093,28 @@
    Opacity still ramps in quickly (0%→3%) and drops out at the end of
    the visible portion so particles don't pop into existence or stall.
 */
+/* Visible fraction scaled from 0.48 → 0.66 in lockstep with the
+   path extension from 584 px → 800 px. velocity = path × VF /
+   cycle_dur stays constant (=221 px/s for alive). The opacity
+   only drops to 0 AFTER offset-distance reaches 100%; the
+   children container's `overflow: clip` absorbs particles
+   spatially as they reach the parent's row, well before the
+   keyframe's fade window. */
 @keyframes conduit-flow-slow {
   0%   { offset-distance: 0%;   opacity: 0; }
   3%   { opacity: var(--max-opacity, 0.85); }
-  48%  { offset-distance: 100%; opacity: var(--max-opacity, 0.85); }
-  50%  { offset-distance: 100%; opacity: 0; }
+  66%  { offset-distance: 100%; opacity: var(--max-opacity, 0.85); }
+  68%  { offset-distance: 100%; opacity: 0; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 
+/* Same VF rescale (0.58 → 0.80) for warm-tier. Velocity preserved
+   at ≈672 px/s. */
 @keyframes conduit-flow-fast {
   0%   { offset-distance: 0%;   opacity: 0; }
   3%   { opacity: var(--max-opacity, 0.95); }
-  58%  { offset-distance: 100%; opacity: var(--max-opacity, 0.95); }
-  60%  { offset-distance: 100%; opacity: 0; }
+  80%  { offset-distance: 100%; opacity: var(--max-opacity, 0.95); }
+  82%  { offset-distance: 100%; opacity: 0; }
   100% { offset-distance: 100%; opacity: 0; }
 }
 
@@ -1115,13 +1133,18 @@
        Movement is still LINEAR within each segment (no easing); the
        speed change is a clean step at the corner, applied only to
        white particles. */
+/* With path extended to 800 px, the bezier elbow (70 px) is now
+   8.75% of total path (was 12% when path was 584 px). Elbow speed
+   preserved at 171 px/s (cycle 0%-12% still covers the 70-px
+   elbow). Rail covers cycle 12%-98% (was 12%-78%), so rail speed
+   rises ≈9% (229 → 250 px/s) — acceptable for the deliberately
+   overcharged white character. */
 @keyframes conduit-flow-fast-white {
-  0%   { offset-distance: 0%;   opacity: 0; }
+  0%   { offset-distance: 0%;     opacity: 0; }
   3%   { opacity: var(--max-opacity, 0.95); }
-  12%  { offset-distance: 12%;  opacity: var(--max-opacity, 0.95); } /* end of elbow — slower segment */
-  78%  { offset-distance: 100%; opacity: var(--max-opacity, 0.95); }
-  80%  { offset-distance: 100%; opacity: 0; }
-  100% { offset-distance: 100%; opacity: 0; }
+  12%  { offset-distance: 8.75%;  opacity: var(--max-opacity, 0.95); } /* end of elbow — slower segment */
+  98%  { offset-distance: 100%;   opacity: var(--max-opacity, 0.95); }
+  100% { offset-distance: 100%;   opacity: 0; }
 }
 
 /*

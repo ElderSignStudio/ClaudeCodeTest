@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { getContext, setContext } from 'svelte';
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import type { PropagationUser, PreviewTarget, BranchActivityState } from '$lib/mock/propagation';
 	import { sortNodesByPropagation, computeBranchActivity } from '$lib/mock/propagation';
@@ -64,6 +65,43 @@
 		 *  visible ignition somewhere in the subtree. */
 		whiteAnchorId?: string | undefined;
 	} = $props();
+
+	/* ── Tree-scoped conduit-path config ────────────────────────
+	   The offset-path's length must reach every conduit's
+	   destination (parent's clip plane) in the tree. Instead of
+	   hardcoding a length that "happens to work" for the trees we
+	   know about, the root PropagationNode (depth 0) measures the
+	   deepest descendant's offsetTop after mount, computes the
+	   required path length, and exposes it via context so every
+	   descendant's scheduler uses the same value.
+
+	   `pathTotalPx` is the path's total length in pixels (bezier
+	   70 px + straight segment). `cycleScale` is the ratio between
+	   the measured path and the BASELINE_PATH_PX floor — applied
+	   to per-particle `flowDur` and base delays so velocity stays
+	   constant per state when the path extends beyond the floor.
+	   Trees that fit within the floor get cycleScale = 1 (no
+	   change to current visual character). */
+	type TreeConfig = { pathTotalPx: number; cycleScale: number };
+	const BASELINE_PATH_PX = 800;
+	const PATH_TO_RAIL_TOP = 84;
+	const CLIP_MARGIN_PX = 10;
+	const PATH_BUFFER_PX = 30;
+
+	/* `depth` is stable per instance — set once when the parent
+	   template instantiates this <Self> and never re-bound. Svelte 5
+	   flags reading it at script top-level as a reactivity hygiene
+	   warning even when the value can't actually change; the
+	   svelte-ignore below suppresses it for this specific read. */
+	let treeConfig: TreeConfig;
+	// svelte-ignore state_referenced_locally
+	if (depth === 0) {
+		const config = $state({ pathTotalPx: BASELINE_PATH_PX, cycleScale: 1 });
+		setContext('propagation:tree-config', config);
+		treeConfig = config;
+	} else {
+		treeConfig = getContext<TreeConfig>('propagation:tree-config');
+	}
 
 	/* Branch activity is computed ONCE at the origin (depth 0) and
 	   inherited by all descendants via `branchRootActivity`. This means
@@ -569,12 +607,21 @@
 				effectiveActivity === 'accelerating'        ? 0.12 :
 				effectiveActivity === 'alive'               ? 0.15 :
 				                                              0;
+			/* Cycle scale matches the runtime-measured path length to
+			   the BASELINE_PATH_PX (800). When the tree is deeper
+			   than baseline, both path AND cycle scale up together
+			   so velocity = path / (cycle × VF) stays constant. The
+			   cadence PATTERN (the relative position of each delay
+			   within its cycle) is preserved — only absolute time
+			   stretches. For trees within the baseline, cycleScale
+			   is 1 so nothing changes. */
+			const cycleScale = treeConfig.cycleScale;
 			return {
 				id: i,
 				color,
 				colorTag,
-				flowDelay: baseDelays[i] + r(i * 11 + 1) * jitterScale,
-				flowDur:   (cycleMin + r(i * 13 + 1) * (cycleMax - cycleMin)) * speedMultiplier,
+				flowDelay: (baseDelays[i] + r(i * 11 + 1) * jitterScale) * cycleScale,
+				flowDur:   (cycleMin + r(i * 13 + 1) * (cycleMax - cycleMin)) * speedMultiplier * cycleScale,
 				helixAmp,
 				helixDelay: -r(i * 19 + 1) * 0.35,
 				helixDur,
@@ -680,6 +727,45 @@
 	   arrival at the parent). */
 	let wrapperEl: HTMLDivElement | null = $state(null);
 
+	/* ── Root-only: measure the deepest descendant and size the
+	     offset-path to fit it. ResizeObserver re-measures when the
+	     tree expands/collapses so the path adapts to layout changes
+	     instead of relying on a static guess. */
+	$effect(() => {
+		if (depth !== 0 || !wrapperEl) return;
+		const rootEl = wrapperEl;
+
+		function measure() {
+			const particles = rootEl.querySelectorAll('.conduit-particle');
+			let maxOffsetTop = 0;
+			for (const p of particles) {
+				const w = (p as HTMLElement).parentElement as HTMLElement | null;
+				if (w) maxOffsetTop = Math.max(maxOffsetTop, w.offsetTop);
+			}
+			const neededPathPx = PATH_TO_RAIL_TOP + maxOffsetTop + CLIP_MARGIN_PX + PATH_BUFFER_PX;
+			const pathTotalPx = Math.max(BASELINE_PATH_PX, neededPathPx);
+			const endY = 14 - (pathTotalPx - 70);
+			const cycleScale = pathTotalPx / BASELINE_PATH_PX;
+			// Only update context if values actually changed — avoids
+			// re-triggering descendants' effects for no-op measurements.
+			if (
+				treeConfig.pathTotalPx !== pathTotalPx ||
+				treeConfig.cycleScale !== cycleScale
+			) {
+				treeConfig.pathTotalPx = pathTotalPx;
+				treeConfig.cycleScale = cycleScale;
+			}
+			rootEl.style.setProperty(
+				'--conduit-path',
+				`path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 ${endY}')`,
+			);
+		}
+
+		const observer = new ResizeObserver(measure);
+		observer.observe(rootEl);
+		return () => observer.disconnect();
+	});
+
 	/* Schedule arrival pings for THIS node's particles.
 
 	   The CSS particle animation is an infinite loop; native events
@@ -732,15 +818,19 @@
 		   ...so the clip-offset fraction is (94 + offsetTop) / 584.
 
 		   Then we map that offset fraction to a CYCLE fraction using
-		   each animation's offset→cycle progression:
-		     conduit-flow-slow (alive):       cycle 0-48% ⇒ offset 0-100% linear
-		     conduit-flow-fast (warm-tier):   cycle 0-58% ⇒ offset 0-100% linear
-		     conduit-flow-fast-white (peak):  cycle 0-12% ⇒ offset 0-12%
-		                                       cycle 12-78% ⇒ offset 12-100%
-		   so the elbow-slowdown is honoured for whites too. */
-		const PATH_TOTAL_PX     = 584;
-		const PATH_TO_RAIL_TOP  = 84;  /* bezier_len (70) + rail-top y (14) */
-		const CLIP_MARGIN_PX    = 10;
+		   each animation's offset→cycle progression (path length
+		   measured at runtime; baseline 800 px, with cycleScale
+		   adjusting per-tree if the measured tree needs more):
+		     conduit-flow-slow (alive):       cycle 0-66% ⇒ offset 0-100% linear
+		     conduit-flow-fast (warm-tier):   cycle 0-80% ⇒ offset 0-100% linear
+		     conduit-flow-fast-white (peak):  cycle 0-12%  ⇒ offset 0-(70/path×100)%
+		                                       cycle 12-98% ⇒ offset (70/path×100)-100%
+		   The elbow boundary is `70 / pathTotalPx × 100` % of path
+		   (the bezier is fixed at 70 px regardless of path length).
+		   Reading from the reactive `treeConfig` makes this effect
+		   re-run if the root re-measures (e.g. tree expanded). */
+		const PATH_TOTAL_PX           = treeConfig.pathTotalPx;
+		const WHITE_ELBOW_OFFSET_PCT  = (70 / PATH_TOTAL_PX) * 100;
 
 		particleEls.forEach((el, i) => {
 			const p = conduitParticles[i];
@@ -772,13 +862,20 @@
 
 				let arrivalCycleFraction: number;
 				if (isWhite) {
-					if (clipOffsetPct <= 12) {
-						arrivalCycleFraction = clipOffsetPct / 100;
+					/* White elbow: cycle 0-12% covers offset 0-8.75%.
+					   White rail:  cycle 12-98% covers offset 8.75-100%. */
+					if (clipOffsetPct <= WHITE_ELBOW_OFFSET_PCT) {
+						arrivalCycleFraction = (clipOffsetPct / WHITE_ELBOW_OFFSET_PCT) * 0.12;
 					} else {
-						arrivalCycleFraction = (12 + (clipOffsetPct - 12) * 66 / 88) / 100;
+						const railOffsetRange = 100 - WHITE_ELBOW_OFFSET_PCT;
+						arrivalCycleFraction =
+							0.12 + ((clipOffsetPct - WHITE_ELBOW_OFFSET_PCT) / railOffsetRange) * 0.86;
 					}
 				} else {
-					const visibleCycleFraction = effectiveActivity === 'alive' ? 0.48 : 0.58;
+					/* Visible cycle fraction matches the flow keyframe's
+					   offset-distance 100% phase: 66% for alive, 80% for
+					   warm-tier. */
+					const visibleCycleFraction = effectiveActivity === 'alive' ? 0.66 : 0.80;
 					arrivalCycleFraction = clipOffsetFraction * visibleCycleFraction;
 				}
 
