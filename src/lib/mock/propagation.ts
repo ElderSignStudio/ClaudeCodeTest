@@ -174,9 +174,20 @@ const NAME_POOL = [
 	'Bram', 'Lia', 'Kai', 'Maja', 'Otto', 'Saskia', 'Janek', 'Stine',
 	'Lukas', 'Mira', 'Tobias', 'Yana', 'Adrian', 'Lena', 'Mikko', 'Sanna',
 	'Hilde', 'Joris', 'Petra', 'Vesa', 'Kira', 'Aleks', 'Suvi', 'Erik',
-	'Mira', 'Tor', 'Liv', 'Niko', 'Aris', 'Hana', 'Iliana', 'Olek',
+	'Tor', 'Liv', 'Niko', 'Aris', 'Hana', 'Iliana', 'Olek',
 	'Selma', 'Vera', 'Magnus', 'Anita', 'Bo', 'Cilla', 'Dag', 'Emil',
 	'Fia', 'Gunnar', 'Hilma', 'Ida', 'Jaakko', 'Karin', 'Lassi',
+	/* Extended pool — kept distinct enough culturally that 70+ node
+	   trees (the stress archetypes) don't fall back to "Name42". */
+	'Reidar', 'Solveig', 'Asbjorn', 'Hedda', 'Frida', 'Aksel', 'Brit',
+	'Caspar', 'Doro', 'Ebbe', 'Frode', 'Greta', 'Halla', 'Imre',
+	'Janus', 'Kalla', 'Lior', 'Mira-Lin', 'Nika', 'Ola', 'Pirjo',
+	'Quintin', 'Rune', 'Signe', 'Tilda', 'Ulrik', 'Vidar', 'Wilma',
+	'Xenia', 'Yrsa', 'Zora', 'Aki', 'Bao', 'Cato', 'Dela', 'Eero',
+	'Filip', 'Gita', 'Henrik', 'Ines', 'Jonas', 'Klara', 'Linnea',
+	'Milja', 'Norah', 'Osku', 'Pauli', 'Reeta', 'Saga', 'Toivo',
+	'Una', 'Veera', 'Werner', 'Yara', 'Zane', 'Aino', 'Bjarte',
+	'Cosima', 'Dario', 'Edda', 'Folke', 'Gisli', 'Halvar', 'Idun',
 ];
 
 const CHARACTERS_PASSIVE = [
@@ -779,24 +790,489 @@ function buildStrongSpotlight(ctx: BuilderCtx): ArchetypeResult {
 	};
 }
 
+/* ─────────────── Stress-test archetypes ───────────────
+
+   The archetypes below are designed to stress-test specific
+   weaknesses of the visualization once it matured beyond the
+   original showcase. Each one targets:
+
+     viral-explosion      → deep scrolling, single-trunk continuity
+     slow-burn            → state evolution through depth
+     fragmented-community → side-by-side state diversity at level 0
+     false-start          → strong→quiet descending state transitions
+     resurrection         → quiet→strong descending transitions, deep cluster
+     multi-core-spread    → parallel trunks at different intensities
+
+   They're built bottom-up using small inline shorthands inside each
+   builder so the tree shape stays visually scannable in the source.
+   Each builder caps at 12–13 levels by hand; we don't try to
+   parameterise depth because trees of this scale are easier to read
+   as concrete shapes than as recursive plans. */
+
+/* 9. Viral Explosion — one dominant 12-level trunk with successes
+   distributed at depth, plus mid-tree side branches that stay quiet
+   so state diversity is visible at every depth level the user
+   scrolls through. The two siblings under the origin are tiny so
+   the dominant trunk visually owns the screen.
+
+   Successes (counting from origin): origin itself, dominant L1,
+   L2, L4, L6, L9 = 6 successful-amplifiers in the dominant trunk.
+   Origin classifies as PEAK; descending the trunk hits PEAK→PEAK
+   →STRONG→STRONG→ACCELERATING→ACCELERATING→ALIVE→DEAD as the
+   success count below each node drops. */
+function buildViralExplosion(ctx: BuilderCtx): ArchetypeResult {
+	const sa = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'successful-amplifier', children ? { children } : {});
+	const amp = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'amplifier', children ? { children } : {});
+	const dl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'deep-listener', children ? { children } : {});
+	const pl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'passive-listener', children ? { children } : {});
+	const dead = () =>
+		makeNode(ctx, 'passive-listener', { amplifications: 0 });
+
+	// Build dominant trunk bottom-up, depth 12 (origin = level 0).
+	const L12 = dead();                                              // deepest leaf
+	const L11 = dl([L12]);                                           // alive→dead
+	const L10 = amp([L11, pl()]);                                    // alive
+	const L9 = sa([L10, dl(), pl()]);                                // accelerating (1 success: self)
+	const L8 = amp([L9, dl([pl()])]);                                // accelerating
+	const L7 = dl([L8]);                                             // accelerating
+	const L6 = sa([                                                  // strong (1 self + 1 below)
+		L7,
+		amp([dl(), pl()]),                                            //   side branch — alive
+		dl(),                                                         //   side branch — alive
+	]);
+	const L5 = amp([L6]);                                            // strong
+	const L4 = sa([                                                  // strong (1 self + 2 below) → eventually peak when added with L2
+		L5,
+		amp([dl([pl()])]),                                            //   side branch — alive
+		pl(),
+	]);
+	const L3 = amp([L4, dl()]);                                      // strong/peak
+	const L2 = sa([                                                  // peak (1 self + 3 below = 4)
+		L3,
+		dl([pl()]),                                                   //   side branch — alive
+	]);
+	const dominant = sa([L2]);                                       // peak (5 successes in subtree)
+
+	// Tiny sibling branches under origin — alive / dead-ish so the
+	// origin's child level shows mixed states.
+	const siblingA = amp([dl(), pl()]);                              // alive
+	const siblingB = dl([pl()]);                                     // alive (deep-listener has amps)
+
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [dominant, siblingA, siblingB],
+	});
+
+	// A couple of small unrelated origins for scrolling padding.
+	return {
+		roots: [origin, buildSmallRoot(ctx), buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 10. Slow Burn — 11-level tree with sustained branching at every
+   level and successful-amplifiers spaced ~every 2-3 levels so the
+   subtree classifications EVOLVE smoothly as you descend.
+
+   Successes are placed at depths 1, 3, 5, 7, 9. Walking from origin
+   you see: origin PEAK → L1 STRONG → L3 STRONG → L5 ACCELERATING →
+   L7 ACCELERATING → L9 ACCELERATING → L10 ALIVE → DEAD. */
+function buildSlowBurn(ctx: BuilderCtx): ArchetypeResult {
+	const sa = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'successful-amplifier', children ? { children } : {});
+	const amp = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'amplifier', children ? { children } : {});
+	const dl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'deep-listener', children ? { children } : {});
+	const pl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'passive-listener', children ? { children } : {});
+	const dead = () =>
+		makeNode(ctx, 'passive-listener', { amplifications: 0 });
+
+	// Bottom-up. Each level fans out 2-3 children.
+	const L11 = dead();
+	const L10a = dl([L11, dead()]);                                  // alive
+	const L10b = pl();                                                // alive
+	const L9 = sa([L10a, L10b, pl()]);                                // accelerating
+	const L8 = amp([L9, dl([pl()]), pl()]);                           // accelerating
+	const L7 = sa([                                                   // strong (1 self + 1 below)
+		L8,
+		amp([dl(), pl()]),
+		dl(),
+	]);
+	const L6 = amp([L7, dl([pl()]), pl()]);                           // strong
+	const L5 = sa([                                                   // strong (1 self + 2 below)
+		L6,
+		dl([amp([pl()])]),
+		pl(),
+	]);
+	const L4 = dl([L5, amp([dl(), pl()])]);                           // strong (3 successes below)
+	const L3 = sa([                                                   // peak (1 self + 3 below = 4)
+		L4,
+		amp([dl([pl()]), dl()]),
+		dl(),
+	]);
+	const L2 = amp([L3, dl([pl()]), pl()]);                           // peak
+	const L1 = sa([                                                   // peak (1 self + 4 below = 5)
+		L2,
+		amp([dl(), dl([pl()])]),
+		dl([pl()]),
+	]);
+
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [L1, amp([dl(), pl()]), dl([pl()])],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 11. Fragmented Community — five visible origins each in a
+   DIFFERENT branch state, each deep enough (5-8 levels) to test
+   intermediate branching and state diversity within itself. The
+   roots-row scrolling demands all five be visible enough to scan
+   side-by-side. */
+function buildFragmentedCommunity(ctx: BuilderCtx): ArchetypeResult {
+	const sa = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'successful-amplifier', children ? { children } : {});
+	const amp = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'amplifier', children ? { children } : {});
+	const dl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'deep-listener', children ? { children } : {});
+	const pl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'passive-listener', children ? { children } : {});
+	const dead = () =>
+		makeNode(ctx, 'passive-listener', { amplifications: 0 });
+
+	// Origin 1: PEAK — 4 successes spread across 6 levels, branching.
+	const peakOrigin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [
+			sa([
+				sa([
+					amp([dl([pl()]), pl()]),
+					dl([pl()]),
+				]),
+				dl([amp([pl()])]),
+			]),
+			sa([
+				amp([dl(), dl([pl()])]),
+				pl(),
+			]),
+			amp([dl(), pl()]),
+		],
+	});
+
+	// Origin 2: STRONG — 2 successes, 6 levels.
+	const strongOrigin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			sa([
+				amp([dl([pl()]), dl()]),
+				dl([pl()]),
+			]),
+			sa([
+				dl([amp([pl()])]),
+				pl(),
+			]),
+			amp([dl(), pl()]),
+		],
+	});
+
+	// Origin 3: ACCELERATING — 1 success deep, 7 levels.
+	const accelOrigin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			amp([
+				dl([
+					amp([
+						sa([
+							dl([pl()]),
+							pl(),
+						]),
+						pl(),
+					]),
+					dl(),
+				]),
+			]),
+			dl([pl()]),
+		],
+	});
+
+	// Origin 4: ALIVE — amps but no successes, 5 levels.
+	const aliveOrigin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			amp([
+				dl([
+					amp([dl([pl()]), pl()]),
+					pl(),
+				]),
+				dl(),
+			]),
+			dl([pl()]),
+			pl(),
+		],
+	});
+
+	// Origin 5: DEAD — pure passive chain.
+	const deadOrigin = makeNode(ctx, 'passive-listener', {
+		isOrigin: true,
+		amplifications: 0,
+		children: [
+			dead(),
+			dead(),
+		],
+	});
+
+	return {
+		roots: [peakOrigin, strongOrigin, accelOrigin, aliveOrigin, deadOrigin],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 12. False Start — top-heavy burst of successful amplifiers near
+   the origin, then a long quiet tail. Tests state transitions
+   DESCENDING: the origin reads as peak/strong, but the descendants
+   beyond the initial burst all classify as alive or dead.
+
+   Visual: bright top, dim trunk for ~8 levels. */
+function buildFalseStart(ctx: BuilderCtx): ArchetypeResult {
+	const sa = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'successful-amplifier', children ? { children } : {});
+	const amp = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'amplifier', children ? { children } : {});
+	const dl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'deep-listener', children ? { children } : {});
+	const pl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'passive-listener', children ? { children } : {});
+	const dead = () =>
+		makeNode(ctx, 'passive-listener', { amplifications: 0 });
+
+	// Quiet 7-level tail used multiple times. Each instance gets its
+	// own freshly generated names from the pool.
+	const quietTail = (): PropagationUser =>
+		dl([                                                            // L1
+			amp([                                                         // L2
+				dl([                                                        // L3
+					amp([                                                     // L4
+						dl([                                                    // L5
+							pl([                                                  // L6
+								dead(),                                             // L7
+							]),
+						]),
+					]),
+				]),
+			]),
+		]);
+
+	// Origin: PEAK (4 immediate successes), then each success leads
+	// into a long quiet chain.
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [
+			sa([quietTail()]),
+			sa([quietTail()]),
+			sa([quietTail()]),
+			sa([quietTail(), dl([pl()])]),
+			amp([dl([pl()]), pl()]),
+		],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 13. Resurrection — long quiet trunk from the origin, then a deep
+   cluster of successes near the bottom. Tests deep-scrolling
+   discovery: the visual story starts quiet and only the deepest
+   strata reveal that the signal eventually ignited.
+
+   Successes are concentrated at depth 8-10, with branching at the
+   ignition zone. */
+function buildResurrection(ctx: BuilderCtx): ArchetypeResult {
+	const sa = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'successful-amplifier', children ? { children } : {});
+	const amp = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'amplifier', children ? { children } : {});
+	const dl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'deep-listener', children ? { children } : {});
+	const pl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'passive-listener', children ? { children } : {});
+	const dead = () =>
+		makeNode(ctx, 'passive-listener', { amplifications: 0 });
+
+	// The deep ignition cluster (depths 8-12) — multiple successes
+	// branching out.
+	const ignitionCluster = sa([
+		sa([
+			amp([dl([pl()]), dl()]),
+			dl([amp([pl()])]),
+		]),
+		sa([
+			dl([dl([dead()])]),
+			pl(),
+		]),
+		amp([
+			dl([pl()]),
+		]),
+	]);
+
+	// Quiet trunk from level 1 to 7 wrapping the ignition cluster.
+	// All deep-listeners so the trunk feels patient before the
+	// bloom. Branching is intentionally sparse — each level usually
+	// has 1 main child + an occasional dead leaf.
+	let trunk: PropagationUser = ignitionCluster;
+	const trunkKinds: PropagationNodeKind[] = [
+		'deep-listener',   // L7
+		'deep-listener',   // L6
+		'amplifier',       // L5 — slight movement
+		'deep-listener',   // L4
+		'deep-listener',   // L3
+		'amplifier',       // L2 — a hint of momentum
+		'deep-listener',   // L1
+	];
+	for (let i = 0; i < trunkKinds.length; i++) {
+		const kind = trunkKinds[i];
+		// Every other level gets a small dead-end sibling to break
+		// the monotone single-child chain.
+		const sibling = i % 2 === 1 ? dl([pl()]) : pl();
+		trunk = makeNode(ctx, kind, { children: [trunk, sibling] });
+	}
+
+	const origin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [trunk, dl([pl()])],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 14. Multi-Core Spread — origin with THREE successful-amplifier
+   children at level 1, each leading into a deep subtree of
+   DIFFERENT intensity (peak / strong / accelerating). Tests parallel
+   reading of multiple competing trunks side-by-side. */
+function buildMultiCoreSpread(ctx: BuilderCtx): ArchetypeResult {
+	const sa = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'successful-amplifier', children ? { children } : {});
+	const amp = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'amplifier', children ? { children } : {});
+	const dl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'deep-listener', children ? { children } : {});
+	const pl = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'passive-listener', children ? { children } : {});
+	const dead = () =>
+		makeNode(ctx, 'passive-listener', { amplifications: 0 });
+
+	// Core A: PEAK — 4 additional successes downstream, 7 levels.
+	const coreA = sa([
+		sa([
+			amp([
+				sa([
+					dl([pl()]),
+					amp([dl(), pl()]),
+				]),
+				dl([pl()]),
+			]),
+			dl([dead()]),
+		]),
+		sa([
+			amp([dl([pl()]), dl()]),
+			pl(),
+		]),
+		amp([dl(), dead()]),
+	]);
+
+	// Core B: STRONG — 2 additional successes, 7 levels.
+	const coreB = sa([
+		sa([
+			amp([
+				dl([
+					amp([dl([pl()]), pl()]),
+					pl(),
+				]),
+			]),
+			dl([pl()]),
+		]),
+		amp([
+			dl([amp([pl()]), pl()]),
+			dl(),
+		]),
+		pl(),
+	]);
+
+	// Core C: ACCELERATING — 0 additional successes (just itself), 8 levels.
+	const coreC = sa([
+		amp([
+			dl([
+				amp([
+					dl([
+						amp([dl([pl()]), pl()]),
+						pl(),
+					]),
+				]),
+				dl(),
+			]),
+		]),
+		dl([pl()]),
+	]);
+
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [coreA, coreB, coreC],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
 const ARCHETYPES = [
-	{ name: 'hub-dominant',     build: buildHubDominant     },
-	{ name: 'fragmented',       build: buildFragmented      },
-	{ name: 'late-bloomer',     build: buildLateBloomer     },
-	{ name: 'deep-chain',       build: buildDeepChain       },
-	{ name: 'bursty',           build: buildBursty          },
-	{ name: 'sparse',           build: buildSparse          },
-	{ name: 'showcase',         build: buildShowcase        },
-	{ name: 'strong-spotlight', build: buildStrongSpotlight },
+	{ name: 'hub-dominant',         build: buildHubDominant         },
+	{ name: 'fragmented',           build: buildFragmented          },
+	{ name: 'late-bloomer',         build: buildLateBloomer         },
+	{ name: 'deep-chain',           build: buildDeepChain           },
+	{ name: 'bursty',               build: buildBursty              },
+	{ name: 'sparse',               build: buildSparse              },
+	{ name: 'showcase',             build: buildShowcase            },
+	{ name: 'strong-spotlight',     build: buildStrongSpotlight     },
+	{ name: 'viral-explosion',      build: buildViralExplosion      },
+	{ name: 'slow-burn',            build: buildSlowBurn            },
+	{ name: 'fragmented-community', build: buildFragmentedCommunity },
+	{ name: 'false-start',          build: buildFalseStart          },
+	{ name: 'resurrection',         build: buildResurrection        },
+	{ name: 'multi-core-spread',    build: buildMultiCoreSpread     },
 ] as const;
 
 /* Items whose forest is pinned to a specific archetype for design-system
    testing. All other items rotate through the procedural archetypes
    below via their id's hash. */
 const PINNED_ARCHETYPES: Record<string, string> = {
-	'frozen-sun':  'showcase',         /* all five branch states side by side */
-	'iron-coast':  'strong-spotlight', /* dedicated strong-accelerating test */
-	'pale-verge':  'strong-spotlight', /* second strong test (different forest) */
+	'frozen-sun':         'showcase',             /* all five branch states side by side */
+	'iron-coast':         'strong-spotlight',     /* dedicated strong-accelerating test */
+	'pale-verge':         'strong-spotlight',     /* second strong test (different forest) */
+	/* Stress-test pins. Each pinned id navigates to a tree designed
+	   to expose a specific weakness; visit them when evaluating
+	   deep-scrolling, state-transition rendering, or parallel trunks. */
+	'night-forest':       'viral-explosion',      /* 12-level dominant trunk */
+	'tape-weather':       'slow-burn',            /* 11-level smooth state evolution */
+	'cold-dispatch':      'fragmented-community', /* 5 origins, one per state */
+	'burial-light':       'false-start',          /* peak top, dead/alive tail */
+	'cinder-plain':       'resurrection',         /* quiet trunk, deep ignition */
+	'wolves-under-glass': 'multi-core-spread',    /* 3 competing trunks */
 };
 
 /* Archetype names that should NEVER appear via random rotation —
@@ -911,6 +1387,36 @@ const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; o
 		summary: 'Quiet across the board — a few origins surfaced the signal but it has not yet propagated.',
 		crossingNote: 'Sparse — almost no onward movement.',
 		originNote: 'A handful of quiet origins surfaced the signal independently.',
+	},
+	'viral-explosion': {
+		summary: 'One scout opened a runaway chain that propagated through twelve listening layers — most of the signal lives inside a single dominant tributary.',
+		crossingNote: 'Dominant trunk overshadows every adjacent origin; the signal moved through one long lineage.',
+		originNote: 'Surfaced through a hub propagator whose immediate forward share kept igniting downstream.',
+	},
+	'slow-burn': {
+		summary: 'Steady eleven-level propagation — each generation of scouts passed the signal to two or three more, with successful amplifications sprinkled across every other layer.',
+		crossingNote: 'Consistent forward motion at every depth; the heat tapers gently rather than collapsing.',
+		originNote: 'Surfaced through a patient connector whose forward sharing kept compounding generation after generation.',
+	},
+	'fragmented-community': {
+		summary: 'Five independent origins surfaced the signal in parallel, each carrying their own local subculture forward at a different intensity — from runaway pull to archaeological silence.',
+		crossingNote: 'Five separate listening pockets reached the signal independently; their downstream temperatures span the full spectrum.',
+		originNote: 'Multiple unrelated origins surfaced the signal in parallel through unrelated scenes.',
+	},
+	'false-start': {
+		summary: 'A loud opening that didn\'t hold — the origin opened with four immediate successful amplifications, then every downstream branch quietly settled without further movement.',
+		crossingNote: 'Early ignition gave way to long quiet tails; momentum was front-loaded, not sustained.',
+		originNote: 'Surfaced through a hub that initially propagated widely before adjacent scenes absorbed it without further amplification.',
+	},
+	'resurrection': {
+		summary: 'A long quiet trunk that finally bloomed eight layers in — for most of its lineage the signal was held privately, before opening into a cluster of forward-sharers at depth.',
+		crossingNote: 'The signal was passed silently across several quiet generations before a late ignition reopened it.',
+		originNote: 'Surfaced through a patient origin whose downstream remained internal for many generations before suddenly catching.',
+	},
+	'multi-core-spread': {
+		summary: 'Three competing onward-paths under a single origin — each branch propagates at a different intensity, producing parallel trunks of distinctly different heat side by side.',
+		crossingNote: 'Three concurrent successful amplifiers split the signal into parallel trunks with markedly different downstream pull.',
+		originNote: 'Surfaced through a hub whose immediate forward share split into three competing lineages.',
 	},
 };
 
