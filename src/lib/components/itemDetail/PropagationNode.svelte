@@ -290,21 +290,33 @@
 		const cadencePattern = Math.floor(r(2) * 4);
 
 		if (effectiveActivity === 'alive') {
-			/* Patient drift, the tree's resting metabolic state. Now
-			   2 particle slots per branch so alive reads as persistent
-			   quiet circulation rather than occasional inactivity. The
-			   two particles are STRONGLY DESYNCED: second particle
-			   launches ~half a cycle after the first, so at any moment
-			   typically only ONE of them is visible. Cycle widened to
-			   5.0-7.0s for slightly more breath. */
+			/* Patient drift, the tree's resting metabolic state. 2
+			   particle slots; cycle 5.0-7.0s so the apparent rate stays
+			   sparse no matter which cadence we pick.
+
+			   Per-branch cadence personality (chosen by hash) gives
+			   alive branches different rhythmic fingerprints rather
+			   than all sharing the half-cycle desync rhythm:
+			     0 deep-desync       — A early, B near half-cycle later
+			                            (the previous behaviour)
+			     1 paired-then-gap   — A & B fire close, then a long
+			                            quiet gap until next cycle
+			     2 lonely-very-late  — A early, B near end of cycle —
+			                            "occasional second transmission"
+			     3 deeply-offset     — A mid-early, B mid-late, neither
+			                            at the boundaries
+			   The branch keeps its personality forever (hash is
+			   stable), so different alive branches feel rhythmically
+			   distinct without being individually loud. */
 			count = 2;
 			cycleMin = 5.0;
 			cycleMax = 7.0;
 			cyanShare = 1.0; amberShare = 0.0; whiteShare = 0.0;
-			baseDelays = [
-				r(7) * 0.5,           /* particle A: 0.0–0.5s */
-				2.8 + r(8) * 1.2,     /* particle B: 2.8–4.0s (≈ half-cycle later) */
-			];
+			baseDelays =
+				cadencePattern === 0 ? [r(7) * 0.4,        2.8 + r(8) * 1.2] :  /* deep-desync */
+				cadencePattern === 1 ? [r(7) * 0.3,        0.5 + r(8) * 0.5] :  /* paired-then-gap */
+				cadencePattern === 2 ? [r(7) * 0.2,        4.0 + r(8) * 1.5] :  /* lonely-very-late */
+				                       [0.6 + r(7) * 0.5,  3.5 + r(8) * 1.0];   /* deeply-offset */
 		} else if (effectiveActivity === 'accelerating') {
 			/* Cadence patterns — each accelerating branch picks one of
 			   several stagger shapes via hash so the group reads as
@@ -334,40 +346,55 @@
 				   cadencePattern === 2 ? [0.00, 0.70, 1.55] :
 				                          [0.00, 0.55, 1.10]);
 		} else if (effectiveActivity === 'strong-accelerating') {
-			/* 3 particles (down from 4) — strong now caps at the same
-			   slot budget as accelerating so an inherited strong subtree
-			   doesn't oversaturate the DOM. Amber still clearly
-			   dominates (75%), cyan up slightly (25%) to keep the
-			   cultural substrate readable underneath. The cycle base
-			   stays the same; the amber speed multiplier below pushes
-			   the effective amber cycle to 2.0-3.6s so the branch feels
-			   powerful but not frantic. */
+			/* 3 particles (down from 4) — strong caps at the same slot
+			   budget as accelerating so an inherited strong subtree
+			   doesn't oversaturate the DOM. Amber dominates (75%),
+			   cyan 25% keeps the cultural substrate readable. Cycle
+			   1.17-1.50s; amber speed multiplier below pushes effective
+			   amber cycle to 2.0-3.6s.
+
+			   Cadence: WAVES OF PROPAGATION. Three of four shapes
+			   include a tight pair, so most strong branches read as
+			   pulsed bursts followed by a quiet stretch rather than
+			   evenly-spaced ticks. The fourth keeps a looser
+			   "breathing" shape so the cohort isn't uniformly bursty.
+			     0 tight-pair + lone-mid (forward wave)
+			     1 lone + tight-late-pair (backward wave)
+			     2 near-triplet burst (the densest wave)
+			     3 breathing-looser (calmer breath) */
 			count = 3;
 			cycleMin = 1.17;
 			cycleMax = 1.50;
 			cyanShare = 0.25; amberShare = 0.75; whiteShare = 0.0;
 			baseDelays =
-				cadencePattern === 0 ? [0.00, 0.18, 1.10] :
-				cadencePattern === 1 ? [0.00, 0.80, 1.18] :
-				cadencePattern === 2 ? [0.00, 0.55, 1.30] :
-				                       [0.00, 0.40, 0.85];
+				cadencePattern === 0 ? [0.00, 0.10, 0.65] :  /* forward wave */
+				cadencePattern === 1 ? [0.00, 0.55, 0.70] :  /* backward wave */
+				cadencePattern === 2 ? [0.00, 0.07, 0.20] :  /* triplet burst */
+				                       [0.00, 0.35, 0.90];   /* breathing */
 		} else {
-			/* peak-accelerating: 3 particles (down from 5) so a whole
-			   inherited peak subtree doesn't blanket the page in particle
-			   DOM. Whites are rare visible ignition events: 6% per slot
-			   ≈ 0.18 expected per branch, plus the anchored guarantee.
-			   Cyan bumped from 15% to 22% so the cultural substrate
-			   stays visible underneath the amber — peak should not read
-			   as "orange mode". */
+			/* peak-accelerating: 3 particles. Whites are rare visible
+			   ignition events: 6% per slot ≈ 0.18 expected per branch,
+			   plus the anchored guarantee. Cyan 22% keeps cultural
+			   substrate visible under amber — peak should not read as
+			   "orange mode".
+
+			   Cadence: MICRO-BURSTS inside dense flow. Three of four
+			   shapes produce tight overlaps so peak reads as overloaded
+			   transmission. The fourth keeps a breathing pattern so a
+			   peak subtree never becomes uniform noise.
+			     0 tight-pair + lone (forward burst + delayed third)
+			     1 twin-launch + middle (the doubled feel, softened)
+			     2 near-triplet burst (densest — three within ~0.3s)
+			     3 breathing (loose stagger — calmer peak branch) */
 			count = 3;
 			cycleMin = 1.00;
 			cycleMax = 1.40;
 			cyanShare = 0.22; amberShare = 0.72; whiteShare = 0.06;
 			baseDelays =
-				cadencePattern === 0 ? [0.00, 0.18, 1.05] :
-				cadencePattern === 1 ? [0.00, 0.70, 1.05] :
-				cadencePattern === 2 ? [0.00, 0.40, 0.95] :
-				                       [0.00, 0.16, 1.05]; /* twin-launch variant — softened from 0.08 to 0.16 so the doubled feel is less machine-gun */
+				cadencePattern === 0 ? [0.00, 0.14, 0.85] :  /* tight pair + lone */
+				cadencePattern === 1 ? [0.00, 0.06, 0.42] :  /* twin-launch + middle */
+				cadencePattern === 2 ? [0.00, 0.18, 0.32] :  /* near-triplet burst */
+				                       [0.00, 0.45, 0.95];   /* breathing */
 		}
 
 		/* ─── Build particles ──────────────────────────────────── */
@@ -532,11 +559,21 @@
 				? 0.55 + r(i * 23 + 1) * 0.30              /* 0.55–0.85s */
 				: 0.36 + r(i * 23 + 1) * 0.22;             /* 0.36–0.58s */
 
+			/* Per-particle delay jitter — scales DOWN as branch energy
+			   climbs so strong/peak burst patterns stay tight. Without
+			   this, the fixed 0.12s jitter previously smeared
+			   strong/peak triplet-bursts into even spacing. */
+			const jitterScale =
+				effectiveActivity === 'peak-accelerating'   ? 0.04 :
+				effectiveActivity === 'strong-accelerating' ? 0.06 :
+				effectiveActivity === 'accelerating'        ? 0.12 :
+				effectiveActivity === 'alive'               ? 0.15 :
+				                                              0;
 			return {
 				id: i,
 				color,
 				colorTag,
-				flowDelay: baseDelays[i] + r(i * 11 + 1) * 0.12,
+				flowDelay: baseDelays[i] + r(i * 11 + 1) * jitterScale,
 				flowDur:   (cycleMin + r(i * 13 + 1) * (cycleMax - cycleMin)) * speedMultiplier,
 				helixAmp,
 				helixDelay: -r(i * 19 + 1) * 0.35,
