@@ -6,10 +6,18 @@
 	Implementation reflects that: roots[] is an array, each root is a recursive
 	`PropagationUser` tree, no cross-links.
 
-	Cultural framing: nodes carry editorial fields beyond identity — scenes
-	the user belongs to, behavior notes, optional cluster descriptions. The
-	page uses these to talk about propagation in anthropological terms (scenes,
-	orbits, listening circles) rather than as a social graph.
+	Forests are now PROCEDURALLY GENERATED per item id. A small set of
+	archetype builders (hub-dominant, fragmented, late-bloomer, deep-chain,
+	bursty, sparse) drive overall shape; a seeded RNG and editorial pools
+	(names, characters, behavior notes, scenes) drive the details. The same
+	item id always produces the same forest. Different item ids feel
+	visibly distinct — different depths, different densities, different
+	rhythms.
+
+	This file does NOT introduce edge/branch/special-structure visual
+	semantics. Only `nodeKind` drives rendering. The richer forests exist
+	so the next visual-language layer can be designed against realistic
+	tree structures.
 */
 
 /** Editorial novelty tier — how famous the signal felt at a given moment. */
@@ -20,10 +28,7 @@ export type FameTier = 'Underground' | 'Niche' | 'Emerging' | 'Hot';
 
 	`nodeKind` captures *how this scout received and treated the signal*.
 	The visual language renders these four kinds plus two stackable
-	overlays (origin, current-user). Edge-types, branch/subtree
-	variables, and special-structure styling were all removed in the
-	visual-language cleanup pass — they may be reintroduced later as a
-	separate layer, but for now the tree only speaks node types.
+	overlays (origin, current-user).
 */
 
 /** What kind of listening / amplifying behavior this scout demonstrates. */
@@ -32,6 +37,46 @@ export type PropagationNodeKind =
 	| 'deep-listener'         // signal resonated deeply; quiet but engaged
 	| 'amplifier'             // intentionally transmitted onward
 	| 'successful-amplifier'; // their transmission carried the signal far
+
+/* Branch-level activity — a five-tier spectrum from dormant to runaway
+   ignition. Each node computes its own tier from ITS OWN subtree (not
+   inherited from the root), so a single tree can contain multiple
+   states simultaneously: a quiet alive parent with an accelerating
+   sub-branch, a strong-accelerating subtree cooling into alive side
+   branches, etc.
+
+     dead                → archaeological silence, no propagation
+     alive               → calm circulation, amps but no successful chains
+     accelerating        → momentum emerging, 1 successful amplifier
+     strong-accelerating → cultural pull intensifying, 2-3 successes
+     peak-accelerating   → runaway ignition, 4+ successes downstream
+*/
+export type BranchActivityState =
+	| 'dead'
+	| 'alive'
+	| 'accelerating'
+	| 'strong-accelerating'
+	| 'peak-accelerating';
+
+/** Walk a node's subtree and classify how alive the propagation feels.
+ *  Heuristic only — based on successful-amplifier density and amp counts.
+ *  Each PropagationNode component calls this for ITSELF (not inherited),
+ *  which is what lets the tree contain mixed states at different depths. */
+export function computeBranchActivity(root: PropagationUser): BranchActivityState {
+	let totalAmps = 0;
+	let successCount = 0;
+	const walk = (n: PropagationUser) => {
+		totalAmps += n.amplifications;
+		if (n.nodeKind === 'successful-amplifier') successCount++;
+		for (const c of n.children) walk(c);
+	};
+	walk(root);
+	if (successCount >= 4) return 'peak-accelerating';
+	if (successCount >= 2) return 'strong-accelerating';
+	if (successCount > 0) return 'accelerating';
+	if (totalAmps > 0) return 'alive';
+	return 'dead';
+}
 
 export type PropagationUser = {
 	id: string;
@@ -67,8 +112,8 @@ export type PropagationUser = {
 	noveltyTierAtDiscovery?: FameTier;
 	/** FameIndex (0-100) of the signal at the moment this user discovered it. */
 	fameIndexAtDiscovery?: number;
-	/** Marks users whose branch reached many people — earns the high-impact
-	 *  tree treatment (brighter branch-size badge + accent halo on avatar). */
+	/** Marks users whose branch reached many people — kept for editorial /
+	 *  inspector copy (not visual). */
 	highImpact?: boolean;
 	/** Editorial 0-5 score reflecting how impactful this user's discovery
 	 *  was relative to the signal's then-novelty. */
@@ -80,8 +125,8 @@ export type PropagationUser = {
 	/** Size of the largest downstream subcascade rooted at this user. */
 	biggestSubcascadeReach?: number;
 
-	/** Marks the current viewer's own node — triggers the "you" label,
-	 *  brighter avatar ring, and selection deference in the tree. */
+	/** Marks the current viewer's own node — triggers the row's cu-row rail
+	 *  and primary avatar border. */
 	isCurrentUser?: boolean;
 	/** Faint placeholder for the current user's pending amplification.
 	 *  Renders dimmed + italic + non-selectable; the row only invites the
@@ -89,335 +134,859 @@ export type PropagationUser = {
 	isPreviewNode?: boolean;
 
 	/** Behavioral category — passive / deep / amplifier / successful-amplifier.
-	 *  This is the only visual-language field on PropagationUser. Edge,
-	 *  branch, and special-structure visual fields were removed in the
-	 *  cleanup pass; they may return later as separate layers. */
+	 *  Only visual-language field on PropagationUser. */
 	nodeKind?: PropagationNodeKind;
 };
 
 export type RootBranchSummary = {
 	rootId: string;
-	label: string;     // e.g. "Marco's branch — ambient + drone explorers"
-	count: number;     // total downstream including the root
+	label: string;
+	count: number;
 };
 
 export type PropagationForest = {
 	itemId: string;
-	/** Visible independent origins. */
 	roots: PropagationUser[];
-	/** Roots beyond the visible ones (quieter origins, hidden behind the
-	 *  "+N more independent origins" expander in the tree). */
 	hiddenRootUsers: PropagationUser[];
-	/** Roots count beyond the visible ones — kept as a derived/explicit
-	 *  number for places that only need the count (global inspector). */
 	hiddenRoots: number;
-	/** Total user count across the whole forest (visible + hidden). */
 	totalReach: number;
-	/** Independent origin count (visible + hidden). */
 	independentOrigins: number;
-	/** Editorial 0-100 score reflecting cultural transmission strength. */
 	weightedImpact: number;
-	/** Total amplification actions across the forest. */
 	totalAmplifications: number;
-	/** Narrative one-liner — appears in the global inspector state. */
 	summary: string;
-	/** Per-root branch summaries — appear in the global inspector. */
 	branchSummaries: RootBranchSummary[];
-	/** Scenes / orbits the signal has crossed into. Used in the hero
-	 *  propagation summary and in the global inspector. */
 	scenes: string[];
-	/** Short editorial phrase summarizing scene/orbit crossover for the hero. */
 	crossingNote: string;
-	/** Earliest origin context one-liner, e.g. "First surfaced through Marco's
-	 *  ambient orbit". Surfaced in the hero. */
 	originNote: string;
 };
 
 const dicebear = (seed: string) =>
 	`https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=1e1b4b`;
 
-/*
-	Base forest — three visible roots + two hidden, modest depth. Each user
-	carries scenes/orbit chips so the inspector can talk about culture rather
-	than identity alone.
-*/
-const baseRoots: PropagationUser[] = [
-	{
-		id: 'marco',
-		name: 'Marco',
-		avatar: dicebear('MarcoAmb'),
-		character: 'Underground connector',
-		amplifications: 5,
-		branchSize: 9,
-		discoveredAgo: '2 weeks ago',
-		behaviorNote: 'Bridges ritual + ambient scenes; tends to surface signals before broader adoption.',
-		scenes: ['ritual ambient', 'cassette ambient orbit', 'deep listening cluster'],
-		isOrigin: true,
-		noveltyTierAtDiscovery: 'Underground',
-		fameIndexAtDiscovery: 8,
-		highImpact: true,
-		discoveryScore: 4.4,
-		depthLevels: 3,
-		biggestSubcascadeName: 'Renan',
-		biggestSubcascadeReach: 5,
-		nodeKind: 'successful-amplifier',
-		children: [
-			{
-				id: 'julia',
-				name: 'Julia',
-				avatar: dicebear('JuliaForest'),
-				character: 'Ambient cartographer',
-				amplifications: 3,
-				branchSize: 2,
-				discoveredAgo: '11 days ago',
-				behaviorNote: 'Maps quiet ambient scenes; modest reach but high resonance with adjacent listeners.',
-				scenes: ['ambient cartographers', 'late-night headphone scene'],
-				noveltyTierAtDiscovery: 'Underground',
-				fameIndexAtDiscovery: 11,
-				discoveryScore: 2.6,
-				depthLevels: 1,
-				nodeKind: 'amplifier',
-				children: [
-					{
-						id: 'sofia',
-						name: 'Sofia',
-						avatar: dicebear('SofiaQuiet'),
-						character: 'Quiet listener',
-						amplifications: 1,
-						branchSize: 0,
-						discoveredAgo: '6 days ago',
-						behaviorNote: 'Rare amplifier — when she does, signal tends to stop with her.',
-						scenes: ['late-night headphone scene'],
-						noveltyTierAtDiscovery: 'Niche',
-						fameIndexAtDiscovery: 18,
-						discoveryScore: 1.2,
-						depthLevels: 0,
-						nodeKind: 'deep-listener',
-						children: [],
-					},
-				],
-			},
-			{
-				id: 'renan',
-				name: 'Renan',
-				avatar: dicebear('RenanDrone'),
-				character: 'Drone obsessive',
-				amplifications: 4,
-				branchSize: 5,
-				discoveredAgo: '10 days ago',
-				behaviorNote: 'High amplification rate within drone circles, low crossover outside.',
-				scenes: ['drone microculture', 'ritual ambient'],
-				noveltyTierAtDiscovery: 'Underground',
-				fameIndexAtDiscovery: 12,
-				highImpact: true,
-				discoveryScore: 3.6,
-				depthLevels: 1,
-				biggestSubcascadeName: 'Drone-leaning cluster',
-				biggestSubcascadeReach: 4,
-				nodeKind: 'amplifier',
-				children: [],
-				hiddenChildren: 4,
-				hiddenChildrenLabel: 'Drone-leaning listeners',
-				hiddenChildrenDescription:
-					'Quiet listeners who tend to amplify within their orbit but rarely cross-pollinate.',
-			},
-		],
-	},
-	{
-		id: 'alice',
-		name: 'Alice',
-		avatar: dicebear('AliceSignal'),
-		character: 'Deep scene explorer',
-		amplifications: 8,
-		branchSize: 14,
-		discoveredAgo: '3 weeks ago',
-		behaviorNote: 'Largest single branch; consistently surfaces signals through her ambient overlap.',
-		scenes: ['deep listening cluster', 'ambient/drone crossover listeners', 'post-rock crossover branch'],
-		isOrigin: true,
-		noveltyTierAtDiscovery: 'Underground',
-		fameIndexAtDiscovery: 5,
-		highImpact: true,
-		discoveryScore: 4.8,
-		depthLevels: 3,
-		biggestSubcascadeName: 'Pieter',
-		biggestSubcascadeReach: 4,
-		nodeKind: 'successful-amplifier',
-		children: [
-			{
-				id: 'daria',
-				name: 'Daria',
-				avatar: dicebear('DariaScout'),
-				character: 'Cassette archivist',
-				amplifications: 2,
-				branchSize: 0,
-				discoveredAgo: '12 days ago',
-				behaviorNote: 'Documents quiet releases; minimal further amplification.',
-				scenes: ['cassette ambient orbit'],
-				noveltyTierAtDiscovery: 'Niche',
-				fameIndexAtDiscovery: 16,
-				discoveryScore: 2.1,
-				depthLevels: 0,
-				nodeKind: 'passive-listener',
-				children: [],
-			},
-			{
-				id: 'pieter',
-				name: 'Pieter',
-				avatar: dicebear('PieterPost'),
-				character: 'Post-rock crossover',
-				amplifications: 3,
-				branchSize: 4,
-				discoveredAgo: '9 days ago',
-				behaviorNote: 'Picks up signals from ambient circles and carries them into post-rock-adjacent listeners.',
-				scenes: ['post-rock crossover branch', 'ambient/drone crossover listeners'],
-				noveltyTierAtDiscovery: 'Niche',
-				fameIndexAtDiscovery: 19,
-				highImpact: true,
-				discoveryScore: 3.2,
-				depthLevels: 1,
-				biggestSubcascadeName: 'Post-rock crossover',
-				biggestSubcascadeReach: 3,
-				nodeKind: 'successful-amplifier',
-				children: [],
-				hiddenChildren: 3,
-				hiddenChildrenLabel: 'Post-rock-adjacent listeners',
-				hiddenChildrenDescription:
-					'Crossover ears that drift between drone and post-rock; signals tend to slow but persist here.',
-			},
-		],
-		hiddenChildren: 6,
-		hiddenChildrenLabel: 'Ambient listeners cluster',
-		hiddenChildrenDescription:
-			'Low-visibility ambient cluster — signals often surface here before broader adoption.',
-	},
-	{
-		id: 'dan',
-		name: 'Dan',
-		avatar: dicebear('DanOuter'),
-		character: 'Early signal hunter',
-		amplifications: 2,
-		branchSize: 1,
-		discoveredAgo: '5 weeks ago',
-		behaviorNote: 'Earliest scout in this forest. Smaller branch but very early origin.',
-		scenes: ['quiet early listener cluster', 'late-night headphone scene'],
-		isOrigin: true,
-		noveltyTierAtDiscovery: 'Underground',
-		fameIndexAtDiscovery: 3,
-		discoveryScore: 3.8,
-		depthLevels: 1,
-		nodeKind: 'deep-listener',
-		children: [
-			{
-				id: 'mara',
-				name: 'Mara',
-				avatar: dicebear('MaraLowKey'),
-				character: 'Low-key listener',
-				amplifications: 1,
-				branchSize: 0,
-				discoveredAgo: '4 weeks ago',
-				behaviorNote: 'Single onward amplification.',
-				scenes: ['late-night headphone scene'],
-				noveltyTierAtDiscovery: 'Underground',
-				fameIndexAtDiscovery: 6,
-				discoveryScore: 1.8,
-				depthLevels: 0,
-				nodeKind: 'passive-listener',
-				children: [],
-			},
-		],
-	},
-	/*
-		Tomas — pure deep-listener origin scout, visible at root level.
-		He surfaced the signal independently but never amplified onward, so
-		the tree can show what the "origin" overlay reads like on a node
-		that has NO amplification motion. (Previously hidden behind the
-		"+N more origins" expander; promoted for visual calibration.)
-	*/
-	{
-		id: 'tomas',
-		name: 'Tomas',
-		avatar: dicebear('TomasCassette'),
-		character: 'Late-night cassette collector',
-		amplifications: 1,
-		branchSize: 0,
-		discoveredAgo: '6 weeks ago',
-		behaviorNote: 'Quiet origin — surfaced the signal alone and rarely amplifies forward.',
-		scenes: ['cassette ambient orbit', 'late-night headphone scene'],
-		isOrigin: true,
-		noveltyTierAtDiscovery: 'Underground',
-		fameIndexAtDiscovery: 2,
-		discoveryScore: 4.0,
-		depthLevels: 0,
-		nodeKind: 'deep-listener',
-		children: [],
-	},
+/* ─────────────── Editorial pools (used by the generator) ─────────────── */
+
+/* First-name pool. The four "known" scouts (dan / alice / marco / yuki)
+   are intentionally NOT in this list — they're injected by id when the
+   route source needs them. */
+const NAME_POOL = [
+	'Sofia', 'Daria', 'Pieter', 'Mara', 'Julia', 'Renan', 'Tomas', 'Inga',
+	'Leo', 'Anya', 'Saul', 'Eva', 'Wren', 'Iris', 'Owen', 'Nadia',
+	'Bram', 'Lia', 'Kai', 'Maja', 'Otto', 'Saskia', 'Janek', 'Stine',
+	'Lukas', 'Mira', 'Tobias', 'Yana', 'Adrian', 'Lena', 'Mikko', 'Sanna',
+	'Hilde', 'Joris', 'Petra', 'Vesa', 'Kira', 'Aleks', 'Suvi', 'Erik',
+	'Mira', 'Tor', 'Liv', 'Niko', 'Aris', 'Hana', 'Iliana', 'Olek',
+	'Selma', 'Vera', 'Magnus', 'Anita', 'Bo', 'Cilla', 'Dag', 'Emil',
+	'Fia', 'Gunnar', 'Hilma', 'Ida', 'Jaakko', 'Karin', 'Lassi',
 ];
 
-/*
-	Hidden root origins — real independent root nodes that sit behind the
-	"+N more independent origins" expander in the tree. These are NOT
-	downstream of marco/alice/dan/tomas: each brought the signal in from
-	outside the network on their own. Minimal subtrees by design — they
-	exist to demonstrate quieter origins that still need to be reachable.
-*/
-const hiddenRootUsers: PropagationUser[] = [
-	{
-		id: 'inga',
-		name: 'Inga',
-		avatar: dicebear('IngaField'),
-		character: 'Field-recording listener',
-		amplifications: 0,
-		branchSize: 0,
-		discoveredAgo: '4 weeks ago',
-		behaviorNote: 'Quieter origin — discovery sat with her without onward amplification.',
-		scenes: ['field recordings', 'quiet early listener cluster'],
-		isOrigin: true,
-		noveltyTierAtDiscovery: 'Underground',
-		fameIndexAtDiscovery: 4,
-		discoveryScore: 3.4,
-		depthLevels: 0,
-		nodeKind: 'passive-listener',
-		children: [],
-	},
+const CHARACTERS_PASSIVE = [
+	'Cassette archivist', 'Quiet listener', 'Low-key listener',
+	'Late-night drifter', 'Late commuter', 'Headphone observer',
+	'Background absorber', 'Lurker by habit', 'Soft completionist',
+	'Catalogue grazer', 'Sleeve reader', 'Shelf cataloguer',
+	'Half-attention listener', 'Background fixture',
 ];
+
+const CHARACTERS_DEEP = [
+	'Deep ambient seeker', 'Field-recording listener', 'Drone immersion student',
+	'Late-night dweller', 'Ritual listener', 'Devotional ambient ear',
+	'Long-form contemplative', 'Slow listener', 'Tape-loop devotee',
+	'Reverb cartographer', 'Resonance follower', 'Texture archivist',
+	'Headphone ritualist', 'Patient listener',
+];
+
+const CHARACTERS_AMP = [
+	'Ambient cartographer', 'Drone obsessive', 'Post-rock crossover',
+	'Late-night signal hunter', 'Cassette scout', 'Scene connector',
+	'Edge-of-scene listener', 'Crossover taste-maker', 'Mixtape sharer',
+	'Note-passing curator', 'Whisper network amplifier', 'Sleeve photographer',
+	'Show-up-late witness', 'Quiet broadcaster',
+];
+
+const CHARACTERS_SUCCESS = [
+	'Underground connector', 'Deep scene explorer', 'Cross-scene bridge',
+	'Cultural propagator', 'Trusted signal carrier', 'Quietly central node',
+	'Branch-defining scout', 'Long-arc amplifier', 'Cassette underground hub',
+];
+
+const SCENES = [
+	'ambient/drone crossover', 'cassette ambient orbit', 'post-rock crossover',
+	'late-night headphone scene', 'drone microculture', 'ritual ambient',
+	'field recordings', 'cassette ambient', 'experimental crossover',
+	'folk-leaning ambient', 'long-form drone', 'tape ambient',
+	'liminal listening cluster', 'dawn-walk ambient', 'underground cassette',
+	'whisper network', 'quiet early-listener cluster', 'patient ambient orbit',
+];
+
+const BEHAVIOR_NOTES_PASSIVE = [
+	'Signal stopped here.', 'Listened once, never amplified.',
+	'Quiet endpoint of the branch.', 'No onward transmission.',
+	'Catalogued silently.', 'Filed away without sharing.',
+	'Picked it up; let it rest.',
+];
+
+const BEHAVIOR_NOTES_DEEP = [
+	'Resonated deeply, did not amplify.', 'Sat with the signal for weeks.',
+	'Returned to it repeatedly, alone.', 'Quiet but engaged.',
+	'Internal listener; the signal mattered here.', 'Held it without sharing.',
+	'Listened in full, in silence.',
+];
+
+const BEHAVIOR_NOTES_AMP = [
+	'Picked up the signal and carried it forward.', 'Shared with a tight circle.',
+	'Quietly pushed it into adjacent listeners.', 'Transmitted onward, intentionally.',
+	'Whisper-network amplification.', 'Sent it to a small group with context.',
+];
+
+const BEHAVIOR_NOTES_SUCCESS = [
+	'High-impact propagator; the branch reached far.',
+	'Carried the signal across scenes.', 'Trusted broadcaster within their circle.',
+	'Their transmission opened a wide downstream branch.',
+	'Bridge-style scout — the branch reached unexpected listeners.',
+];
+
+const CLUSTER_LABELS = [
+	'Quieter listeners', 'Drone-leaning listeners', 'Ambient cluster',
+	'Late-night cluster', 'Cassette-adjacent listeners',
+	'Post-rock-adjacent listeners', 'Field-recording cluster',
+	'Quiet downstream branch', 'Patient ambient cluster',
+	'Edge-of-scene listeners',
+];
+
+const CLUSTER_DESCRIPTIONS = [
+	'Quiet listeners who tend to amplify within their orbit but rarely cross-pollinate.',
+	'Crossover ears that drift between adjacent scenes; signals tend to slow but persist here.',
+	'Late-night listeners — minimal onward movement, but the signal lingers.',
+	'Scene-adjacent listeners who absorb without re-broadcasting.',
+	'Quiet downstream branch where the signal settles without further amplification.',
+];
+
+const DISCOVERED_PHRASES = [
+	'2 days ago', '4 days ago', '6 days ago', '9 days ago', '11 days ago',
+	'2 weeks ago', '3 weeks ago', '4 weeks ago', '5 weeks ago', '6 weeks ago',
+	'8 weeks ago', '3 months ago',
+];
+
+/* ─────────────── Seeded RNG ─────────────── */
+
+function hashString(s: string): number {
+	let h = 2166136261 >>> 0;
+	for (let i = 0; i < s.length; i++) {
+		h ^= s.charCodeAt(i);
+		h = Math.imul(h, 16777619) >>> 0;
+	}
+	return h >>> 0;
+}
+
+function makeRng(seed: number) {
+	// xorshift32 — small, deterministic, good enough for mock variation.
+	let x = seed | 0;
+	if (x === 0) x = 1;
+	return () => {
+		x ^= x << 13; x |= 0;
+		x ^= x >>> 17;
+		x ^= x << 5;  x |= 0;
+		return ((x >>> 0) % 1_000_000) / 1_000_000;
+	};
+}
+
+function pick<T>(rand: () => number, arr: readonly T[]): T {
+	return arr[Math.floor(rand() * arr.length) % arr.length];
+}
+
+function pickN<T>(rand: () => number, arr: readonly T[], n: number): T[] {
+	const copy = arr.slice();
+	const out: T[] = [];
+	for (let i = 0; i < n && copy.length > 0; i++) {
+		const idx = Math.floor(rand() * copy.length) % copy.length;
+		out.push(copy.splice(idx, 1)[0]);
+	}
+	return out;
+}
+
+function randInt(rand: () => number, min: number, max: number): number {
+	return Math.floor(rand() * (max - min + 1)) + min;
+}
+
+function chance(rand: () => number, p: number): boolean {
+	return rand() < p;
+}
+
+/* ─────────────── Node builder ─────────────── */
+
+type BuilderCtx = {
+	rand: () => number;
+	usedIds: Set<string>;
+	usedNames: Set<string>;
+};
+
+function uniqueName(ctx: BuilderCtx): string {
+	for (let i = 0; i < 30; i++) {
+		const candidate = pick(ctx.rand, NAME_POOL);
+		if (!ctx.usedNames.has(candidate)) {
+			ctx.usedNames.add(candidate);
+			return candidate;
+		}
+	}
+	// Fallback when pool exhausted.
+	const fallback = pick(ctx.rand, NAME_POOL) + String(randInt(ctx.rand, 2, 99));
+	ctx.usedNames.add(fallback);
+	return fallback;
+}
+
+function uniqueId(ctx: BuilderCtx, basis: string): string {
+	const base = basis.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+	let candidate = base;
+	let i = 1;
+	while (ctx.usedIds.has(candidate)) {
+		candidate = `${base}-${i++}`;
+	}
+	ctx.usedIds.add(candidate);
+	return candidate;
+}
+
+function charactersFor(kind: PropagationNodeKind): readonly string[] {
+	switch (kind) {
+		case 'passive-listener':     return CHARACTERS_PASSIVE;
+		case 'deep-listener':        return CHARACTERS_DEEP;
+		case 'amplifier':            return CHARACTERS_AMP;
+		case 'successful-amplifier': return CHARACTERS_SUCCESS;
+	}
+}
+
+function behaviorFor(kind: PropagationNodeKind): readonly string[] {
+	switch (kind) {
+		case 'passive-listener':     return BEHAVIOR_NOTES_PASSIVE;
+		case 'deep-listener':        return BEHAVIOR_NOTES_DEEP;
+		case 'amplifier':            return BEHAVIOR_NOTES_AMP;
+		case 'successful-amplifier': return BEHAVIOR_NOTES_SUCCESS;
+	}
+}
+
+function makeNode(
+	ctx: BuilderCtx,
+	kind: PropagationNodeKind,
+	opts: Partial<PropagationUser> = {},
+): PropagationUser {
+	const name = opts.name ?? uniqueName(ctx);
+	const id = opts.id ?? uniqueId(ctx, name);
+	const avatar = opts.avatar ?? dicebear(id + Math.floor(ctx.rand() * 1000));
+	return {
+		id,
+		name,
+		avatar,
+		character: opts.character ?? pick(ctx.rand, charactersFor(kind)),
+		amplifications: opts.amplifications ?? (
+			kind === 'successful-amplifier' ? randInt(ctx.rand, 4, 9)
+				: kind === 'amplifier'        ? randInt(ctx.rand, 2, 5)
+				: kind === 'deep-listener'    ? randInt(ctx.rand, 0, 2)
+				: 0
+		),
+		branchSize: opts.branchSize ?? 0,
+		discoveredAgo: opts.discoveredAgo ?? pick(ctx.rand, DISCOVERED_PHRASES),
+		behaviorNote: opts.behaviorNote ?? pick(ctx.rand, behaviorFor(kind)),
+		scenes: opts.scenes ?? pickN(ctx.rand, SCENES, randInt(ctx.rand, 1, 2)),
+		children: opts.children ?? [],
+		hiddenChildren: opts.hiddenChildren,
+		hiddenChildrenLabel: opts.hiddenChildrenLabel,
+		hiddenChildrenDescription: opts.hiddenChildrenDescription,
+		isOrigin: opts.isOrigin,
+		highImpact: opts.highImpact,
+		noveltyTierAtDiscovery: opts.noveltyTierAtDiscovery,
+		fameIndexAtDiscovery: opts.fameIndexAtDiscovery,
+		discoveryScore: opts.discoveryScore,
+		depthLevels: opts.depthLevels,
+		biggestSubcascadeName: opts.biggestSubcascadeName,
+		biggestSubcascadeReach: opts.biggestSubcascadeReach,
+		nodeKind: kind,
+	};
+}
+
+/* ─────────────── Shape builders ─────────────── */
+
+/* Pick a downstream-kind distribution for children of a given parent.
+   Mostly passive/deep, with occasional amps and rare successful amps. */
+function pickDownstreamKind(rand: () => number, allowSuccess = false): PropagationNodeKind {
+	const r = rand();
+	if (allowSuccess && r < 0.04) return 'successful-amplifier';
+	if (r < 0.18) return 'amplifier';
+	if (r < 0.50) return 'deep-listener';
+	return 'passive-listener';
+}
+
+/* A deep narrow chain — used for "deep-chain" archetypes and for
+   tucked-away quiet branches. Length is randomised within a range. */
+function buildChain(
+	ctx: BuilderCtx,
+	minLen: number,
+	maxLen: number,
+	{ allowAmpAt = -1, allowSuccessAt = -1 }: { allowAmpAt?: number; allowSuccessAt?: number } = {},
+): PropagationUser {
+	const len = randInt(ctx.rand, minLen, maxLen);
+	let kind: PropagationNodeKind =
+		chance(ctx.rand, 0.4) ? 'deep-listener' : 'passive-listener';
+	// Build leaf upward.
+	let cursor: PropagationUser = makeNode(ctx, kind);
+	for (let d = 1; d < len; d++) {
+		const fromTop = len - 1 - d;
+		if (allowSuccessAt >= 0 && fromTop === allowSuccessAt) {
+			kind = 'successful-amplifier';
+		} else if (allowAmpAt >= 0 && fromTop === allowAmpAt) {
+			kind = 'amplifier';
+		} else {
+			kind = chance(ctx.rand, 0.55) ? 'deep-listener' : 'passive-listener';
+		}
+		cursor = makeNode(ctx, kind, { children: [cursor] });
+	}
+	return cursor;
+}
+
+/* A wide cluster of siblings under one parent. */
+function buildCluster(
+	ctx: BuilderCtx,
+	count: number,
+	options: { withGrandchildren?: boolean; allowSuccess?: boolean } = {},
+): PropagationUser[] {
+	const { withGrandchildren = true, allowSuccess = false } = options;
+	const out: PropagationUser[] = [];
+	for (let i = 0; i < count; i++) {
+		const kind = pickDownstreamKind(ctx.rand, allowSuccess && i === 0);
+		const grandkids: PropagationUser[] = [];
+		if (withGrandchildren && (kind === 'amplifier' || kind === 'successful-amplifier')) {
+			const gcCount = kind === 'successful-amplifier'
+				? randInt(ctx.rand, 2, 4)
+				: randInt(ctx.rand, 0, 2);
+			for (let j = 0; j < gcCount; j++) {
+				const gkKind = pickDownstreamKind(ctx.rand);
+				grandkids.push(makeNode(ctx, gkKind));
+			}
+		}
+		out.push(makeNode(ctx, kind, { children: grandkids }));
+	}
+	return out;
+}
+
+/* A burst — one node with many direct children, optionally with a hidden tail. */
+function buildBurst(
+	ctx: BuilderCtx,
+	parentKind: PropagationNodeKind,
+	visibleCount: number,
+	hiddenCount: number,
+): PropagationUser {
+	const children: PropagationUser[] = [];
+	for (let i = 0; i < visibleCount; i++) {
+		const kind = pickDownstreamKind(ctx.rand, i === 0 && chance(ctx.rand, 0.4));
+		const subkidsCount =
+			kind === 'successful-amplifier' ? randInt(ctx.rand, 1, 3)
+				: kind === 'amplifier' ? randInt(ctx.rand, 0, 2)
+				: 0;
+		const subkids: PropagationUser[] = [];
+		for (let j = 0; j < subkidsCount; j++) {
+			subkids.push(makeNode(ctx, pickDownstreamKind(ctx.rand)));
+		}
+		children.push(makeNode(ctx, kind, { children: subkids }));
+	}
+	return makeNode(ctx, parentKind, {
+		isOrigin: true,
+		children,
+		hiddenChildren: hiddenCount,
+		hiddenChildrenLabel: hiddenCount > 0 ? pick(ctx.rand, CLUSTER_LABELS) : undefined,
+		hiddenChildrenDescription: hiddenCount > 0 ? pick(ctx.rand, CLUSTER_DESCRIPTIONS) : undefined,
+	});
+}
+
+/* A small, often dead-end root — most common shape across the forest. */
+function buildSmallRoot(ctx: BuilderCtx): PropagationUser {
+	const kind: PropagationNodeKind = chance(ctx.rand, 0.5) ? 'passive-listener' : 'deep-listener';
+	const kidCount = randInt(ctx.rand, 0, 2);
+	const kids: PropagationUser[] = [];
+	for (let i = 0; i < kidCount; i++) {
+		kids.push(makeNode(ctx, pickDownstreamKind(ctx.rand)));
+	}
+	return makeNode(ctx, kind, { isOrigin: true, children: kids });
+}
+
+/* ─────────────── Archetypes ─────────────── */
+
+/* Each archetype returns a (roots, hiddenRoots) tuple. */
+type ArchetypeResult = { roots: PropagationUser[]; hiddenRootUsers: PropagationUser[] };
+
+/* 1. Hub-dominant — one big successful-amplifier root + a few quiet origins. */
+function buildHubDominant(ctx: BuilderCtx): ArchetypeResult {
+	const hub = buildBurst(ctx, 'successful-amplifier', randInt(ctx.rand, 3, 5), randInt(ctx.rand, 4, 8));
+	// Add a deeper sub-branch under one of the hub's children for variety.
+	if (hub.children.length > 1 && chance(ctx.rand, 0.7)) {
+		const target = hub.children[0];
+		target.children = [...target.children, buildChain(ctx, 3, 5)];
+	}
+	const small1 = buildSmallRoot(ctx);
+	const small2 = buildSmallRoot(ctx);
+	const hidden: PropagationUser[] = [];
+	const hiddenCount = randInt(ctx.rand, 1, 3);
+	for (let i = 0; i < hiddenCount; i++) hidden.push(buildSmallRoot(ctx));
+	return { roots: [hub, small1, small2], hiddenRootUsers: hidden };
+}
+
+/* 2. Fragmented — many small origins, mostly shallow. */
+function buildFragmented(ctx: BuilderCtx): ArchetypeResult {
+	const visible: PropagationUser[] = [];
+	const visibleCount = randInt(ctx.rand, 4, 6);
+	for (let i = 0; i < visibleCount; i++) visible.push(buildSmallRoot(ctx));
+	// Promote one to a small amplifier for variety.
+	if (visible.length > 0 && chance(ctx.rand, 0.8)) {
+		const target = visible[0];
+		target.nodeKind = 'amplifier';
+		target.character = pick(ctx.rand, CHARACTERS_AMP);
+		target.children = [
+			...target.children,
+			makeNode(ctx, pickDownstreamKind(ctx.rand)),
+			makeNode(ctx, pickDownstreamKind(ctx.rand)),
+		];
+	}
+	const hidden: PropagationUser[] = [];
+	for (let i = 0; i < randInt(ctx.rand, 3, 5); i++) hidden.push(buildSmallRoot(ctx));
+	return { roots: visible, hiddenRootUsers: hidden };
+}
+
+/* 3. Late-bloomer — quiet chain that explodes deep down. */
+function buildLateBloomer(ctx: BuilderCtx): ArchetypeResult {
+	// Build the "blooming" sub-burst first, then wrap it in a quiet chain.
+	const sub = buildBurst(ctx, 'successful-amplifier', randInt(ctx.rand, 3, 5), randInt(ctx.rand, 2, 5));
+	sub.isOrigin = false; // it's mid-chain, not a true origin
+	// Wrap it in 3–5 quiet listener nodes above it.
+	const chainLen = randInt(ctx.rand, 3, 5);
+	let cursor: PropagationUser = sub;
+	for (let d = 0; d < chainLen; d++) {
+		const k: PropagationNodeKind =
+			d === 0 ? 'amplifier' :
+			chance(ctx.rand, 0.55) ? 'deep-listener' : 'passive-listener';
+		cursor = makeNode(ctx, k, { children: [cursor] });
+	}
+	cursor.isOrigin = true;
+	return {
+		roots: [cursor, buildSmallRoot(ctx), buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx), buildSmallRoot(ctx)],
+	};
+}
+
+/* 4. Deep-chain — narrow, long, mostly listener chain. */
+function buildDeepChain(ctx: BuilderCtx): ArchetypeResult {
+	const len = randInt(ctx.rand, 7, 10);
+	const main = buildChain(ctx, len, len, {
+		allowAmpAt: Math.floor(len / 2),
+	});
+	main.isOrigin = true;
+	// Occasional sibling at a mid-depth — tiny dead-end shoot.
+	if (chance(ctx.rand, 0.7) && main.children.length > 0) {
+		const mid = main.children[0];
+		mid.children = [...mid.children, makeNode(ctx, 'passive-listener')];
+	}
+	const sideRoot1 = buildSmallRoot(ctx);
+	const sideRoot2 = buildSmallRoot(ctx);
+	return {
+		roots: [main, sideRoot1, sideRoot2],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 5. Bursty — origin → one successful amplifier → dense sibling cluster. */
+function buildBursty(ctx: BuilderCtx): ArchetypeResult {
+	const cluster = buildCluster(ctx, randInt(ctx.rand, 4, 6), { allowSuccess: true });
+	const sub = makeNode(ctx, 'successful-amplifier', {
+		children: cluster,
+		hiddenChildren: randInt(ctx.rand, 2, 5),
+		hiddenChildrenLabel: pick(ctx.rand, CLUSTER_LABELS),
+		hiddenChildrenDescription: pick(ctx.rand, CLUSTER_DESCRIPTIONS),
+	});
+	const root = makeNode(ctx, 'amplifier', { isOrigin: true, children: [sub] });
+	const small1 = buildSmallRoot(ctx);
+	const small2 = buildSmallRoot(ctx);
+	return {
+		roots: [root, small1, small2],
+		hiddenRootUsers: [buildSmallRoot(ctx), buildSmallRoot(ctx)],
+	};
+}
+
+/* 6. Sparse — a few quiet origins, almost no spread. */
+function buildSparse(ctx: BuilderCtx): ArchetypeResult {
+	const visible: PropagationUser[] = [];
+	for (let i = 0; i < randInt(ctx.rand, 3, 4); i++) visible.push(buildSmallRoot(ctx));
+	// Give one of them a slightly deeper tail.
+	if (visible.length > 0 && chance(ctx.rand, 0.6)) {
+		const target = visible[Math.floor(ctx.rand() * visible.length)];
+		target.children = [...target.children, buildChain(ctx, 2, 4)];
+	}
+	return {
+		roots: visible,
+		hiddenRootUsers: [buildSmallRoot(ctx), buildSmallRoot(ctx)],
+	};
+}
+
+/* 7. Showcase — hand-tuned forest that exhibits ALL FIVE branch states
+   side by side, plus several mixed-state scenarios. Used as a fixed
+   override for the `frozen-sun` demo item so the visual differentiation
+   between dead/alive/accelerating/strong/peak is always inspectable in
+   one screenshot. Heuristic (in computeBranchActivity):
+     dead         → 0 amps anywhere
+     alive        → some amps, 0 successful-amplifiers
+     accelerating → 1 successful-amplifier
+     strong       → 2-3 successful-amplifiers
+     peak         → 4+ successful-amplifiers */
+function buildShowcase(ctx: BuilderCtx): ArchetypeResult {
+	const successKid = (children: PropagationUser[] = []) =>
+		makeNode(ctx, 'successful-amplifier', { children });
+
+	// ── PEAK origin: 5 successful-amplifiers downstream, dense traffic ──
+	// Internally contains strong + accelerating sub-branches as you descend.
+	const peakRoot = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [
+			successKid([
+				successKid([
+					makeNode(ctx, 'amplifier'),
+					makeNode(ctx, 'deep-listener'),
+				]),
+				makeNode(ctx, 'amplifier', { children: [
+					makeNode(ctx, 'deep-listener'),
+				] }),
+			]),
+			successKid([
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			successKid([
+				makeNode(ctx, 'deep-listener'),
+			]),
+			makeNode(ctx, 'amplifier', { children: [
+				makeNode(ctx, 'passive-listener'),
+			] }),
+			makeNode(ctx, 'deep-listener'),
+		],
+	});
+
+	// ── STRONG origin: exactly 2 successful-amplifiers downstream ──
+	// One of its sub-branches is accelerating (1 success), the other is alive.
+	const strongRoot = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			successKid([
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			successKid([
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'amplifier'),
+			]),
+			makeNode(ctx, 'amplifier', { children: [
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			] }),
+		],
+	});
+
+	// ── ACCELERATING origin: 1 successful-amplifier ──
+	// Sub-branches under that success are alive.
+	const acceleratingRoot = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			successKid([
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			makeNode(ctx, 'deep-listener'),
+			makeNode(ctx, 'passive-listener'),
+		],
+	});
+
+	// ── ALIVE origin: amps but no successful-amplifier ──
+	// Cool, calm, steady. One dead leaf child for mixed-state illustration.
+	const aliveRoot = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			makeNode(ctx, 'deep-listener'),
+			makeNode(ctx, 'amplifier', { children: [
+				makeNode(ctx, 'deep-listener'),
+			] }),
+			makeNode(ctx, 'passive-listener', { amplifications: 0 }),
+		],
+	});
+
+	// ── DEAD origin: 0 amps, only passive listeners ──
+	const deadRoot = makeNode(ctx, 'passive-listener', {
+		isOrigin: true,
+		amplifications: 0,
+		children: [
+			makeNode(ctx, 'passive-listener', { amplifications: 0 }),
+		],
+	});
+
+	return {
+		roots: [peakRoot, strongRoot, acceleratingRoot, aliveRoot, deadRoot],
+		hiddenRootUsers: [],
+	};
+}
+
+/* 8. Strong-spotlight — a single main origin pinned to the strong-
+   accelerating classification (exactly 2 successful-amplifiers in its
+   subtree), surrounded by one calm alive origin and one dead origin for
+   contrast. Used by a couple of specific item ids (see below) so the
+   strong tier can be inspected outside the frozen-sun showcase. */
+function buildStrongSpotlight(ctx: BuilderCtx): ArchetypeResult {
+	const successKid = (children: PropagationUser[] = []) =>
+		makeNode(ctx, 'successful-amplifier', { children });
+
+	const strongRoot = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			successKid([
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			successKid([
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'amplifier'),
+				makeNode(ctx, 'passive-listener'),
+			]),
+			makeNode(ctx, 'amplifier', { children: [
+				makeNode(ctx, 'deep-listener'),
+				makeNode(ctx, 'passive-listener'),
+			] }),
+			makeNode(ctx, 'deep-listener'),
+		],
+	});
+
+	const aliveOrigin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		children: [
+			makeNode(ctx, 'deep-listener'),
+			makeNode(ctx, 'amplifier', { children: [makeNode(ctx, 'deep-listener')] }),
+			makeNode(ctx, 'passive-listener', { amplifications: 0 }),
+		],
+	});
+
+	const deadOrigin = makeNode(ctx, 'passive-listener', {
+		isOrigin: true,
+		amplifications: 0,
+		children: [makeNode(ctx, 'passive-listener', { amplifications: 0 })],
+	});
+
+	return {
+		roots: [strongRoot, aliveOrigin, deadOrigin],
+		hiddenRootUsers: [],
+	};
+}
+
+const ARCHETYPES = [
+	{ name: 'hub-dominant',     build: buildHubDominant     },
+	{ name: 'fragmented',       build: buildFragmented      },
+	{ name: 'late-bloomer',     build: buildLateBloomer     },
+	{ name: 'deep-chain',       build: buildDeepChain       },
+	{ name: 'bursty',           build: buildBursty          },
+	{ name: 'sparse',           build: buildSparse          },
+	{ name: 'showcase',         build: buildShowcase        },
+	{ name: 'strong-spotlight', build: buildStrongSpotlight },
+] as const;
+
+/* Items whose forest is pinned to a specific archetype for design-system
+   testing. All other items rotate through the procedural archetypes
+   below via their id's hash. */
+const PINNED_ARCHETYPES: Record<string, string> = {
+	'frozen-sun':  'showcase',         /* all five branch states side by side */
+	'iron-coast':  'strong-spotlight', /* dedicated strong-accelerating test */
+	'pale-verge':  'strong-spotlight', /* second strong test (different forest) */
+};
+
+/* Archetype names that should NEVER appear via random rotation —
+   they're reserved for explicit pinning above. Keeps procedural items
+   feeling natural and prevents the showcase/test surfaces from
+   accidentally appearing under arbitrary item ids. */
+const NON_ROTATING_ARCHETYPES = new Set(Object.values(PINNED_ARCHETYPES));
+const ROTATION_ARCHETYPES = ARCHETYPES.filter(
+	(a) => !NON_ROTATING_ARCHETYPES.has(a.name),
+);
+
+/* ─────────────── Source-scout injection ─────────────── */
+
+/* Known scouts that may appear as the route source. The forest must
+   include the one matching `sourceScoutId` so the route insertion
+   (Dan's preview / amp node) can find them. */
+const KNOWN_SCOUTS: Record<string, { name: string; avatar: string; character: string }> = {
+	marco: { name: 'Marco', avatar: dicebear('MarcoAmb'), character: 'Underground connector' },
+	alice: { name: 'Alice', avatar: dicebear('AliceSignal'), character: 'Deep scene explorer' },
+	yuki:  { name: 'Yuki',  avatar: dicebear('YukiQuiet'),   character: 'Cross-scene bridge'   },
+	dan:   { name: 'Dan',   avatar: dicebear('DanOuter'),    character: 'Early signal hunter'  },
+};
+
+/* Find a "promotable" origin in the forest and rebrand it as the known
+   scout `id`. We prefer the most prominent root (largest visible branch)
+   so the route's source scout reads as an important node, but fall back
+   to the first root if no clear winner. */
+function rebrandRootAs(roots: PropagationUser[], id: string): PropagationUser[] {
+	const known = KNOWN_SCOUTS[id];
+	if (!known) return roots;
+	if (roots.length === 0) return roots;
+	// Already present anywhere? Then no rebrand needed.
+	for (const r of roots) {
+		if (findInNode(r, id)) return roots;
+	}
+	// Prefer a root with the largest visible subtree (or first by default).
+	let target = roots[0];
+	let bestCount = countNodes(target);
+	for (const r of roots.slice(1)) {
+		const c = countNodes(r);
+		if (c > bestCount) { target = r; bestCount = c; }
+	}
+	target.id = id;
+	target.name = known.name;
+	target.avatar = known.avatar;
+	target.character = known.character;
+	return roots;
+}
+
+function findInNode(node: PropagationUser, id: string): PropagationUser | null {
+	if (node.id === id) return node;
+	for (const c of node.children) {
+		const hit = findInNode(c, id);
+		if (hit) return hit;
+	}
+	return null;
+}
+
+function countNodes(node: PropagationUser): number {
+	let n = 1;
+	for (const c of node.children) n += countNodes(c);
+	return n;
+}
+
+/* Compute branchSize for every node — used by sortNodesByPropagation. */
+function annotateBranchSizes(node: PropagationUser): number {
+	let total = 0;
+	for (const c of node.children) total += 1 + annotateBranchSizes(c);
+	node.branchSize = total;
+	return total;
+}
+
+/* ─────────────── Forest assembly ─────────────── */
+
+const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; originNote: string }> = {
+	'hub-dominant': {
+		summary: 'A dominant hub propagator carrying the signal across adjacent listening circles, with quieter origins persisting at the edges.',
+		crossingNote: 'One central scout pulled the signal forward; smaller origins surface independently.',
+		originNote: 'First surfaced through a dominant ambient connector.',
+	},
+	'fragmented': {
+		summary: 'Many independent origins, each spreading quietly — no single propagation center has emerged.',
+		crossingNote: 'Fragmented surfacing across multiple small listening circles.',
+		originNote: 'Multiple unrelated origins surfaced the signal in parallel.',
+	},
+	'late-bloomer': {
+		summary: 'A long quiet chain that finally opened into broader propagation — the signal sat with listeners before it moved.',
+		crossingNote: 'Patient resonance gave way to sudden spread several levels downstream.',
+		originNote: 'Surfaced quietly at first; bloomed later through a hub deep in the chain.',
+	},
+	'deep-chain': {
+		summary: 'A narrow, deep chain of resonant listeners — the signal traveled slowly through patient ears.',
+		crossingNote: 'Mostly internal resonance; little outward broadcast.',
+		originNote: 'Surfaced through a single quiet origin and walked deep into adjacent listeners.',
+	},
+	'bursty': {
+		summary: 'An amplifier turned a quiet origin into a wide cluster of onward listeners — bursty propagation through a single scene.',
+		crossingNote: 'Tight cluster spread under a single propagator.',
+		originNote: 'Surfaced quietly, then opened into a dense local cluster.',
+	},
+	'showcase': {
+		summary: 'A diagnostic forest spanning the full energy spectrum — runaway propagation, intensifying pull, emerging momentum, calm circulation, and an archaeological remnant — for side-by-side visual comparison.',
+		crossingNote: 'Five origins, five distinct propagation temperatures within one ecosystem.',
+		originNote: 'Hand-tuned diagnostic forest showcasing every branch-activity tier.',
+	},
+	'strong-spotlight': {
+		summary: 'A strong-accelerating propagator dominating a single scene, with a quieter circulating side branch and one archaeological remnant for visual contrast.',
+		crossingNote: 'Two successful amplifiers in the main subtree create sustained pressure without runaway ignition.',
+		originNote: 'Surfaced through a single intensifying connector whose downstream amplifies into a heated cluster.',
+	},
+	'sparse': {
+		summary: 'Quiet across the board — a few origins surfaced the signal but it has not yet propagated.',
+		crossingNote: 'Sparse — almost no onward movement.',
+		originNote: 'A handful of quiet origins surfaced the signal independently.',
+	},
+};
 
 /**
- * Returns a propagation forest for the given item. Shape is constant for v1;
- * hero numerics scale lightly off `scouts` so each detail page reads
- * differently in the inspector without per-item hand authoring.
+ * Returns a propagation forest for the given item. Forest shape is
+ * procedurally generated from the item id so each item page feels
+ * distinct, but always deterministic — the same id returns the same
+ * forest.
+ *
+ * `sourceScoutId` (when provided) names a known scout that the item's
+ * route flows through; the generator rebrands one of the produced
+ * origins to that scout so the route insertion (Dan's preview / amp
+ * node) can find them. For items where Dan is genuinely the route
+ * source, Dan is included as an origin.
  */
-export function propagationForestFor(itemId: string, scouts: number): PropagationForest {
-	const visibleCount = 12;
-	const totalReach = Math.max(visibleCount + 2, scouts * 2 + visibleCount);
-	const hiddenRoots = hiddenRootUsers.length;
-	const independentOrigins = baseRoots.length + hiddenRoots;
-	const totalAmplifications = Math.max(scouts + 12, 17);
-	const weightedImpact = Math.max(38, Math.min(86, 38 + scouts * 3));
+export function propagationForestFor(
+	itemId: string,
+	scouts: number,
+	sourceScoutId?: string,
+): PropagationForest {
+	const seed = hashString(itemId);
+	const rand = makeRng(seed);
+	const ctx: BuilderCtx = { rand, usedIds: new Set(), usedNames: new Set() };
+
+	/* A handful of item ids are pinned to design-system test surfaces
+	   (see PINNED_ARCHETYPES above). All other items continue to rotate
+	   through the procedural archetypes via their id's hash. */
+	const pinnedName = PINNED_ARCHETYPES[itemId];
+	const archetype = pinnedName
+		? ARCHETYPES.find((a) => a.name === pinnedName)!
+		: ROTATION_ARCHETYPES[seed % ROTATION_ARCHETYPES.length];
+	const built = archetype.build(ctx);
+
+	// Inject the route source scout into the forest if specified.
+	if (sourceScoutId && KNOWN_SCOUTS[sourceScoutId]) {
+		rebrandRootAs(built.roots, sourceScoutId);
+	}
+
+	// Compute branchSize across the whole forest.
+	for (const r of built.roots) annotateBranchSizes(r);
+	for (const r of built.hiddenRootUsers) annotateBranchSizes(r);
+
+	const visibleNodeCount = built.roots.reduce((sum, r) => sum + countNodes(r), 0);
+	const hiddenNodeCount = built.hiddenRootUsers.reduce((sum, r) => sum + countNodes(r), 0);
+	const totalReach = visibleNodeCount + hiddenNodeCount;
+	const independentOrigins = built.roots.length + built.hiddenRootUsers.length;
+	const totalAmplifications = Math.max(
+		Math.round(totalReach * 0.6) + scouts,
+		8,
+	);
+	const weightedImpact = Math.max(28, Math.min(92, 28 + Math.round(totalReach * 1.4)));
+
+	// Branch summaries — one entry per visible root.
+	const branchSummaries: RootBranchSummary[] = built.roots.map((r) => ({
+		rootId: r.id,
+		label: `${r.name}'s branch — ${r.character.toLowerCase()}`,
+		count: countNodes(r),
+	}));
+
+	const notes = ARCHETYPE_NOTES[archetype.name];
+	const sceneList = pickN(rand, SCENES, randInt(rand, 3, 5));
 
 	return {
 		itemId,
-		roots: baseRoots,
-		hiddenRootUsers,
-		hiddenRoots,
+		roots: built.roots,
+		hiddenRootUsers: built.hiddenRootUsers,
+		hiddenRoots: built.hiddenRootUsers.length,
 		totalReach,
 		independentOrigins,
 		weightedImpact,
 		totalAmplifications,
-		summary:
-			'Spreading through three distinct circles before reaching adjacent listening scenes. Multiple independent origins suggest cultural pull rather than algorithmic push.',
-		branchSummaries: [
-			{ rootId: 'marco', label: "Marco's branch — ambient + drone explorers",         count: 9  },
-			{ rootId: 'alice', label: "Alice's branch — deep ambient + post-rock crossover", count: 14 },
-			{ rootId: 'dan',   label: "Dan's branch — earliest, quietest origin",            count: 1  },
-		],
-		scenes: [
-			'ambient/drone crossover',
-			'cassette ambient orbit',
-			'post-rock crossover',
-			'late-night headphone scene',
-		],
-		crossingNote: 'Crossing ambient + drone listening circles, drifting into post-rock-adjacent listeners.',
-		originNote: "First surfaced through Marco's ambient orbit.",
+		summary: notes.summary,
+		branchSummaries,
+		scenes: sceneList,
+		crossingNote: notes.crossingNote,
+		originNote: notes.originNote,
 	};
 }
 
@@ -472,10 +1041,7 @@ export function findParentInForest(forest: PropagationForest, userId: string): P
 	return null;
 }
 
-/* ─────────────── Immutable forest transformers ───────────────
-   These helpers return a new forest with the requested change applied.
-   Used by the Item Detail page to derive the "displayed" forest from the
-   loaded forest + the current user's amplification state. */
+/* ─────────────── Immutable forest transformers ─────────────── */
 
 /** Returns a new forest with the given user removed wherever they appear. */
 export function removeUserFromForest(forest: PropagationForest, userId: string): PropagationForest {
@@ -514,20 +1080,8 @@ export function markUserInForest(
 
 /*
 	Sibling ordering — propagation-strength order so strong nodes lead each
-	sibling group. Used both at the root level (PropagationTree.svelte) and
-	for children of every parent (PropagationNode.svelte). Preview nodes go
-	to the END of the group so Dan's preview/amplify position stays stable
-	visually.
-
-	Primary sort: base nodeKind rank
-	  0 = successful-amplifier
-	  1 = amplifier
-	  2 = deep-listener
-	  3 = passive-listener
-	  4 = no nodeKind set
-	  999 = preview (always last)
-
-	Secondary sort: branchSize descending (bigger reach reads first).
+	sibling group. Preview nodes go to the END of the group so Dan's
+	preview/amplify position stays stable visually.
 */
 export function nodeKindRank(u: PropagationUser): number {
 	if (u.isPreviewNode) return 999;

@@ -91,6 +91,7 @@ export const load = ({ params }) => {
 			...externalMetrics(origin.reachedScouts),
 		};
 		return { item: detail, forest: propagationForestFor(id, detail.scouts) };
+		// Origin Stories items have no sourceScoutId (Dan IS the discoverer).
 	}
 
 	const gaining = breakingOutItems.find(i => i.id === id);
@@ -109,7 +110,7 @@ export const load = ({ params }) => {
 			sourceScoutId: gaining.sourceScoutId,
 			...externalMetrics(gaining.scouts),
 		};
-		return { item: detail, forest: propagationForestFor(id, detail.scouts) };
+		return { item: detail, forest: propagationForestFor(id, detail.scouts, gaining.sourceScoutId) };
 	}
 
 	// Item-typed lanes: From Your Scouts / High-Quality Scouts / For You / OSA / DU / OTB.
@@ -140,7 +141,7 @@ export const load = ({ params }) => {
 				sourceScoutId: found.sourceScoutId,
 				...externalMetrics(found.scouts),
 			};
-			return { item: detail, forest: propagationForestFor(id, detail.scouts) };
+			return { item: detail, forest: propagationForestFor(id, detail.scouts, found.sourceScoutId) };
 		}
 	}
 
