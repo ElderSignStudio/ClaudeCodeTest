@@ -29,8 +29,10 @@
 		depth = 0,
 		isLast = false,
 		onParticleArrival = undefined,
-		branchRootActivity = undefined,
 		whiteAnchorId = undefined,
+		inheritedLabeledState = undefined,
+		incomingTrunkActivity = undefined,
+		outgoingTrunkActivity = undefined,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
@@ -49,13 +51,6 @@
 		 *  halo. Wired in the recursive <Self> render below — every
 		 *  parent passes its own resonance handler down. */
 		onParticleArrival?: () => void;
-		/** The activity classification of the BRANCH ROOT (origin). Each
-		 *  origin (depth=0) computes its own; descendants inherit it via
-		 *  this prop so the whole subtree of e.g. a peak-accelerating
-		 *  origin renders with peak parameters — 5 slots, 18% white roll,
-		 *  etc. Without this, only the origin itself would be peak and
-		 *  the rest of the subtree would render as lower tiers. */
-		branchRootActivity?: BranchActivityState | undefined;
 		/** Deterministic safety net for peak-origin subtrees: the origin
 		 *  hash-picks ONE descendant id from its visible subtree. That
 		 *  descendant's first particle slot is forced white. Other slots
@@ -64,6 +59,31 @@
 		 *  of all slots rolling non-white still yields at least one
 		 *  visible ignition somewhere in the subtree. */
 		whiteAnchorId?: string | undefined;
+		/** The branch state most recently *labeled* up this lineage —
+		 *  i.e. either the origin's state, or the state of the most
+		 *  recent transition-labeled ancestor. Used to decide whether
+		 *  THIS node should render its own transition label: if this
+		 *  node's local subtree classifies differently from what was
+		 *  last labeled above, it's a transition point and gets a
+		 *  label. */
+		inheritedLabeledState?: BranchActivityState | undefined;
+		/** State of the vertical trunk segment ABOVE this child's elbow
+		 *  (i.e. the segment that this child's "top stub" renders).
+		 *  Per the trunk-accumulation rule, this is the MAX state of
+		 *  (this child + every visible sibling BELOW it), since all
+		 *  those branches' traffic flows up through this trunk
+		 *  segment toward the parent. Undefined for origins (no
+		 *  incoming trunk) and falls back to this child's own state. */
+		incomingTrunkActivity?: BranchActivityState | undefined;
+		/** State of the vertical trunk segment BELOW this child's
+		 *  elbow (i.e. the segment that this child's "bottom
+		 *  extension" renders, leading down to the next sibling).
+		 *  Per the rule, this is the MAX state of all siblings BELOW
+		 *  this child — NOT just the immediate next sibling, since a
+		 *  hotter branch further down still flows through this
+		 *  section on its way up. Undefined for the last child
+		 *  (no bottom extension is rendered). */
+		outgoingTrunkActivity?: BranchActivityState | undefined;
 	} = $props();
 
 	/* ── Tree-scoped conduit-path config ────────────────────────
@@ -103,18 +123,45 @@
 		treeConfig = getContext<TreeConfig>('propagation:tree-config');
 	}
 
-	/* Branch activity is computed ONCE at the origin (depth 0) and
-	   inherited by all descendants via `branchRootActivity`. This means
-	   the whole subtree of a peak-accelerating origin renders with
-	   peak parameters (5 slots, 18% white roll, etc.), so white-hot
-	   ignition events can appear distributed anywhere in the subtree
-	   rather than only on the origin's own conduit (which doesn't
-	   exist — depth 0 doesn't draw a conduit). Different origins still
-	   classify independently, so a tree with a peak origin alongside an
-	   alive origin alongside a dead origin still reads as five distinct
-	   propagation temperatures. */
+	/* Branch activity is computed PER NODE from this node's own
+	   subtree — not inherited from the origin. Earlier the origin's
+	   state was propagated to every descendant via a
+	   `branchRootActivity` prop so the whole subtree of a peak
+	   origin would paint with peak parameters; but that meant the
+	   conduit/particles/illumination of an internal node that had
+	   cooled to ALIVE still rendered as PEAK, contradicting the
+	   transition labels and the actual local subtree classification.
+	   Now every layer (rail color, atmosphere, particle shares,
+	   helix amplitude, illumination keyframe, heat bump) reads the
+	   same `effectiveActivity` that the transition-label system
+	   uses, so labels and visuals always agree. */
 	const effectiveActivity = $derived<BranchActivityState | undefined>(
-		depth === 0 ? computeBranchActivity(user) : branchRootActivity,
+		computeBranchActivity(user),
+	);
+
+	/* ─── Branch-state transition labels ─────────────────────────
+	   `effectiveActivity` (above) IS this node's local subtree state
+	   now; we re-export it as `localActivity` to keep the label
+	   template's intent explicit. The label fires only when the
+	   local state differs from the most recently labeled ancestor's
+	   state (`inheritedLabeledState` from props). Otherwise the
+	   inherited value passes through unchanged, so a long quiet
+	   trunk shows the label only once at its top, not on every node.
+	   Return transitions (PEAK → ALIVE → PEAK) work naturally
+	   because the second PEAK still differs from the intervening
+	   ALIVE. */
+	const localActivity = $derived<BranchActivityState>(effectiveActivity!);
+	const labeledStateAbove = $derived<BranchActivityState | undefined>(
+		depth === 0 ? localActivity : inheritedLabeledState,
+	);
+	const showTransitionLabel = $derived(
+		depth > 0 &&
+		!user.isPreviewNode &&
+		labeledStateAbove !== undefined &&
+		localActivity !== labeledStateAbove,
+	);
+	const labeledStateForChildren = $derived<BranchActivityState | undefined>(
+		showTransitionLabel ? localActivity : labeledStateAbove,
 	);
 
 	/* White-hot ignition safety anchor.
@@ -168,6 +215,64 @@
 		hasHiddenTail ? stubsFor(user.hiddenChildren ?? 0) : [],
 	);
 
+	/* Pre-compute each child's branch activity once, then accumulate
+	   the trunk-state max bottom-up across the combined visible
+	   siblings (sortedChildren + tailStubs when expanded). This gives
+	   each child two derived values to pass into its <Self>:
+
+	     incomingTrunkActivity = hottestAtAndBelow[i]
+	         = max(child[i], child[i+1], ..., child[last])
+	         drives THIS child's top stub.
+
+	     outgoingTrunkActivity = hottestAtAndBelow[i+1] or undefined
+	         = max(child[i+1], ..., child[last])
+	         drives THIS child's bottom extension.
+
+	   Per the conduit-state spec: a trunk segment paints with the
+	   hottest branch that has JOINED the trunk at or below that
+	   segment. Walking bottom-up yields exactly that accumulation —
+	   the lowest section carries only the lowest sibling, each
+	   higher section adds any hotter sibling joining at its
+	   junction. */
+	const sortedChildrenActivities = $derived(
+		sortedChildren.map(computeBranchActivity),
+	);
+	const tailStubsActivities = $derived(
+		tailStubs.map(computeBranchActivity),
+	);
+	const combinedChildrenActivities = $derived([
+		...sortedChildrenActivities,
+		...tailStubsActivities,
+	]);
+	const STATE_RANK: Record<BranchActivityState, number> = {
+		'dead': 0,
+		'alive': 1,
+		'accelerating': 2,
+		'strong-accelerating': 3,
+		'peak-accelerating': 4,
+	};
+	function maxState(
+		a: BranchActivityState | undefined,
+		b: BranchActivityState | undefined,
+	): BranchActivityState | undefined {
+		if (a === undefined) return b;
+		if (b === undefined) return a;
+		return STATE_RANK[a] >= STATE_RANK[b] ? a : b;
+	}
+	/* hottestAtAndBelow[i] = max(activities[i], activities[i+1], …, last).
+	   Computed bottom-up so each entry inherits the running max from
+	   below. */
+	const hottestAtAndBelow = $derived.by((): (BranchActivityState | undefined)[] => {
+		const out: (BranchActivityState | undefined)[] =
+			new Array(combinedChildrenActivities.length);
+		let acc: BranchActivityState | undefined = undefined;
+		for (let i = combinedChildrenActivities.length - 1; i >= 0; i--) {
+			acc = maxState(combinedChildrenActivities[i], acc);
+			out[i] = acc;
+		}
+		return out;
+	});
+
 	/* Reactive illumination direction.
 
 	   Two separate `text-*` classes — one for the dormant conduit,
@@ -185,29 +290,53 @@
 	   particle's halo additively illuminates the dim conduit (and
 	   surrounding dark background) wherever it passes. */
 	/*
-	   Conduit stroke color per state. The conduit itself stays cool
-	   (cyan-indigo) for the calmer half of the spectrum and warms only
-	   at the higher tiers — alive/accelerating still read as cool-blue
-	   cultural circulation; warmth emerges into the conduit only as
-	   the branch heats up.
+	   Conduit stroke color per state. Five distinct tiers with the
+	   cool→warm hue jump placed at the SEMANTIC boundary between
+	   "circulation" (no successful amplifications) and "propagation"
+	   (at least one successful amplification).
 
-	     dead         → desaturated white remnant, very dim
-	     alive        → cool indigo at ~8% alpha
-	     accelerating → cool indigo slightly brighter (~10%) — particles
-	                    bring the first hint of amber, not the line
-	     strong       → amber tint enters the conduit itself (~13%)
-	     peak         → saturated amber tint (~18%)
-	*/
-	const railColorClass = $derived(
-		effectiveActivity === 'peak-accelerating'
+	     dead         → desaturated neutral, very dim (5%)
+	     alive        → cool indigo, low alpha (8%) —
+	                    "calm circulation, no successful amps"
+	     accelerating → warm amber, low alpha (10%) — ← HUE JUMP HERE
+	                    first successful amplifier → propagation begins
+	     strong       → warm amber, medium alpha (13%)
+	     peak         → warm amber, bright alpha (18%)
+
+	   Previously the hue jump sat between accelerating and strong,
+	   which made the accumulated trunk above accelerating branches
+	   render in the same cool indigo as alive — visually
+	   indistinguishable. Now the jump lands at the right semantic
+	   threshold and accelerating reads clearly warm at a glance. */
+	function railColorClassFor(state: BranchActivityState | undefined): string {
+		return state === 'peak-accelerating'
 			? 'text-[oklch(0.76_0.16_60)]/18'
-			: effectiveActivity === 'strong-accelerating'
+			: state === 'strong-accelerating'
 				? 'text-[oklch(0.73_0.13_55)]/13'
-				: effectiveActivity === 'accelerating'
-					? 'text-primary/10'
-					: effectiveActivity === 'alive'
+				: state === 'accelerating'
+					? 'text-[oklch(0.72_0.10_60)]/10'
+					: state === 'alive'
 						? 'text-primary/8'
-						: 'text-white/5',
+						: 'text-white/5';
+	}
+	const railColorClass = $derived(railColorClassFor(effectiveActivity));
+	/* Trunk-section colour rules (per the conduit-state spec):
+	     elbow              → child's own state          (railColorClass)
+	     top stub  (above)  → MAX(this child + every sibling below)
+	     bottom ext (below) → MAX(every sibling below this child)
+	   `incomingTrunkActivity` / `outgoingTrunkActivity` carry those
+	   maxes from the parent's combined-siblings computation; we fall
+	   back to the child's own state when the parent didn't pass them
+	   (origin context, single child, etc.). */
+	const topRailColorClass = $derived(
+		incomingTrunkActivity !== undefined
+			? railColorClassFor(incomingTrunkActivity)
+			: railColorClass,
+	);
+	const bottomRailColorClass = $derived(
+		outgoingTrunkActivity !== undefined
+			? railColorClassFor(outgoingTrunkActivity)
+			: railColorClass,
 	);
 
 	/*
@@ -216,14 +345,25 @@
 	   Aura variants are NOT additive (they set the same filter property);
 	   pick one based on state.
 	*/
-	const atmosphereClasses = $derived(
-		effectiveActivity === 'peak-accelerating'
+	function atmosphereClassesFor(state: BranchActivityState | undefined): string {
+		return state === 'peak-accelerating'
 			? 'conduit-breath conduit-aura-peak'
-			: effectiveActivity === 'strong-accelerating'
+			: state === 'strong-accelerating'
 				? 'conduit-breath conduit-aura-strong'
-				: effectiveActivity === 'accelerating'
+				: state === 'accelerating'
 					? 'conduit-breath conduit-aura'
-					: '',
+					: '';
+	}
+	const atmosphereClasses = $derived(atmosphereClassesFor(effectiveActivity));
+	const topAtmosphereClasses = $derived(
+		incomingTrunkActivity !== undefined
+			? atmosphereClassesFor(incomingTrunkActivity)
+			: atmosphereClasses,
+	);
+	const bottomAtmosphereClasses = $derived(
+		outgoingTrunkActivity !== undefined
+			? atmosphereClassesFor(outgoingTrunkActivity)
+			: atmosphereClasses,
 	);
 
 	/* Conduit glow disabled — the conduit is dormant; particles
@@ -445,7 +585,19 @@
 			   still roll normally; whites can also appear naturally on
 			   any peak-subtree branch via the 18% per-slot probability. */
 			let colorTag: ParticleColorTag;
-			if (computedWhiteAnchorId === user.id && i === 0) {
+			/* Anchor-forced white fires only if THIS node is still
+			   locally peak. With per-node state now driving the
+			   conduit's character, a transitioned anchor descendant
+			   would otherwise paint a stray white particle on a non-
+			   peak conduit — visually contradicting the rest of its
+			   own conduit. The per-slot whiteShare on other peak
+			   descendants still catches whites elsewhere if this
+			   anchor happens to be dropped. */
+			if (
+				computedWhiteAnchorId === user.id &&
+				i === 0 &&
+				effectiveActivity === 'peak-accelerating'
+			) {
 				colorTag = 'white';
 			} else {
 				const roll = r(i * 7 + 100);
@@ -903,6 +1055,21 @@
 		};
 	});
 
+	/* Short, terse forms of the branch-state names used by the
+	   transition chip. Origins keep the existing
+	   "peak accelerating" / "strong accelerating" full form via a
+	   separate code path; transitions use the abbreviated form so
+	   they read as quieter section markers, not full classifications. */
+	function shortStateLabel(state: BranchActivityState): string {
+		switch (state) {
+			case 'peak-accelerating':   return 'peak';
+			case 'strong-accelerating': return 'strong';
+			case 'accelerating':        return 'accelerating';
+			case 'alive':               return 'alive';
+			case 'dead':                return 'dead';
+		}
+	}
+
 	function nodeKindClass(u: PropagationUser): string {
 		if (u.isPreviewNode) return '';
 		switch (u.nodeKind) {
@@ -990,16 +1157,21 @@
 		     needed at this height). Straight line; the S-curve is only
 		     visually meaningful on long rails.
 
-		     Accelerating branches add `conduit-breath` (slow opacity
-		     drift — barely perceptible) and `conduit-aura` (faint warm
-		     drop-shadow around the painted strokes). Alive/dead conduits
-		     stay visually static. -->
+		     COLOUR: uses `topRailColorClass` / `topAtmosphereClasses`
+		     derived from `incomingTrunkActivity` — the MAX state of
+		     (this child + every visible sibling below it). All those
+		     branches' traffic flows up through this trunk segment
+		     toward the parent, so the segment paints with the hottest
+		     branch that has joined the trunk at-or-below this child.
+		     A first child whose own branch is alive will still paint
+		     this segment as STRONG/PEAK if a hotter sibling sits
+		     below it. -->
 		<svg
 			class={[
 				'absolute pointer-events-none overflow-visible',
-				railColorClass,
+				topRailColorClass,
 				conduitGlowClass,
-				atmosphereClasses,
+				topAtmosphereClasses,
 			]}
 			style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;"
 			viewBox="0 0 4 14"
@@ -1015,13 +1187,22 @@
 			     wrapper height via preserveAspectRatio="none" and keeps
 			     the gentle S-curve for organic drift. Meets the next
 			     sibling's top stub flat-to-flat at the wrapper boundary
-			     (no +2px overlap, no double-stack). -->
+			     (no +2px overlap, no double-stack).
+
+			     COLOUR: uses `bottomRailColorClass` /
+			     `bottomAtmosphereClasses` derived from
+			     `outgoingTrunkActivity` — the MAX state of all siblings
+			     BELOW this child (NOT just the immediate next sibling).
+			     A hot branch two siblings down still flows through this
+			     section on its way up, so the segment paints with the
+			     hottest branch that joins the trunk at or below the
+			     next junction. -->
 			<svg
 				class={[
 					'absolute pointer-events-none overflow-visible',
-					railColorClass,
+					bottomRailColorClass,
 					conduitGlowClass,
-					atmosphereClasses,
+					bottomAtmosphereClasses,
 				]}
 				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px); --breath-delay: {breathDelay.toFixed(3)}s;"
 				viewBox="0 0 4 100"
@@ -1183,6 +1364,27 @@
 				!user.isPreviewNode && nodeKindClass(user),
 			]}
 		>
+			{#if DEBUG_BRANCH_LABELS && showTransitionLabel}
+				<!-- Incoming-segment annotation — anchored to the LEFT
+				     of the avatar where the incoming conduit elbow
+				     arrives, so it visually labels the SEGMENT, not the
+				     node. Absolute-positioned (no layout impact), tiny
+				     italic typography, leading line glyph trailing back
+				     along the conduit. pointer-events-none so clicks
+				     pass through to the row underneath. -->
+				<span
+					class={[
+						'absolute right-full top-1/2 -translate-y-1/2 mr-1 pointer-events-none',
+						'whitespace-nowrap text-[10px] uppercase tracking-widest font-mono italic opacity-70',
+						localActivity === 'peak-accelerating'    && 'text-[oklch(0.92_0.10_70)]',
+						localActivity === 'strong-accelerating'  && 'text-[oklch(0.80_0.18_55)]',
+						localActivity === 'accelerating'         && 'text-warning',
+						localActivity === 'alive'                && 'text-primary',
+						localActivity === 'dead'                 && 'text-base-content/40',
+					]}
+					aria-label={`incoming branch segment: ${shortStateLabel(localActivity)}`}
+				><span class="opacity-55 not-italic" aria-hidden="true">─</span> {shortStateLabel(localActivity)}</span>
+			{/if}
 			{#if user.nodeKind === 'successful-amplifier' && !user.isPreviewNode}
 				<!-- Outward broadcast ripple for successful amplifiers,
 				     composing with the orbit comet and double-ring halo. -->
@@ -1272,23 +1474,12 @@
 					{user.name}
 				</p>
 				{#if user.isOrigin && !user.isPreviewNode}
+					<!-- ORIGIN chip only — origins have no incoming segment,
+					     so they don't get a state annotation. The branch
+					     state of an origin can be read from the visual
+					     character of its outgoing conduits + the row-state
+					     chips that appear on its first internal transitions. -->
 					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
-				{/if}
-				{#if DEBUG_BRANCH_LABELS && depth === 0 && !user.isPreviewNode && effectiveActivity}
-					<!-- Calibration-only label showing the branch's current
-					     activity state. Toggle DEBUG_BRANCH_LABELS in script. -->
-					<span
-						class={[
-							'text-[10px] uppercase tracking-widest font-mono shrink-0',
-							effectiveActivity === 'peak-accelerating'    && 'text-[oklch(0.92_0.10_70)]',
-							effectiveActivity === 'strong-accelerating'  && 'text-[oklch(0.80_0.18_55)]',
-							effectiveActivity === 'accelerating'         && 'text-warning',
-							effectiveActivity === 'alive'                && 'text-primary',
-							effectiveActivity === 'dead'                 && 'text-base-content/40',
-						]}
-					>
-						{effectiveActivity.replace('-', ' ')}
-					</span>
 				{/if}
 			</div>
 			<p class={[
@@ -1438,8 +1629,14 @@
 					depth={depth + 1}
 					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
 					onParticleArrival={onChildParticleArrival}
-					branchRootActivity={effectiveActivity}
 					whiteAnchorId={computedWhiteAnchorId}
+					inheritedLabeledState={labeledStateForChildren}
+					incomingTrunkActivity={hottestAtAndBelow[i]}
+					outgoingTrunkActivity={
+						i < combinedChildrenActivities.length - 1
+							? hottestAtAndBelow[i + 1]
+							: undefined
+					}
 				/>
 			{/each}
 
@@ -1530,8 +1727,16 @@
 							depth={depth + 1}
 							isLast={i === tailStubs.length - 1}
 							onParticleArrival={onChildParticleArrival}
-							branchRootActivity={effectiveActivity}
 							whiteAnchorId={computedWhiteAnchorId}
+							inheritedLabeledState={labeledStateForChildren}
+							incomingTrunkActivity={
+								hottestAtAndBelow[sortedChildren.length + i]
+							}
+							outgoingTrunkActivity={
+								sortedChildren.length + i < combinedChildrenActivities.length - 1
+									? hottestAtAndBelow[sortedChildren.length + i + 1]
+									: undefined
+							}
 						/>
 					{/each}
 				{/if}
