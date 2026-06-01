@@ -58,17 +58,33 @@ export type BranchActivityState =
 	| 'strong-accelerating'
 	| 'peak-accelerating';
 
-/** Walk a node's subtree and classify how alive the propagation feels.
- *  Heuristic only — based on successful-amplifier density and amp counts.
- *  Each PropagationNode component calls this for ITSELF (not inherited),
- *  which is what lets the tree contain mixed states at different depths. */
+/** Return a node's branch state.
+ *
+ *  Branch state is conceptually driven by an acceleration model
+ *  (recent activity vs. baseline, growth ratio, momentum) — see
+ *  `branchState` on PropagationUser. When a node sets that field
+ *  explicitly the value is returned directly, which lets a tree
+ *  contain non-monotonic patterns: a deep descendant can legitimately
+ *  classify hotter than its ancestor, branches can re-ignite after
+ *  cooling, etc.
+ *
+ *  When no `branchState` is set, we fall back to a cumulative-subtree
+ *  heuristic (count successful-amplifier descendants and total amps).
+ *  That fallback preserves the original behaviour for archetypes that
+ *  never opted into the explicit model. The walk skips into subtrees
+ *  whose root has its own `branchState` — those are independently
+ *  classified, so they shouldn't contribute to an ancestor's count. */
 export function computeBranchActivity(root: PropagationUser): BranchActivityState {
+	if (root.branchState !== undefined) return root.branchState;
 	let totalAmps = 0;
 	let successCount = 0;
 	const walk = (n: PropagationUser) => {
 		totalAmps += n.amplifications;
 		if (n.nodeKind === 'successful-amplifier') successCount++;
-		for (const c of n.children) walk(c);
+		for (const c of n.children) {
+			if (c.branchState !== undefined) continue; // explicit subtree — independent
+			walk(c);
+		}
 	};
 	walk(root);
 	if (successCount >= 4) return 'peak-accelerating';
@@ -136,6 +152,18 @@ export type PropagationUser = {
 	/** Behavioral category — passive / deep / amplifier / successful-amplifier.
 	 *  Only visual-language field on PropagationUser. */
 	nodeKind?: PropagationNodeKind;
+
+	/** Explicit branch-state override (acceleration-model classification).
+	 *  When set, `computeBranchActivity` returns this directly without
+	 *  walking the subtree. Conceptually represents the node's local
+	 *  momentum (recent activity vs. baseline, growth ratio, etc.) —
+	 *  decoupled from topology so a deep descendant can legitimately
+	 *  classify hotter than its ancestor, a chain can cool and re-ignite,
+	 *  etc. Mock archetypes that want to express specific transition
+	 *  patterns set this field on relevant nodes; archetypes that don't
+	 *  set it fall through to the cumulative-subtree heuristic for
+	 *  backward compatibility. */
+	branchState?: BranchActivityState;
 };
 
 export type RootBranchSummary = {
@@ -409,6 +437,7 @@ function makeNode(
 		depthLevels: opts.depthLevels,
 		biggestSubcascadeName: opts.biggestSubcascadeName,
 		biggestSubcascadeReach: opts.biggestSubcascadeReach,
+		branchState: opts.branchState,
 		nodeKind: kind,
 	};
 }
@@ -1240,6 +1269,450 @@ function buildMultiCoreSpread(ctx: BuilderCtx): ArchetypeResult {
 	};
 }
 
+/* ─────────────── Visual-language validation archetypes ───────────────
+
+   The three archetypes below were added to validate the conduit
+   colour gradient (cool→warm) and the trunk-accumulation rule.
+   They guarantee non-origin Peak subtrees, mixed-state sibling
+   fans, and a sprawling tree with all five states distributed
+   throughout. See archetype notes below for the per-tree story. */
+
+/* 15. Branch Spectrum — one origin with five immediate children,
+   each engineered to classify as a different branch state
+   (Peak / Strong / Accelerating / Alive / Dead) simultaneously.
+   The trunk above each child therefore accumulates the max of
+   all siblings below it: the rail above the leftmost (Peak)
+   child should already read warm-amber at full intensity. */
+function buildBranchSpectrum(ctx: BuilderCtx): ArchetypeResult {
+	const sa  = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'successful-amplifier', children ? { children } : {});
+	const amp = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'amplifier', children ? { children } : {});
+	const dl  = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'deep-listener', children ? { children } : {});
+	const pl  = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'passive-listener', children ? { children } : {});
+	const dead = () =>
+		makeNode(ctx, 'passive-listener', { amplifications: 0 });
+
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [
+			/* PEAK child — subtree holds 4 successful amplifiers
+			   spread across two parallel sub-branches. */
+			amp([
+				sa([
+					sa([dl(), pl()]),
+					sa([dl([pl()])]),
+				]),
+				sa([dl([amp([pl()])]), pl()]),
+			]),
+			/* STRONG child — 2 successes scattered through a
+			   modestly branching subtree. */
+			amp([
+				sa([dl([pl()]), pl()]),
+				sa([dl(), amp([pl()])]),
+				dl([pl()]),
+			]),
+			/* ACCELERATING child — 1 success deeper down. */
+			amp([
+				dl([
+					amp([
+						sa([dl([pl()]), pl()]),
+					]),
+					dl([pl()]),
+				]),
+				dl([pl()]),
+			]),
+			/* ALIVE child — amps + listeners but zero successes. */
+			amp([
+				dl([
+					amp([dl(), pl()]),
+					dl([pl()]),
+				]),
+				dl([pl()]),
+				pl(),
+			]),
+			/* DEAD child — passive endpoint. */
+			pl([dead(), dead()]),
+		],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 16. Nested Peaks — designed to guarantee NON-ORIGIN Peak
+   subtrees at multiple depths. The origin is Peak (cumulative);
+   AND several immediate children's own subtrees independently
+   hold 4+ successes each, so they each render with Peak rail
+   colour + Peak particle character even though they're not the
+   origin. Demonstrates that Peak can show up at depth, not only
+   as the root classification. */
+function buildNestedPeaks(ctx: BuilderCtx): ArchetypeResult {
+	const sa  = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'successful-amplifier', children ? { children } : {});
+	const amp = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'amplifier', children ? { children } : {});
+	const dl  = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'deep-listener', children ? { children } : {});
+	const pl  = (children?: PropagationUser[]) =>
+		makeNode(ctx, 'passive-listener', children ? { children } : {});
+	const dead = () =>
+		makeNode(ctx, 'passive-listener', { amplifications: 0 });
+
+	/* A "peak pocket" — a node whose own subtree contains 4
+	   successes, so it classifies as Peak regardless of context. */
+	const peakPocket = (): PropagationUser =>
+		sa([                                  // self = 1 success
+			sa([dl([pl()])]),                  // +1
+			sa([dl()]),                        // +1
+			sa([dl([amp([pl()])])]),           // +1
+		]);
+
+	/* A peak pocket nested deeper inside an amplifier shell so
+	   the visible "Peak" sits at depth ≥ 2. */
+	const deepPeakPocket = (extraDepth: number): PropagationUser => {
+		let core: PropagationUser = peakPocket();
+		for (let i = 0; i < extraDepth; i++) {
+			core = (i % 2 === 0) ? amp([core, pl()]) : dl([core]);
+		}
+		return core;
+	};
+
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		children: [
+			/* Two immediate children whose OWN subtrees are Peak. */
+			amp([peakPocket()]),                   // depth-1 Peak
+			amp([peakPocket()]),                   // depth-1 Peak
+			/* A child whose Peak pocket sits deeper inside. */
+			amp([
+				dl([
+					deepPeakPocket(2),               // Peak appears at depth ~4
+				]),
+				dl([pl()]),
+			]),
+			/* An alive sibling for contrast — quiet pocket among
+			   the hot ones. */
+			amp([
+				dl([dl([pl()])]),
+				dl([pl()]),
+			]),
+			/* A dead leaf for full-spectrum context. */
+			pl([dead()]),
+		],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 17. Monster Tree — a single sprawling lineage of 100+ visible
+   nodes, 10+ levels deep, with multiple internal Peak / Strong /
+   Accelerating / Alive / Dead pockets distributed throughout. The
+   intent is a deep-scroll surface to evaluate whether the conduit
+   visual language alone (rail colour, particle character, trunk
+   accumulation) can communicate branch state without relying on
+   labels. */
+function buildMonsterTree(ctx: BuilderCtx): ArchetypeResult {
+	/* The monster uses the acceleration-model `branchState` field on
+	   every node to express non-monotonic state patterns: branches
+	   that heat up as you descend, cool tails that re-ignite, peak
+	   pockets nested inside alive ancestors, dead leaves embedded
+	   in surging clusters, etc. Topology (the `kind` field — passive
+	   / deep / amplifier / successful-amplifier) is untouched and
+	   still drives node-role rendering exactly as before. */
+	const node = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser =>
+		makeNode(ctx, kind, { branchState: state, children });
+
+	/* Short reusable subtree builders, each producing a leaf or small
+	   chain with explicit per-node state. */
+	const deadLeaf  = (): PropagationUser => node('passive-listener', 'dead');
+	const aliveLeaf = (): PropagationUser => node('passive-listener', 'alive');
+	const accelLeaf = (): PropagationUser => node('amplifier', 'accelerating');
+	const strongLeaf = (): PropagationUser => node('amplifier', 'strong-accelerating');
+	const peakLeaf   = (): PropagationUser => node('successful-amplifier', 'peak-accelerating');
+
+	/* ── Five branches with deliberately varied state trajectories ── */
+
+	/* BRANCH A — ASCENDING HOTNESS down a single lineage:
+	   Alive → Accel → Strong → Peak → Strong → Alive → Dead.
+	   The trunk WARMS as you descend through several layers, then
+	   cools back down — the inverse of the cumulative model. */
+	const branchA = node('amplifier', 'alive', [
+		node('amplifier', 'accelerating', [
+			node('successful-amplifier', 'strong-accelerating', [
+				node('amplifier', 'peak-accelerating', [
+					node('successful-amplifier', 'peak-accelerating', [
+						node('amplifier', 'strong-accelerating', [
+							node('deep-listener', 'accelerating', [
+								node('deep-listener', 'alive', [
+									node('passive-listener', 'alive', [
+										deadLeaf(),
+									]),
+								]),
+							]),
+						]),
+					]),
+					node('deep-listener', 'alive', [aliveLeaf()]),
+				]),
+				node('amplifier', 'accelerating', [aliveLeaf(), deadLeaf()]),
+			]),
+			node('deep-listener', 'alive', [aliveLeaf()]),
+		]),
+		node('deep-listener', 'dead', [deadLeaf()]),
+	]);
+
+	/* BRANCH B — PHOENIX: Peak → Alive → Peak.
+	   A peak parent with an alive intermediate, then a deep peak
+	   pocket again. Re-ignition pattern. */
+	const branchB = node('successful-amplifier', 'peak-accelerating', [
+		node('amplifier', 'alive', [
+			node('deep-listener', 'alive', [
+				node('amplifier', 'peak-accelerating', [
+					node('successful-amplifier', 'peak-accelerating', [
+						strongLeaf(),
+						node('deep-listener', 'alive', [aliveLeaf()]),
+					]),
+					strongLeaf(),
+				]),
+				aliveLeaf(),
+			]),
+			deadLeaf(),
+		]),
+		node('amplifier', 'strong-accelerating', [
+			peakLeaf(),
+			node('deep-listener', 'accelerating', [aliveLeaf()]),
+		]),
+	]);
+
+	/* BRANCH C — RE-IGNITION through dormancy: Alive → Dead → Accel.
+	   A live branch goes archaeologically silent, then a single
+	   descendant re-ignites cleanly. */
+	const branchC = node('amplifier', 'alive', [
+		node('deep-listener', 'alive', [
+			node('passive-listener', 'dead', [
+				node('passive-listener', 'dead', [
+					node('amplifier', 'accelerating', [
+						node('successful-amplifier', 'strong-accelerating', [
+							peakLeaf(),
+							aliveLeaf(),
+						]),
+						accelLeaf(),
+					]),
+				]),
+			]),
+		]),
+		node('deep-listener', 'alive', [aliveLeaf(), deadLeaf()]),
+		deadLeaf(),
+	]);
+
+	/* BRANCH D — wide alive sprawl with a single deep peak surprise.
+	   Tests Peak appearing inside an otherwise-quiet sub-cascade. */
+	const branchD = node('amplifier', 'alive', [
+		node('deep-listener', 'alive', [
+			node('amplifier', 'alive', [
+				node('deep-listener', 'alive', [
+					node('amplifier', 'peak-accelerating', [
+						node('successful-amplifier', 'peak-accelerating', [
+							strongLeaf(),
+							aliveLeaf(),
+						]),
+						peakLeaf(),
+					]),
+					aliveLeaf(),
+				]),
+				aliveLeaf(),
+				deadLeaf(),
+			]),
+			node('deep-listener', 'alive', [aliveLeaf()]),
+		]),
+		node('amplifier', 'alive', [aliveLeaf(), aliveLeaf()]),
+		deadLeaf(),
+	]);
+
+	/* BRANCH E — cooling chain Peak → Strong → Accel → Alive → Dead
+	   (the cumulative-style descent), kept as a reference. */
+	const branchE = node('successful-amplifier', 'peak-accelerating', [
+		node('amplifier', 'strong-accelerating', [
+			node('amplifier', 'accelerating', [
+				node('deep-listener', 'alive', [
+					node('passive-listener', 'dead', [deadLeaf()]),
+					aliveLeaf(),
+				]),
+				aliveLeaf(),
+			]),
+			node('deep-listener', 'alive', [aliveLeaf()]),
+		]),
+		node('amplifier', 'strong-accelerating', [
+			peakLeaf(),
+			accelLeaf(),
+		]),
+		deadLeaf(),
+	]);
+
+	/* Origin: PEAK with all five branches as children. */
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		branchState: 'peak-accelerating',
+		children: [branchA, branchB, branchC, branchD, branchE],
+		hiddenChildren: randInt(ctx.rand, 6, 10),
+		hiddenChildrenLabel: 'Quieter onward listeners',
+		hiddenChildrenDescription:
+			'A long tail of quieter scouts that received the signal but produced no further detectable amplification.',
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx), buildSmallRoot(ctx)],
+	};
+}
+
+/* 18. Rising Tide — single descending lineage with EVERY transition
+   stepping HOTTER: Alive → Accel → Strong → Peak. Demonstrates the
+   acceleration model's key property: state need not cool with depth. */
+function buildRisingTide(ctx: BuilderCtx): ArchetypeResult {
+	const node = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	const origin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [
+			node('amplifier', 'accelerating', [
+				node('successful-amplifier', 'strong-accelerating', [
+					node('amplifier', 'peak-accelerating', [
+						node('successful-amplifier', 'peak-accelerating', [
+							node('deep-listener', 'strong-accelerating', [
+								node('passive-listener', 'alive'),
+							]),
+							node('amplifier', 'accelerating', [
+								node('passive-listener', 'alive'),
+							]),
+						]),
+					]),
+					node('deep-listener', 'alive', [
+						node('passive-listener', 'alive'),
+					]),
+				]),
+				node('deep-listener', 'alive', [
+					node('passive-listener', 'dead'),
+				]),
+			]),
+			node('deep-listener', 'alive', [
+				node('passive-listener', 'dead'),
+			]),
+		],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 19. Phoenix — Peak origin cools to Alive, then re-ignites to Peak
+   deeper in the lineage. Demonstrates the model's return-transition
+   capability within a single line. */
+function buildPhoenix(ctx: BuilderCtx): ArchetypeResult {
+	const node = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		branchState: 'peak-accelerating',
+		children: [
+			node('amplifier', 'alive', [
+				node('deep-listener', 'alive', [
+					node('amplifier', 'alive', [
+						node('successful-amplifier', 'peak-accelerating', [
+							node('amplifier', 'strong-accelerating', [
+								node('successful-amplifier', 'peak-accelerating', [
+									node('deep-listener', 'alive'),
+									node('amplifier', 'accelerating'),
+								]),
+								node('deep-listener', 'alive'),
+							]),
+							node('deep-listener', 'strong-accelerating', [
+								node('passive-listener', 'alive'),
+							]),
+						]),
+						node('passive-listener', 'dead'),
+					]),
+					node('passive-listener', 'alive'),
+				]),
+			]),
+			node('amplifier', 'strong-accelerating', [
+				node('deep-listener', 'alive'),
+				node('passive-listener', 'dead'),
+			]),
+		],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
+/* 20. Re-ignition — Alive → Dead → Accelerating chain. A live
+   branch goes archaeologically silent then a single descendant
+   re-opens fresh momentum, demonstrating the system's ability to
+   express discontinuous re-entry. */
+function buildReignition(ctx: BuilderCtx): ArchetypeResult {
+	const node = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	const origin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [
+			node('deep-listener', 'alive', [
+				node('passive-listener', 'dead', [
+					node('passive-listener', 'dead', [
+						node('amplifier', 'accelerating', [
+							node('successful-amplifier', 'strong-accelerating', [
+								node('amplifier', 'accelerating', [
+									node('deep-listener', 'alive'),
+								]),
+								node('deep-listener', 'alive'),
+							]),
+							node('deep-listener', 'alive'),
+						]),
+					]),
+				]),
+			]),
+			node('deep-listener', 'alive', [
+				node('passive-listener', 'dead'),
+				node('passive-listener', 'alive'),
+			]),
+		],
+	});
+
+	return {
+		roots: [origin, buildSmallRoot(ctx)],
+		hiddenRootUsers: [buildSmallRoot(ctx)],
+	};
+}
+
 const ARCHETYPES = [
 	{ name: 'hub-dominant',         build: buildHubDominant         },
 	{ name: 'fragmented',           build: buildFragmented          },
@@ -1255,6 +1728,12 @@ const ARCHETYPES = [
 	{ name: 'false-start',          build: buildFalseStart          },
 	{ name: 'resurrection',         build: buildResurrection        },
 	{ name: 'multi-core-spread',    build: buildMultiCoreSpread     },
+	{ name: 'branch-spectrum',      build: buildBranchSpectrum      },
+	{ name: 'nested-peaks',         build: buildNestedPeaks         },
+	{ name: 'monster-tree',         build: buildMonsterTree         },
+	{ name: 'rising-tide',          build: buildRisingTide          },
+	{ name: 'phoenix',              build: buildPhoenix             },
+	{ name: 'reignition',           build: buildReignition          },
 ] as const;
 
 /* Items whose forest is pinned to a specific archetype for design-system
@@ -1273,6 +1752,16 @@ const PINNED_ARCHETYPES: Record<string, string> = {
 	'burial-light':       'false-start',          /* peak top, dead/alive tail */
 	'cinder-plain':       'resurrection',         /* quiet trunk, deep ignition */
 	'wolves-under-glass': 'multi-core-spread',    /* 3 competing trunks */
+	/* Visual-language validation pins. */
+	'slow-satellite':     'branch-spectrum',      /* 5-sibling all-states fan */
+	'glass-signal':       'nested-peaks',         /* non-origin Peak subtrees */
+	'iron-weather':       'monster-tree',         /* 100+ node sprawling stress tree */
+	/* Acceleration-model patterns — explicit branchState on each
+	   node so the trees express non-monotonic transitions that the
+	   cumulative model can't produce. */
+	'minor-current':      'rising-tide',          /* Alive → Accel → Strong → Peak descending */
+	'hollow-ritual':      'phoenix',              /* Peak → Alive → Peak re-ignition */
+	'static-bloom':       'reignition',           /* Alive → Dead → Accel after dormancy */
 };
 
 /* Archetype names that should NEVER appear via random rotation —
@@ -1417,6 +1906,36 @@ const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; o
 		summary: 'Three competing onward-paths under a single origin — each branch propagates at a different intensity, producing parallel trunks of distinctly different heat side by side.',
 		crossingNote: 'Three concurrent successful amplifiers split the signal into parallel trunks with markedly different downstream pull.',
 		originNote: 'Surfaced through a hub whose immediate forward share split into three competing lineages.',
+	},
+	'branch-spectrum': {
+		summary: 'A single origin opening into five immediate sub-branches, each propagating at a distinctly different intensity — runaway pull next to quiet circulation next to archaeological silence — for side-by-side comparison of the full state spectrum.',
+		crossingNote: 'Five sibling sub-branches simultaneously occupying every branch-activity tier under a single propagator.',
+		originNote: 'Surfaced through a hub whose immediate forward share fanned out across the full energy spectrum.',
+	},
+	'nested-peaks': {
+		summary: 'Several immediate downstream amplifiers each opened their own independently runaway sub-cascade — multiple Peak-tier pockets distributed at depth, not only at the origin.',
+		crossingNote: 'Multiple non-origin successful-amplifier pockets, each carrying enough downstream amplification to register as Peak in its own right.',
+		originNote: 'Surfaced through a hub whose forward share repeatedly opened into further runaway pockets several layers down.',
+	},
+	'monster-tree': {
+		summary: 'A sprawling hundred-plus-node propagation network spanning ten generations, with multiple internal ignition pockets, quiet alive regions, and archaeological dead-ends distributed throughout — the full visual language under load.',
+		crossingNote: 'Sustained downstream amplification across many generations and many parallel sub-branches; the signal reached deeply varied listening pockets.',
+		originNote: 'Surfaced through a hub whose forward share opened into a long, branching, internally varied propagation network.',
+	},
+	'rising-tide': {
+		summary: 'A quiet origin whose lineage accelerates as it descends — each generation more energised than the last, momentum compounding through several layers before tapering.',
+		crossingNote: 'Each successive generation amplified more strongly than the last, producing a rare ascending heat profile down a single lineage.',
+		originNote: 'Surfaced quietly through a single scout whose onward chain unexpectedly gathered momentum at every step.',
+	},
+	'phoenix': {
+		summary: 'A peak propagator whose immediate downstream cooled into quiet circulation, then re-ignited several generations later into a second peak — the signal caught fire twice, once at the origin and once deep inside.',
+		crossingNote: 'Strong opening surge cooled into a quiet middle, then a deep descendant cluster re-opened with renewed pull.',
+		originNote: 'Surfaced through a high-pull hub whose downstream went quiet before catching fire again several layers deeper.',
+	},
+	'reignition': {
+		summary: 'A live branch that fell into archaeological silence for several generations before a single descendant re-opened the signal with fresh momentum — a discontinuous re-entry pattern.',
+		crossingNote: 'Quiet circulation collapsed into dormancy before a deep descendant re-opened the propagation cleanly.',
+		originNote: 'Surfaced quietly, lost to dormancy in the middle, then re-emerged through an unexpected late scout.',
 	},
 };
 
