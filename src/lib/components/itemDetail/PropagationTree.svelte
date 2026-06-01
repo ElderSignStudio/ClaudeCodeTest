@@ -56,6 +56,24 @@
 		</p>
 	</div>
 
+	<!--
+		Horizontal-scroll container for the tree body. Deep trees (12+
+		levels) reach widths that exceed the lineage column's track,
+		especially under the lg-grid split where the tree column is
+		~1.55fr — they would otherwise clip silently because the
+		grid track is `minmax(0, …)` and the inner rows use
+		`min-w-0` for truncation. Wrapping just the roots (not the
+		header above) lets the eyebrow stay aligned with the panel
+		while the tree body scrolls horizontally on demand.
+
+		Inner `min-width: max-content` makes the content adopt its
+		NATURAL intrinsic width — preserving the indentation rhythm —
+		instead of being squeezed by the container. When the tree
+		fits, max-content ≤ container width and no scrollbar appears.
+	-->
+	<div class="tree-scroll-x">
+	<div class="tree-scroll-content">
+
 	<!-- Roots — each is its own independent origin tree. Sorted by
 	     propagation strength: successful-amplifier → amplifier → deep
 	     → passive. -->
@@ -129,4 +147,49 @@
 			</button>
 		{/if}
 	{/if}
+
+	</div><!-- /.tree-scroll-content -->
+	</div><!-- /.tree-scroll-x -->
 </div>
+
+<style>
+	/*
+		Horizontal scroll behaviour for the tree body.
+		- `overflow-x: auto` activates a scrollbar only when content
+		  exceeds the container's width — shallow trees never see it.
+		- The inner `.tree-scroll-content` uses `min-width: max-content`
+		  so the tree adopts its natural intrinsic width (preserving
+		  the indentation rhythm) instead of being squeezed by the
+		  parent's grid track.
+		- Custom scrollbar styling keeps it subtle: a 8 px-tall track,
+		  semi-transparent thumb that strengthens on hover, matching
+		  the dark UI. Firefox uses the same colour via the standard
+		  `scrollbar-color` / `scrollbar-width` properties.
+	*/
+	.tree-scroll-x {
+		overflow-x: auto;
+		/* `overflow-y` becomes `auto` implicitly when overflow-x is
+		   not `visible`. The tree's children are bounded by their own
+		   wrapper heights (and particle paths are clipped by each
+		   `overflow-clip` children container further down), so this
+		   does not affect particle rendering or vertical layout. */
+		scrollbar-width: thin;
+		scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+	}
+	.tree-scroll-x::-webkit-scrollbar {
+		height: 8px;
+	}
+	.tree-scroll-x::-webkit-scrollbar-track {
+		background: transparent;
+	}
+	.tree-scroll-x::-webkit-scrollbar-thumb {
+		background: rgba(255, 255, 255, 0.08);
+		border-radius: 4px;
+	}
+	.tree-scroll-x::-webkit-scrollbar-thumb:hover {
+		background: rgba(255, 255, 255, 0.16);
+	}
+	.tree-scroll-content {
+		min-width: max-content;
+	}
+</style>
