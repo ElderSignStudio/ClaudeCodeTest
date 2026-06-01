@@ -31,6 +31,7 @@
 		onParticleArrival = undefined,
 		branchRootActivity = undefined,
 		whiteAnchorId = undefined,
+		inheritedLabeledState = undefined,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
@@ -64,6 +65,17 @@
 		 *  of all slots rolling non-white still yields at least one
 		 *  visible ignition somewhere in the subtree. */
 		whiteAnchorId?: string | undefined;
+		/** The branch state most recently *labeled* up this lineage —
+		 *  i.e. either the origin's state, or the state of the most
+		 *  recent transition-labeled ancestor. Used to decide whether
+		 *  THIS node should render its own transition label: if this
+		 *  node's local subtree classifies differently from what was
+		 *  last labeled above, it's a transition point and gets a
+		 *  label. NOTE: this is INDEPENDENT of `branchRootActivity` —
+		 *  that one still drives particle parameters from the origin
+		 *  so the trunk character carries through. This prop only
+		 *  drives the visual transition markers in the row text. */
+		inheritedLabeledState?: BranchActivityState | undefined;
 	} = $props();
 
 	/* ── Tree-scoped conduit-path config ────────────────────────
@@ -115,6 +127,40 @@
 	   propagation temperatures. */
 	const effectiveActivity = $derived<BranchActivityState | undefined>(
 		depth === 0 ? computeBranchActivity(user) : branchRootActivity,
+	);
+
+	/* ─── Branch-state transition labels ─────────────────────────
+	   Independent from `effectiveActivity` above (which drives the
+	   particle / cadence / illumination character — that stays
+	   inherited from the origin so the trunk feels continuous).
+
+	   `localActivity` classifies THIS node's own subtree. When it
+	   differs from the most recently labeled ancestor's state
+	   (`inheritedLabeledState` from props), the node renders a
+	   transition label and propagates `localActivity` downward as
+	   the new inherited labeled state. Otherwise the inherited
+	   value passes through unchanged, so a long quiet trunk shows
+	   the label only once at its top, not on every node.
+
+	   Origins always render their existing ORIGIN+state chip via
+	   the existing template branch; transition labels only fire at
+	   depth > 0. Return transitions (PEAK → ALIVE → PEAK) work
+	   naturally because the second PEAK still differs from the
+	   intervening ALIVE. */
+	const localActivity = $derived<BranchActivityState>(
+		computeBranchActivity(user),
+	);
+	const labeledStateAbove = $derived<BranchActivityState | undefined>(
+		depth === 0 ? localActivity : inheritedLabeledState,
+	);
+	const showTransitionLabel = $derived(
+		depth > 0 &&
+		!user.isPreviewNode &&
+		labeledStateAbove !== undefined &&
+		localActivity !== labeledStateAbove,
+	);
+	const labeledStateForChildren = $derived<BranchActivityState | undefined>(
+		showTransitionLabel ? localActivity : labeledStateAbove,
 	);
 
 	/* White-hot ignition safety anchor.
@@ -903,6 +949,21 @@
 		};
 	});
 
+	/* Short, terse forms of the branch-state names used by the
+	   transition chip. Origins keep the existing
+	   "peak accelerating" / "strong accelerating" full form via a
+	   separate code path; transitions use the abbreviated form so
+	   they read as quieter section markers, not full classifications. */
+	function shortStateLabel(state: BranchActivityState): string {
+		switch (state) {
+			case 'peak-accelerating':   return 'peak';
+			case 'strong-accelerating': return 'strong';
+			case 'accelerating':        return 'accelerating';
+			case 'alive':               return 'alive';
+			case 'dead':                return 'dead';
+		}
+	}
+
 	function nodeKindClass(u: PropagationUser): string {
 		if (u.isPreviewNode) return '';
 		switch (u.nodeKind) {
@@ -1275,8 +1336,8 @@
 					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
 				{/if}
 				{#if DEBUG_BRANCH_LABELS && depth === 0 && !user.isPreviewNode && effectiveActivity}
-					<!-- Calibration-only label showing the branch's current
-					     activity state. Toggle DEBUG_BRANCH_LABELS in script. -->
+					<!-- Origin-only state chip — full classification name,
+					     full opacity, paired with the "origin" label above. -->
 					<span
 						class={[
 							'text-[10px] uppercase tracking-widest font-mono shrink-0',
@@ -1288,6 +1349,27 @@
 						]}
 					>
 						{effectiveActivity.replace('-', ' ')}
+					</span>
+				{:else if DEBUG_BRANCH_LABELS && showTransitionLabel}
+					<!-- In-tree transition chip — quieter than the origin chip:
+					     no "origin" prefix, abbreviated state name ("peak"
+					     vs "peak accelerating"), and reduced opacity so it
+					     reads as a section marker rather than a status badge.
+					     Only renders where the local subtree classification
+					     differs from the last labeled ancestor's, so long
+					     uniform stretches show a label once and stay quiet
+					     until the next transition. -->
+					<span
+						class={[
+							'text-[10px] uppercase tracking-widest font-mono shrink-0 opacity-60',
+							localActivity === 'peak-accelerating'    && 'text-[oklch(0.92_0.10_70)]',
+							localActivity === 'strong-accelerating'  && 'text-[oklch(0.80_0.18_55)]',
+							localActivity === 'accelerating'         && 'text-warning',
+							localActivity === 'alive'                && 'text-primary',
+							localActivity === 'dead'                 && 'text-base-content/40',
+						]}
+					>
+						{shortStateLabel(localActivity)}
 					</span>
 				{/if}
 			</div>
@@ -1440,6 +1522,7 @@
 					onParticleArrival={onChildParticleArrival}
 					branchRootActivity={effectiveActivity}
 					whiteAnchorId={computedWhiteAnchorId}
+					inheritedLabeledState={labeledStateForChildren}
 				/>
 			{/each}
 
@@ -1532,6 +1615,7 @@
 							onParticleArrival={onChildParticleArrival}
 							branchRootActivity={effectiveActivity}
 							whiteAnchorId={computedWhiteAnchorId}
+							inheritedLabeledState={labeledStateForChildren}
 						/>
 					{/each}
 				{/if}
