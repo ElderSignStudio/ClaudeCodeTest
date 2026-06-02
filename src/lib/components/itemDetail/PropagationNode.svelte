@@ -290,34 +290,49 @@
 	   particle's halo additively illuminates the dim conduit (and
 	   surrounding dark background) wherever it passes. */
 	/*
-	   Conduit stroke color per state. Five distinct tiers with the
-	   cool→warm hue jump placed at the SEMANTIC boundary between
-	   "circulation" (no successful amplifications) and "propagation"
-	   (at least one successful amplification).
+	   Conduit stroke colour per state. Designed for the visual-
+	   identity refinement where branch state must be readable from
+	   the conduit alone (labels are being removed). Two principles:
 
-	     dead         → desaturated neutral, very dim (5%)
-	     alive        → cool indigo, low alpha (8%) —
-	                    "calm circulation, no successful amps"
-	     accelerating → warm amber, low alpha (10%) — ← HUE JUMP HERE
-	                    first successful amplifier → propagation begins
-	     strong       → warm amber, medium alpha (13%)
-	     peak         → warm amber, bright alpha (18%)
+	     1. COLOUR communicates CATEGORY:
+	          dead         → dark blue-grey (barely there)
+	          alive        → vivid electric blue (calm but active)
+	          accel/strong/peak → UNIFIED amber family
 
-	   Previously the hue jump sat between accelerating and strong,
-	   which made the accumulated trunk above accelerating branches
-	   render in the same cool indigo as alive — visually
-	   indistinguishable. Now the jump lands at the right semantic
-	   threshold and accelerating reads clearly warm at a glance. */
+	   The conduit communicates CATEGORY only: blue family vs amber
+	   family. Intensity within the amber family (accel → strong →
+	   peak) is carried by particle traffic, not by paint.
+
+	   Accel/Strong/Peak share the exact same oklch hue and chroma
+	   (55°, 0.11). Lightness is identical for accel and strong
+	   (0.62); peak nudges to 0.63 — a hair's-difference bump that
+	   keeps it firmly inside the family. Alpha steps 15 → 16 → 17
+	   are deliberately tiny (≤7% each) so the warm tiers read as
+	   "the same kind of conduit" from any distance.
+
+	   Alive stays in its own family with the muted moonlight blue
+	   (chroma 0.05, hue 230) — clearly NOT amber, but equally
+	   ghostly so it doesn't dominate either.
+
+	   The eye should find: 1) nodes, 2) moving particles,
+	   3) branch structure, 4) conduit hue (last). */
 	function railColorClassFor(state: BranchActivityState | undefined): string {
 		return state === 'peak-accelerating'
-			? 'text-[oklch(0.76_0.16_60)]/18'
+			? 'text-[oklch(0.63_0.11_55)]/17'
 			: state === 'strong-accelerating'
-				? 'text-[oklch(0.73_0.13_55)]/13'
+				? 'text-[oklch(0.62_0.11_55)]/16'
 				: state === 'accelerating'
-					? 'text-[oklch(0.72_0.10_60)]/10'
+					? 'text-[oklch(0.62_0.11_55)]/15'
 					: state === 'alive'
-						? 'text-primary/8'
-						: 'text-white/5';
+						? 'text-[oklch(0.62_0.05_230)]/14'
+						/* Dead — pushed toward "trace of an old path".
+						   Chroma halved (0.04→0.02) so hue barely
+						   registers as blue; hue nudged 245→250 so
+						   what little colour remains reads as steel/
+						   slate rather than ocean. Alpha cut 7%→5%
+						   (~30% reduction) to make Dead clearly more
+						   absent than Alive without disappearing. */
+						: 'text-[oklch(0.55_0.02_250)]/5';
 	}
 	const railColorClass = $derived(railColorClassFor(effectiveActivity));
 	/* Trunk-section colour rules (per the conduit-state spec):
@@ -340,10 +355,23 @@
 	);
 
 	/*
-	   Atmosphere class per state — breath modulates conduit opacity slowly,
-	   aura adds a faint warm drop-shadow halo. Both scale with intensity.
-	   Aura variants are NOT additive (they set the same filter property);
-	   pick one based on state.
+	   Atmosphere class per state.
+
+	   `conduit-breath` modulates conduit opacity slowly (14s cycle,
+	   per-branch phase). Aura adds a faint static drop-shadow halo
+	   that tracks the warm-tier ladder at compressed intensity:
+
+	     accelerating → conduit-aura        (20%/10% alpha)
+	     strong       → conduit-aura-strong (25%/13% alpha)
+	     peak         → conduit-aura-peak   (30%/15% alpha)
+
+	   These are deliberately close together — strong and peak should
+	   look like family members of accelerating, not like a different
+	   class of element. The intensity hierarchy across the warm tiers
+	   lives in particle traffic, not in conduit glow.
+
+	   Aura variants are NOT additive (they all set `filter:`); pick
+	   exactly one per state.
 	*/
 	function atmosphereClassesFor(state: BranchActivityState | undefined): string {
 		return state === 'peak-accelerating'
@@ -352,7 +380,9 @@
 				? 'conduit-breath conduit-aura-strong'
 				: state === 'accelerating'
 					? 'conduit-breath conduit-aura'
-					: '';
+					: state === 'alive'
+						? 'conduit-breath conduit-aura-alive'
+						: '';
 	}
 	const atmosphereClasses = $derived(atmosphereClassesFor(effectiveActivity));
 	const topAtmosphereClasses = $derived(
@@ -513,7 +543,12 @@
 			count = fourSlotBranch ? 4 : 3;
 			cycleMin = 1.55;
 			cycleMax = 1.92;
-			cyanShare = 0.80; amberShare = 0.20; whiteShare = 0.0;
+			/* Accelerating particles are AMBER-DOMINANT — the colour
+			   shift from cool (alive) to warm (accel/strong/peak)
+			   happens HERE. Cyan was previously 80% (matching alive's
+			   look) which made accel particles read the same as alive
+			   particles to the eye. */
+			cyanShare = 0.30; amberShare = 0.70; whiteShare = 0.0;
 			baseDelays = fourSlotBranch
 				? (cadencePattern === 0 ? [0.00, 0.18, 0.85, 1.25] :
 				   cadencePattern === 1 ? [0.00, 0.55, 0.95, 1.18] :
@@ -524,80 +559,109 @@
 				   cadencePattern === 2 ? [0.00, 0.70, 1.55] :
 				                          [0.00, 0.55, 1.10]);
 		} else if (effectiveActivity === 'strong-accelerating') {
-			/* 3 particles (down from 4) — strong caps at the same slot
-			   budget as accelerating so an inherited strong subtree
-			   doesn't oversaturate the DOM. Amber dominates (75%),
-			   cyan 25% keeps the cultural substrate readable. Cycle
-			   1.17-1.50s; amber speed multiplier below pushes effective
-			   amber cycle to 2.0-3.6s.
+			/* 13 particles — strong should sit CLOSER TO PEAK than to
+			   accelerating, while remaining distinguishable from peak
+			   by density and the absence of white-hot ignition events.
+			   Bumped from 10 so the conduit reads as continuous
+			   pressure with only the smallest gaps. With amber
+			   effective cycles ~2.0-3.6 s and 13 starts per 1.17-1.50 s
+			   cycle, the conduit holds ~24-28 simultaneously-visible
+			   particles — directly inside the target band.
 
-			   Cadence: WAVES OF PROPAGATION. Three of four shapes
-			   include a tight pair, so most strong branches read as
-			   pulsed bursts followed by a quiet stretch rather than
-			   evenly-spaced ticks. The fourth keeps a looser
-			   "breathing" shape so the cohort isn't uniformly bursty.
-			     0 tight-pair + lone-mid (forward wave)
-			     1 lone + tight-late-pair (backward wave)
-			     2 near-triplet burst (the densest wave)
-			     3 breathing-looser (calmer breath) */
-			count = 3;
+			   100% amber — no whites (whites stay exclusive to peak).
+			   Cycle unchanged (1.17-1.50 s) so strong is not faster
+			   than peak; density carries the strong-vs-peak gap.
+
+			   Cadence: SUSTAINED PRESSURE with a faint burst character.
+			   Average slot spacing ~0.08 s; no gap exceeds ~0.12 s.
+			   Each pattern keeps its personality but the bursts are
+			   embedded inside the sustained flow rather than punctuating
+			   quiet stretches.
+			     0 sustained forward wave + late group
+			     1 even spread + tight late group
+			     2 triplet burst + sustained flow
+			     3 near-even breathing */
+			count = 13;
 			cycleMin = 1.17;
 			cycleMax = 1.50;
-			cyanShare = 0.25; amberShare = 0.75; whiteShare = 0.0;
+			cyanShare = 0.0; amberShare = 1.0; whiteShare = 0.0;
 			baseDelays =
-				cadencePattern === 0 ? [0.00, 0.10, 0.65] :  /* forward wave */
-				cadencePattern === 1 ? [0.00, 0.55, 0.70] :  /* backward wave */
-				cadencePattern === 2 ? [0.00, 0.07, 0.20] :  /* triplet burst */
-				                       [0.00, 0.35, 0.90];   /* breathing */
+				cadencePattern === 0 ? [0.00, 0.05, 0.11, 0.18, 0.25, 0.34, 0.43, 0.52, 0.60, 0.68, 0.76, 0.84, 0.92] :  /* sustained forward wave */
+				cadencePattern === 1 ? [0.00, 0.08, 0.16, 0.24, 0.32, 0.40, 0.48, 0.56, 0.66, 0.74, 0.82, 0.90, 0.96] :  /* even spread + tight late */
+				cadencePattern === 2 ? [0.00, 0.05, 0.11, 0.22, 0.30, 0.38, 0.46, 0.54, 0.62, 0.70, 0.78, 0.86, 0.94] :  /* triplet + sustained flow */
+				                       [0.00, 0.07, 0.15, 0.23, 0.31, 0.39, 0.47, 0.54, 0.62, 0.70, 0.78, 0.86, 0.93];   /* near-even breathing */
 		} else {
-			/* peak-accelerating: 3 particles. Whites are rare visible
-			   ignition events: 6% per slot ≈ 0.18 expected per branch,
-			   plus the anchored guarantee. Cyan 22% keeps cultural
-			   substrate visible under amber — peak should not read as
-			   "orange mode".
+			/* 17 particles per peak branch — NEAR-SATURATION. Peak
+			   should be instantly recognisable in peripheral vision
+			   as the hottest state. With amber effective cycles ~2.1-
+			   3.3s and 17 starts per 1.15-1.40s cycle, the conduit
+			   holds ~31-36 simultaneously-visible particles — traffic
+			   everywhere, no quiet stretches.
 
-			   Cadence: MICRO-BURSTS inside dense flow. Three of four
-			   shapes produce tight overlaps so peak reads as overloaded
-			   transmission. The fourth keeps a breathing pattern so a
-			   peak subtree never becomes uniform noise.
-			     0 tight-pair + lone (forward burst + delayed third)
-			     1 twin-launch + middle (the doubled feel, softened)
-			     2 near-triplet burst (densest — three within ~0.3s)
-			     3 breathing (loose stagger — calmer peak branch) */
-			count = 3;
-			cycleMin = 1.00;
+			   Cycle 1.15-1.40s overlaps Strong's (1.17-1.50) — Peak
+			   is NOT faster than Strong. Density carries the entire
+			   strong-vs-peak distinction.
+
+			   White share restored to 11% (within the 10-12% range).
+			   Whites are rare relative to amber (~1/8) but a peak
+			   branch should reliably show one occasionally — see the
+			   forceWhiteSlot guarantee below the particle loop, which
+			   ensures every peak branch fires at least one white per
+			   cycle even if the random roll misses (~14% of branches
+			   at 11% × 17 slots would naturally roll zero).
+
+			   Cadence: SATURATED FLOW. Each pattern's original burst
+			   personality is preserved as the front-shape; additional
+			   slots fill the cycle to eliminate gaps entirely.
+			     0 tight-pair front + sustained tail
+			     1 twin-launch + cascading flow
+			     2 triplet front + sustained tail
+			     3 near-even peak breathing */
+			count = 17;
+			cycleMin = 1.15;
 			cycleMax = 1.40;
-			cyanShare = 0.22; amberShare = 0.72; whiteShare = 0.06;
+			cyanShare = 0.0; amberShare = 0.89; whiteShare = 0.11;
 			baseDelays =
-				cadencePattern === 0 ? [0.00, 0.14, 0.85] :  /* tight pair + lone */
-				cadencePattern === 1 ? [0.00, 0.06, 0.42] :  /* twin-launch + middle */
-				cadencePattern === 2 ? [0.00, 0.18, 0.32] :  /* near-triplet burst */
-				                       [0.00, 0.45, 0.95];   /* breathing */
+				cadencePattern === 0 ? [0.00, 0.05, 0.10, 0.17, 0.24, 0.32, 0.40, 0.48, 0.55, 0.62, 0.69, 0.75, 0.80, 0.85, 0.90, 0.94, 0.98] :
+				cadencePattern === 1 ? [0.00, 0.03, 0.10, 0.15, 0.22, 0.28, 0.36, 0.42, 0.50, 0.56, 0.64, 0.70, 0.78, 0.84, 0.90, 0.94, 0.98] :
+				cadencePattern === 2 ? [0.00, 0.04, 0.09, 0.16, 0.24, 0.30, 0.37, 0.44, 0.51, 0.58, 0.65, 0.72, 0.79, 0.85, 0.90, 0.94, 0.98] :
+				                       [0.00, 0.06, 0.12, 0.18, 0.24, 0.30, 0.36, 0.42, 0.48, 0.54, 0.60, 0.66, 0.72, 0.78, 0.84, 0.90, 0.96];
+		}
+
+		/* Per-peak guarantee: ~14% of peak branches would naturally
+		   roll zero whites at 11% × 17 slots. Pre-roll the per-slot
+		   white outcomes deterministically; if NONE land white, pick
+		   one deterministic slot to force. This way every peak
+		   branch reliably shows at least one ignition per cycle,
+		   without uniformly forcing slot 0 (which would create a
+		   visible "every peak starts with a white" rhythm). */
+		let forceWhiteSlot = -1;
+		if (effectiveActivity === 'peak-accelerating' && count > 0) {
+			let anyNaturalWhite = false;
+			for (let i = 0; i < count; i++) {
+				if (r(i * 7 + 100) < whiteShare) { anyNaturalWhite = true; break; }
+			}
+			if (!anyNaturalWhite) {
+				forceWhiteSlot = Math.floor(r(7777) * count);
+			}
 		}
 
 		/* ─── Build particles ──────────────────────────────────── */
 		const particles = Array.from({ length: count }, (_, i): ConduitParticle => {
 			/* Per-particle colour roll. Whites are checked first
 			   (smallest share), then amber, then cyan as the default.
-			   Slot 0 is forced white when THIS node is the
-			   hash-picked anchor descendant of a peak-accelerating
-			   origin — see computedWhiteAnchorId above. Other slots
-			   still roll normally; whites can also appear naturally on
-			   any peak-subtree branch via the 18% per-slot probability. */
+			   Two forcing paths short-circuit the roll:
+			     1. anchor — slot 0 of the hash-picked peak descendant
+			     2. guarantee — forceWhiteSlot if this branch would
+			        otherwise roll zero whites (see pre-pass above). */
 			let colorTag: ParticleColorTag;
-			/* Anchor-forced white fires only if THIS node is still
-			   locally peak. With per-node state now driving the
-			   conduit's character, a transitioned anchor descendant
-			   would otherwise paint a stray white particle on a non-
-			   peak conduit — visually contradicting the rest of its
-			   own conduit. The per-slot whiteShare on other peak
-			   descendants still catches whites elsewhere if this
-			   anchor happens to be dropped. */
 			if (
 				computedWhiteAnchorId === user.id &&
 				i === 0 &&
 				effectiveActivity === 'peak-accelerating'
 			) {
+				colorTag = 'white';
+			} else if (i === forceWhiteSlot) {
 				colorTag = 'white';
 			} else {
 				const roll = r(i * 7 + 100);
@@ -768,14 +832,51 @@
 			   stretches. For trees within the baseline, cycleScale
 			   is 1 so nothing changes. */
 			const cycleScale = treeConfig.cycleScale;
+			const flowDur = (cycleMin + r(i * 13 + 1) * (cycleMax - cycleMin)) * speedMultiplier * cycleScale;
+
+			/* Steady-state initialisation: pick a deterministic phase
+			   in [0, flowDur) per particle and apply it as a NEGATIVE
+			   offset to flowDelay. CSS treats negative animation-delay
+			   as "the animation has already been running for N seconds",
+			   so on first paint each particle is somewhere mid-journey
+			   rather than at the starting line.
+
+			   Without this, every branch's first iteration starts
+			   together at t=0 → a synchronised burst across the page
+			   that settles after one full flowDur (~2-3 s) as the
+			   per-particle baseDelays + jitter spread the iterations
+			   apart. The offset spans the FULL flowDur (not just one
+			   cycle) so the spread also covers the multi-iteration
+			   overlap that exists in steady state.
+
+			   The hash seed (i * 91 + 13) is independent of the seeds
+			   that drive baseDelays, jitter, helixDelay, etc., so the
+			   phase doesn't collapse onto any of those rhythms. Same
+			   user + same slot → same phase, so refresh is stable.
+
+			   Cadence relationships (baseDelays) survive: each particle's
+			   loop period is still flowDur, so the inter-iteration
+			   relative timing between particles is unchanged after the
+			   first iteration. Only the WHERE-EACH-PARTICLE-IS-AT-MOUNT
+			   is randomised. */
+			const phaseOffset = r(i * 91 + 13) * flowDur;
+			const flowDelay = (baseDelays[i] + r(i * 11 + 1) * jitterScale) * cycleScale - phaseOffset;
+
+			/* Helix phase: extend the existing per-particle randomisation
+			   to span the FULL helix cycle (was hard-capped at 0.35 s
+			   regardless of helixDur 0.36-0.85 s, which left some
+			   particles entering at the same orbit phase as their
+			   siblings at mount). Negative for "already in progress". */
+			const helixDelay = -r(i * 19 + 1) * helixDur;
+
 			return {
 				id: i,
 				color,
 				colorTag,
-				flowDelay: (baseDelays[i] + r(i * 11 + 1) * jitterScale) * cycleScale,
-				flowDur:   (cycleMin + r(i * 13 + 1) * (cycleMax - cycleMin)) * speedMultiplier * cycleScale,
+				flowDelay,
+				flowDur,
 				helixAmp,
-				helixDelay: -r(i * 19 + 1) * 0.35,
+				helixDelay,
 				helixDur,
 				maxOpacity: 0.78 + r(i * 29 + 1) * 0.22,
 				trailScale: 0.85 + r(i * 31 + 1) * 0.35,
