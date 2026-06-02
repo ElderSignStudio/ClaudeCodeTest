@@ -290,34 +290,49 @@
 	   particle's halo additively illuminates the dim conduit (and
 	   surrounding dark background) wherever it passes. */
 	/*
-	   Conduit stroke color per state. Five distinct tiers with the
-	   cool→warm hue jump placed at the SEMANTIC boundary between
-	   "circulation" (no successful amplifications) and "propagation"
-	   (at least one successful amplification).
+	   Conduit stroke colour per state. Designed for the visual-
+	   identity refinement where branch state must be readable from
+	   the conduit alone (labels are being removed). Two principles:
 
-	     dead         → desaturated neutral, very dim (5%)
-	     alive        → cool indigo, low alpha (8%) —
-	                    "calm circulation, no successful amps"
-	     accelerating → warm amber, low alpha (10%) — ← HUE JUMP HERE
-	                    first successful amplifier → propagation begins
-	     strong       → warm amber, medium alpha (13%)
-	     peak         → warm amber, bright alpha (18%)
+	     1. COLOUR communicates CATEGORY:
+	          dead         → dark blue-grey (barely there)
+	          alive        → vivid electric blue (calm but active)
+	          accel/strong/peak → UNIFIED amber family
 
-	   Previously the hue jump sat between accelerating and strong,
-	   which made the accumulated trunk above accelerating branches
-	   render in the same cool indigo as alive — visually
-	   indistinguishable. Now the jump lands at the right semantic
-	   threshold and accelerating reads clearly warm at a glance. */
+	   The conduit communicates CATEGORY only: blue family vs amber
+	   family. Intensity within the amber family (accel → strong →
+	   peak) is carried by particle traffic, not by paint.
+
+	   Accel/Strong/Peak share the exact same oklch hue and chroma
+	   (55°, 0.11). Lightness is identical for accel and strong
+	   (0.62); peak nudges to 0.63 — a hair's-difference bump that
+	   keeps it firmly inside the family. Alpha steps 15 → 16 → 17
+	   are deliberately tiny (≤7% each) so the warm tiers read as
+	   "the same kind of conduit" from any distance.
+
+	   Alive stays in its own family with the muted moonlight blue
+	   (chroma 0.05, hue 230) — clearly NOT amber, but equally
+	   ghostly so it doesn't dominate either.
+
+	   The eye should find: 1) nodes, 2) moving particles,
+	   3) branch structure, 4) conduit hue (last). */
 	function railColorClassFor(state: BranchActivityState | undefined): string {
 		return state === 'peak-accelerating'
-			? 'text-[oklch(0.76_0.16_60)]/18'
+			? 'text-[oklch(0.63_0.11_55)]/17'
 			: state === 'strong-accelerating'
-				? 'text-[oklch(0.73_0.13_55)]/13'
+				? 'text-[oklch(0.62_0.11_55)]/16'
 				: state === 'accelerating'
-					? 'text-[oklch(0.72_0.10_60)]/10'
+					? 'text-[oklch(0.62_0.11_55)]/15'
 					: state === 'alive'
-						? 'text-primary/8'
-						: 'text-white/5';
+						? 'text-[oklch(0.62_0.05_230)]/14'
+						/* Dead — pushed toward "trace of an old path".
+						   Chroma halved (0.04→0.02) so hue barely
+						   registers as blue; hue nudged 245→250 so
+						   what little colour remains reads as steel/
+						   slate rather than ocean. Alpha cut 7%→5%
+						   (~30% reduction) to make Dead clearly more
+						   absent than Alive without disappearing. */
+						: 'text-[oklch(0.55_0.02_250)]/5';
 	}
 	const railColorClass = $derived(railColorClassFor(effectiveActivity));
 	/* Trunk-section colour rules (per the conduit-state spec):
@@ -340,10 +355,23 @@
 	);
 
 	/*
-	   Atmosphere class per state — breath modulates conduit opacity slowly,
-	   aura adds a faint warm drop-shadow halo. Both scale with intensity.
-	   Aura variants are NOT additive (they set the same filter property);
-	   pick one based on state.
+	   Atmosphere class per state.
+
+	   `conduit-breath` modulates conduit opacity slowly (14s cycle,
+	   per-branch phase). Aura adds a faint static drop-shadow halo
+	   that tracks the warm-tier ladder at compressed intensity:
+
+	     accelerating → conduit-aura        (20%/10% alpha)
+	     strong       → conduit-aura-strong (25%/13% alpha)
+	     peak         → conduit-aura-peak   (30%/15% alpha)
+
+	   These are deliberately close together — strong and peak should
+	   look like family members of accelerating, not like a different
+	   class of element. The intensity hierarchy across the warm tiers
+	   lives in particle traffic, not in conduit glow.
+
+	   Aura variants are NOT additive (they all set `filter:`); pick
+	   exactly one per state.
 	*/
 	function atmosphereClassesFor(state: BranchActivityState | undefined): string {
 		return state === 'peak-accelerating'
@@ -352,7 +380,9 @@
 				? 'conduit-breath conduit-aura-strong'
 				: state === 'accelerating'
 					? 'conduit-breath conduit-aura'
-					: '';
+					: state === 'alive'
+						? 'conduit-breath conduit-aura-alive'
+						: '';
 	}
 	const atmosphereClasses = $derived(atmosphereClassesFor(effectiveActivity));
 	const topAtmosphereClasses = $derived(
@@ -513,7 +543,12 @@
 			count = fourSlotBranch ? 4 : 3;
 			cycleMin = 1.55;
 			cycleMax = 1.92;
-			cyanShare = 0.80; amberShare = 0.20; whiteShare = 0.0;
+			/* Accelerating particles are AMBER-DOMINANT — the colour
+			   shift from cool (alive) to warm (accel/strong/peak)
+			   happens HERE. Cyan was previously 80% (matching alive's
+			   look) which made accel particles read the same as alive
+			   particles to the eye. */
+			cyanShare = 0.30; amberShare = 0.70; whiteShare = 0.0;
 			baseDelays = fourSlotBranch
 				? (cadencePattern === 0 ? [0.00, 0.18, 0.85, 1.25] :
 				   cadencePattern === 1 ? [0.00, 0.55, 0.95, 1.18] :
@@ -524,55 +559,56 @@
 				   cadencePattern === 2 ? [0.00, 0.70, 1.55] :
 				                          [0.00, 0.55, 1.10]);
 		} else if (effectiveActivity === 'strong-accelerating') {
-			/* 3 particles (down from 4) — strong caps at the same slot
-			   budget as accelerating so an inherited strong subtree
-			   doesn't oversaturate the DOM. Amber dominates (75%),
-			   cyan 25% keeps the cultural substrate readable. Cycle
-			   1.17-1.50s; amber speed multiplier below pushes effective
-			   amber cycle to 2.0-3.6s.
+			/* 5 particles — strong should read as visibly heavier amber
+			   traffic than accelerating. No cyan: strong is firmly inside
+			   the warm family (accelerating still keeps a 30% cyan
+			   substrate as the cool→warm transition). Cycle 1.17-1.50s;
+			   amber speed multiplier below pushes effective amber cycle
+			   to ~2.0-3.6s.
 
-			   Cadence: WAVES OF PROPAGATION. Three of four shapes
-			   include a tight pair, so most strong branches read as
-			   pulsed bursts followed by a quiet stretch rather than
-			   evenly-spaced ticks. The fourth keeps a looser
-			   "breathing" shape so the cohort isn't uniformly bursty.
-			     0 tight-pair + lone-mid (forward wave)
-			     1 lone + tight-late-pair (backward wave)
-			     2 near-triplet burst (the densest wave)
-			     3 breathing-looser (calmer breath) */
-			count = 3;
+			   Cadence: WAVES OF PROPAGATION. Each pattern preserves
+			   the original 3-slot burst shape with two extra slots
+			   inserted in natural gaps so the wave remains pulsed
+			   rather than uniform noise.
+			     0 forward wave + late pair
+			     1 spread + tight late pair
+			     2 triplet burst + later pair
+			     3 even breathing (loose stagger — calmer strong branch) */
+			count = 5;
 			cycleMin = 1.17;
 			cycleMax = 1.50;
-			cyanShare = 0.25; amberShare = 0.75; whiteShare = 0.0;
+			cyanShare = 0.0; amberShare = 1.0; whiteShare = 0.0;
 			baseDelays =
-				cadencePattern === 0 ? [0.00, 0.10, 0.65] :  /* forward wave */
-				cadencePattern === 1 ? [0.00, 0.55, 0.70] :  /* backward wave */
-				cadencePattern === 2 ? [0.00, 0.07, 0.20] :  /* triplet burst */
-				                       [0.00, 0.35, 0.90];   /* breathing */
+				cadencePattern === 0 ? [0.00, 0.10, 0.32, 0.65, 0.85] :  /* forward wave + late pair */
+				cadencePattern === 1 ? [0.00, 0.28, 0.55, 0.70, 0.95] :  /* spread + tight late pair */
+				cadencePattern === 2 ? [0.00, 0.07, 0.20, 0.55, 0.80] :  /* triplet burst + later pair */
+				                       [0.00, 0.22, 0.45, 0.70, 0.95];   /* even breathing */
 		} else {
-			/* peak-accelerating: 3 particles. Whites are rare visible
-			   ignition events: 6% per slot ≈ 0.18 expected per branch,
-			   plus the anchored guarantee. Cyan 22% keeps cultural
-			   substrate visible under amber — peak should not read as
-			   "orange mode".
+			/* 6 particles per peak branch — constant amber stream that
+			   almost never empties, ~20% denser than strong.
+			   Whites are OCCASIONAL ignition events (~10% per slot ≈
+			   0.6 expected per cycle), not constant. The pulse animation
+			   on the conduit carries the "this is igniting" feeling;
+			   whites are the visible spark that accompanies it. Cyan
+			   removed entirely — peak is solidly warm.
 
-			   Cadence: MICRO-BURSTS inside dense flow. Three of four
-			   shapes produce tight overlaps so peak reads as overloaded
-			   transmission. The fourth keeps a breathing pattern so a
-			   peak subtree never becomes uniform noise.
-			     0 tight-pair + lone (forward burst + delayed third)
-			     1 twin-launch + middle (the doubled feel, softened)
-			     2 near-triplet burst (densest — three within ~0.3s)
-			     3 breathing (loose stagger — calmer peak branch) */
-			count = 3;
+			   Cadence: MICRO-BURSTS inside dense flow. Original
+			   3-slot bursts preserved; three additional slots
+			   sustain the flow between bursts so the conduit never
+			   feels empty.
+			     0 tight-pair + spread + late pair
+			     1 twin-launch + cascading flow
+			     2 near-triplet + sustained flow
+			     3 breathing — even peak */
+			count = 6;
 			cycleMin = 1.00;
 			cycleMax = 1.40;
-			cyanShare = 0.22; amberShare = 0.72; whiteShare = 0.06;
+			cyanShare = 0.0; amberShare = 0.90; whiteShare = 0.10;
 			baseDelays =
-				cadencePattern === 0 ? [0.00, 0.14, 0.85] :  /* tight pair + lone */
-				cadencePattern === 1 ? [0.00, 0.06, 0.42] :  /* twin-launch + middle */
-				cadencePattern === 2 ? [0.00, 0.18, 0.32] :  /* near-triplet burst */
-				                       [0.00, 0.45, 0.95];   /* breathing */
+				cadencePattern === 0 ? [0.00, 0.14, 0.30, 0.50, 0.72, 0.88] :  /* tight pair + spread + late pair */
+				cadencePattern === 1 ? [0.00, 0.06, 0.22, 0.42, 0.65, 0.82] :  /* twin-launch + cascading flow */
+				cadencePattern === 2 ? [0.00, 0.10, 0.18, 0.32, 0.60, 0.82] :  /* near-triplet + sustained flow */
+				                       [0.00, 0.16, 0.32, 0.50, 0.70, 0.90];   /* breathing — even peak */
 		}
 
 		/* ─── Build particles ──────────────────────────────────── */
