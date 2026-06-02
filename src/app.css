@@ -716,18 +716,29 @@
   height: var(--particle-size, 4px);
   border-radius: var(--head-radius, 50%);
   background: currentColor;
+  /* 3-stop halo (compressed from 5). Each box-shadow stop is a
+     separate compositor paint; with 200+ simultaneous particles on
+     deep trees (iron-weather) the 5-stop version was the dominant
+     per-particle cost. The compressed version merges near+mid into
+     a single stronger mid stop, and wide+very-wide into a single
+     soft outer stop — the eye reads the same "headlight"
+     character at viewing distance, but the GPU does ~40% less
+     work per particle. White-hot particles get an additional
+     bright core layer below (.conduit-particle-white .conduit-head
+     override) so their dramatic-spark quality is preserved. */
   box-shadow:
     /* tight bright core */
     0 0 calc(var(--head-glow, 4px) * 0.40 * var(--halo-spread, 1)) 0 currentColor,
-    /* near halo (still nearly full intensity) */
-    0 0 calc(var(--head-glow, 4px) * 0.90 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 80%, transparent),
-    /* mid halo */
-    0 0 calc(var(--head-glow, 4px) * 1.60 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 55%, transparent),
-    /* wide halo — this is what reaches the conduit on either side */
-    0 0 calc(var(--head-glow, 4px) * 2.50 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 30%, transparent),
-    /* very wide soft fade — atmospheric bloom edge */
-    0 0 calc(var(--head-glow, 4px) * 3.80 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 14%, transparent);
+    /* mid halo (merged near+mid) */
+    0 0 calc(var(--head-glow, 4px) * 1.40 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 62%, transparent),
+    /* wide soft outer halo (merged wide+very-wide) */
+    0 0 calc(var(--head-glow, 4px) * 3.20 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 22%, transparent);
   transform: translateY(0);
+  /* No will-change hint — the conduit-orbit transform animation
+     already auto-promotes each head to a GPU layer for the
+     duration of the animation, and forcing 400+ persistent
+     layers across deep trees would pressure GPU memory more than
+     it would help frame rate. */
 }
 
 /* ─── Thermal trail ──────────────────────────────────────────
@@ -786,9 +797,11 @@
     color-mix(in oklab, currentColor 14%, transparent) 65%,
     color-mix(in oklab, currentColor 52%, transparent) 100%
   );
-  filter: blur(0.35px);
-  /* Base opacity; the depth-phase animation overrides during
-     the helix cycle. `--max-opacity` is already per-particle. */
+  /* No filter:blur — at 0.35px it was sub-pixel and barely
+     perceptible at viewing distance, but every trail with a
+     filter set forces a separate compositor layer + filter
+     pass. With 200+ trails on deep trees that's a measurable
+     hit. The gradient's own soft edge sells the wake. */
   opacity: var(--max-opacity, 1);
 }
 
@@ -820,7 +833,10 @@
     color-mix(in oklab, currentColor 30%, transparent) 50%,
     color-mix(in oklab, currentColor 76%, transparent) 100%
   );
-  filter: blur(0.4px);
+  /* No filter:blur — same reason as the warm-trail rule. White
+     trails are rare (peak only) so the per-particle cost mattered
+     less here, but staying consistent avoids two compositor
+     pipelines. */
 }
 
 /* ─── Conduit bloom ──────────────────────────────────────────
