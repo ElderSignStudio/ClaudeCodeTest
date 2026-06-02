@@ -30,7 +30,6 @@
 		isLast = false,
 		onParticleArrival = undefined,
 		whiteAnchorId = undefined,
-		inheritedLabeledState = undefined,
 		incomingTrunkActivity = undefined,
 		outgoingTrunkActivity = undefined,
 	}: {
@@ -59,14 +58,6 @@
 		 *  of all slots rolling non-white still yields at least one
 		 *  visible ignition somewhere in the subtree. */
 		whiteAnchorId?: string | undefined;
-		/** The branch state most recently *labeled* up this lineage —
-		 *  i.e. either the origin's state, or the state of the most
-		 *  recent transition-labeled ancestor. Used to decide whether
-		 *  THIS node should render its own transition label: if this
-		 *  node's local subtree classifies differently from what was
-		 *  last labeled above, it's a transition point and gets a
-		 *  label. */
-		inheritedLabeledState?: BranchActivityState | undefined;
 		/** State of the vertical trunk segment ABOVE this child's elbow
 		 *  (i.e. the segment that this child's "top stub" renders).
 		 *  Per the trunk-accumulation rule, this is the MAX state of
@@ -139,31 +130,6 @@
 		computeBranchActivity(user),
 	);
 
-	/* ─── Branch-state transition labels ─────────────────────────
-	   `effectiveActivity` (above) IS this node's local subtree state
-	   now; we re-export it as `localActivity` to keep the label
-	   template's intent explicit. The label fires only when the
-	   local state differs from the most recently labeled ancestor's
-	   state (`inheritedLabeledState` from props). Otherwise the
-	   inherited value passes through unchanged, so a long quiet
-	   trunk shows the label only once at its top, not on every node.
-	   Return transitions (PEAK → ALIVE → PEAK) work naturally
-	   because the second PEAK still differs from the intervening
-	   ALIVE. */
-	const localActivity = $derived<BranchActivityState>(effectiveActivity!);
-	const labeledStateAbove = $derived<BranchActivityState | undefined>(
-		depth === 0 ? localActivity : inheritedLabeledState,
-	);
-	const showTransitionLabel = $derived(
-		depth > 0 &&
-		!user.isPreviewNode &&
-		labeledStateAbove !== undefined &&
-		localActivity !== labeledStateAbove,
-	);
-	const labeledStateForChildren = $derived<BranchActivityState | undefined>(
-		showTransitionLabel ? localActivity : labeledStateAbove,
-	);
-
 	/* White-hot ignition safety anchor.
 
 	   When THIS node is a peak-accelerating ORIGIN (depth 0), pick one
@@ -194,10 +160,6 @@
 		if (ids.length === 0) return undefined;
 		return ids[hash32(user.id + '|white-anchor') % ids.length];
 	});
-
-	/* Debug switch — shows DEAD / ALIVE / ACCELERATING labels next to
-	   each root. Flip to false to hide. */
-	const DEBUG_BRANCH_LABELS = true;
 
 	let expanded = $state(true);
 	let tailExpanded = $state(false);
@@ -1156,21 +1118,6 @@
 		};
 	});
 
-	/* Short, terse forms of the branch-state names used by the
-	   transition chip. Origins keep the existing
-	   "peak accelerating" / "strong accelerating" full form via a
-	   separate code path; transitions use the abbreviated form so
-	   they read as quieter section markers, not full classifications. */
-	function shortStateLabel(state: BranchActivityState): string {
-		switch (state) {
-			case 'peak-accelerating':   return 'peak';
-			case 'strong-accelerating': return 'strong';
-			case 'accelerating':        return 'accelerating';
-			case 'alive':               return 'alive';
-			case 'dead':                return 'dead';
-		}
-	}
-
 	function nodeKindClass(u: PropagationUser): string {
 		if (u.isPreviewNode) return '';
 		switch (u.nodeKind) {
@@ -1465,27 +1412,6 @@
 				!user.isPreviewNode && nodeKindClass(user),
 			]}
 		>
-			{#if DEBUG_BRANCH_LABELS && showTransitionLabel}
-				<!-- Incoming-segment annotation — anchored to the LEFT
-				     of the avatar where the incoming conduit elbow
-				     arrives, so it visually labels the SEGMENT, not the
-				     node. Absolute-positioned (no layout impact), tiny
-				     italic typography, leading line glyph trailing back
-				     along the conduit. pointer-events-none so clicks
-				     pass through to the row underneath. -->
-				<span
-					class={[
-						'absolute right-full top-1/2 -translate-y-1/2 mr-1 pointer-events-none',
-						'whitespace-nowrap text-[10px] uppercase tracking-widest font-mono italic opacity-70',
-						localActivity === 'peak-accelerating'    && 'text-[oklch(0.92_0.10_70)]',
-						localActivity === 'strong-accelerating'  && 'text-[oklch(0.80_0.18_55)]',
-						localActivity === 'accelerating'         && 'text-warning',
-						localActivity === 'alive'                && 'text-primary',
-						localActivity === 'dead'                 && 'text-base-content/40',
-					]}
-					aria-label={`incoming branch segment: ${shortStateLabel(localActivity)}`}
-				><span class="opacity-55 not-italic" aria-hidden="true">─</span> {shortStateLabel(localActivity)}</span>
-			{/if}
 			{#if user.nodeKind === 'successful-amplifier' && !user.isPreviewNode}
 				<!-- Outward broadcast ripple for successful amplifiers,
 				     composing with the orbit comet and double-ring halo. -->
@@ -1731,7 +1657,6 @@
 					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
 					onParticleArrival={onChildParticleArrival}
 					whiteAnchorId={computedWhiteAnchorId}
-					inheritedLabeledState={labeledStateForChildren}
 					incomingTrunkActivity={hottestAtAndBelow[i]}
 					outgoingTrunkActivity={
 						i < combinedChildrenActivities.length - 1
@@ -1829,8 +1754,7 @@
 							isLast={i === tailStubs.length - 1}
 							onParticleArrival={onChildParticleArrival}
 							whiteAnchorId={computedWhiteAnchorId}
-							inheritedLabeledState={labeledStateForChildren}
-							incomingTrunkActivity={
+									incomingTrunkActivity={
 								hottestAtAndBelow[sortedChildren.length + i]
 							}
 							outgoingTrunkActivity={
