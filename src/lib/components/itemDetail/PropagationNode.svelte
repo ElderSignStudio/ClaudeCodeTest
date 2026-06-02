@@ -1500,12 +1500,30 @@
 				]}>
 					{user.name}
 				</p>
+				{#if user.branchSize > 0 && !user.isPreviewNode}
+					<!-- Propagation score — sits immediately after the scout
+					     name on the same baseline. Colour follows the node's
+					     own branch state so the score reads as an attribute
+					     of the scout, not a separate metric. Slightly smaller
+					     than the name (text-[11px] vs 13px), slightly
+					     brighter than the subtitle (alpha 60-82 vs subtitle
+					     /60); reads as metadata, never competes with the
+					     name. No glow, no pulse, no animation. -->
+					<span
+						class={[
+							'shrink-0 text-[11px] tabular-nums leading-none',
+							effectiveActivity === 'peak-accelerating'   ? 'text-[oklch(0.82_0.14_58)]/82'
+							: effectiveActivity === 'strong-accelerating' ? 'text-[oklch(0.75_0.14_55)]/72'
+							: effectiveActivity === 'accelerating'        ? 'text-[oklch(0.70_0.13_55)]/65'
+							: effectiveActivity === 'alive'               ? 'text-[oklch(0.72_0.07_230)]/62'
+							:                                                'text-base-content/42',
+						]}
+						aria-label={`branch size ${user.branchSize}`}
+					>+{user.branchSize}</span>
+				{/if}
 				{#if user.isOrigin && !user.isPreviewNode}
-					<!-- ORIGIN chip only — origins have no incoming segment,
-					     so they don't get a state annotation. The branch
-					     state of an origin can be read from the visual
-					     character of its outgoing conduits + the row-state
-					     chips that appear on its first internal transitions. -->
+					<!-- ORIGIN chip — sits after the score so the visual order
+					     reads "Alice +34 ORIGIN": name, metadata, role badge. -->
 					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
 				{/if}
 			</div>
@@ -1521,14 +1539,6 @@
 			</p>
 		</div>
 
-		<!-- Branch-size hint on the right edge. Neutral readout — no
-		     branch-mass / hub visual weighting (those systems were
-		     removed in the cleanup pass). -->
-		{#if user.branchSize > 0}
-			<span class="shrink-0 mt-1.5 text-[10px] font-mono tabular-nums text-base-content/45">
-				+{user.branchSize}
-			</span>
-		{/if}
 	</div>
 
 	<!--
