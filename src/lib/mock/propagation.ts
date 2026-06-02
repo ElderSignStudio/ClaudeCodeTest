@@ -1713,6 +1713,103 @@ function buildReignition(ctx: BuilderCtx): ArchetypeResult {
 	};
 }
 
+/* 21. Conduit-compare — DEBUG SURFACE.
+
+   Three "comparison sections" stacked vertically: Peak at the top,
+   Strong in the middle, Accelerating at the bottom. Inside each
+   section, a TALL alive dummy chain sits above a state-specific
+   TARGET sibling. Because siblings sort by branchSize (descending)
+   within the same kind-rank, the dummy ends up above the target —
+   and the target's top-rail therefore extends as a LONG vertical
+   conduit instead of a short elbow.
+
+   Layout under the origin:
+
+     PeakSection   (container, alive, 13 nodes total — sorts 1st)
+       ├─ tallDummy  (alive chain, 8 deep)
+       └─ peakTarget (long peak rail above, 17 peak particles + white)
+
+     StrongSection (container, alive, 11 nodes — sorts 2nd)
+       ├─ tallDummy  (alive chain, 6 deep)
+       └─ strongTarget (long strong rail above, 13 amber particles)
+
+     AccSection    (container, alive, 9 nodes — sorts 3rd)
+       ├─ tallDummy  (alive chain, 4 deep)
+       └─ accTarget  (long accel rail above, 3-4 amber particles)
+
+   All targets and dummies share the `successful-amplifier` node-kind
+   (rank 0) so sort tiebreaks by branchSize — the dummy's deeper
+   chain always sorts ABOVE the target. Section containers use
+   the same kind so they sort in descending order of total
+   subtree size: peak(13) > strong(11) > acc(9).
+
+   No `buildSmallRoot` clutter — this is purely a calibration view. */
+function buildConduitCompare(ctx: BuilderCtx): ArchetypeResult {
+	const node = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	/* tallDummy — a successful-amplifier whose subtree is a chain of
+	   N alive deep-listeners ending in a passive-listener. The chain
+	   length governs the wrapper height, which governs how long the
+	   target sibling's rail becomes. The top must be sa (rank 0) so
+	   sort tiebreaks against the target by branchSize. */
+	const tallDummy = (chainDepth: number): PropagationUser => {
+		let chain: PropagationUser = node('passive-listener', 'alive');
+		for (let i = 0; i < chainDepth - 1; i++) {
+			chain = node('deep-listener', 'alive', [chain]);
+		}
+		return node('successful-amplifier', 'alive', [chain]);
+	};
+
+	const peakTarget = (): PropagationUser =>
+		node('successful-amplifier', 'peak-accelerating', [
+			node('amplifier', 'peak-accelerating', [
+				node('passive-listener', 'alive'),
+			]),
+		]);
+
+	const strongTarget = (): PropagationUser =>
+		node('successful-amplifier', 'strong-accelerating', [
+			node('amplifier', 'strong-accelerating', [
+				node('passive-listener', 'alive'),
+			]),
+		]);
+
+	const accTarget = (): PropagationUser =>
+		node('successful-amplifier', 'accelerating', [
+			node('amplifier', 'accelerating', [
+				node('passive-listener', 'alive'),
+			]),
+		]);
+
+	/* section — alive container holding the [tallDummy, target] pair.
+	   The container itself is successful-amplifier so sections sort
+	   by branchSize under the origin. */
+	const section = (chainDepth: number, target: PropagationUser): PropagationUser =>
+		node('successful-amplifier', 'alive', [
+			tallDummy(chainDepth),
+			target,
+		]);
+
+	const peakSection   = section(8, peakTarget());
+	const strongSection = section(6, strongTarget());
+	const accSection    = section(4, accTarget());
+
+	const origin = makeNode(ctx, 'successful-amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [peakSection, strongSection, accSection],
+	});
+
+	return {
+		roots: [origin],
+		hiddenRootUsers: [],
+	};
+}
+
 const ARCHETYPES = [
 	{ name: 'hub-dominant',         build: buildHubDominant         },
 	{ name: 'fragmented',           build: buildFragmented          },
@@ -1734,6 +1831,7 @@ const ARCHETYPES = [
 	{ name: 'rising-tide',          build: buildRisingTide          },
 	{ name: 'phoenix',              build: buildPhoenix             },
 	{ name: 'reignition',           build: buildReignition          },
+	{ name: 'conduit-compare',      build: buildConduitCompare      },
 ] as const;
 
 /* Items whose forest is pinned to a specific archetype for design-system
@@ -1762,6 +1860,10 @@ const PINNED_ARCHETYPES: Record<string, string> = {
 	'minor-current':      'rising-tide',          /* Alive → Accel → Strong → Peak descending */
 	'hollow-ritual':      'phoenix',              /* Peak → Alive → Peak re-ignition */
 	'static-bloom':       'reignition',           /* Alive → Dead → Accel after dormancy */
+	/* Particle-traffic calibration surface — three long vertical
+	   conduits, one each for Peak / Strong / Accel, stacked top-to-
+	   bottom. Visit /items/soft-collapse to compare densities. */
+	'soft-collapse':      'conduit-compare',
 };
 
 /* Archetype names that should NEVER appear via random rotation —
@@ -1936,6 +2038,11 @@ const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; o
 		summary: 'A live branch that fell into archaeological silence for several generations before a single descendant re-opened the signal with fresh momentum — a discontinuous re-entry pattern.',
 		crossingNote: 'Quiet circulation collapsed into dormancy before a deep descendant re-opened the propagation cleanly.',
 		originNote: 'Surfaced quietly, lost to dormancy in the middle, then re-emerged through an unexpected late scout.',
+	},
+	'conduit-compare': {
+		summary: 'Debug surface — three long vertical conduits stacked top-to-bottom (Peak, Strong, Accelerating) for side-by-side particle-traffic calibration.',
+		crossingNote: 'Calibration tree — three target sub-branches, each preceded by a tall alive dummy sibling to stretch the rail.',
+		originNote: 'A calibration surface for visually comparing particle density across Peak, Strong, and Accelerating long conduits.',
 	},
 };
 
