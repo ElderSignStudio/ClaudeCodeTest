@@ -716,18 +716,29 @@
   height: var(--particle-size, 4px);
   border-radius: var(--head-radius, 50%);
   background: currentColor;
+  /* 3-stop halo (compressed from 5). Each box-shadow stop is a
+     separate compositor paint; with 200+ simultaneous particles on
+     deep trees (iron-weather) the 5-stop version was the dominant
+     per-particle cost. The compressed version merges near+mid into
+     a single stronger mid stop, and wide+very-wide into a single
+     soft outer stop — the eye reads the same "headlight"
+     character at viewing distance, but the GPU does ~40% less
+     work per particle. White-hot particles get an additional
+     bright core layer below (.conduit-particle-white .conduit-head
+     override) so their dramatic-spark quality is preserved. */
   box-shadow:
     /* tight bright core */
     0 0 calc(var(--head-glow, 4px) * 0.40 * var(--halo-spread, 1)) 0 currentColor,
-    /* near halo (still nearly full intensity) */
-    0 0 calc(var(--head-glow, 4px) * 0.90 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 80%, transparent),
-    /* mid halo */
-    0 0 calc(var(--head-glow, 4px) * 1.60 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 55%, transparent),
-    /* wide halo — this is what reaches the conduit on either side */
-    0 0 calc(var(--head-glow, 4px) * 2.50 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 30%, transparent),
-    /* very wide soft fade — atmospheric bloom edge */
-    0 0 calc(var(--head-glow, 4px) * 3.80 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 14%, transparent);
+    /* mid halo (merged near+mid) */
+    0 0 calc(var(--head-glow, 4px) * 1.40 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 62%, transparent),
+    /* wide soft outer halo (merged wide+very-wide) */
+    0 0 calc(var(--head-glow, 4px) * 3.20 * var(--halo-spread, 1)) 0 color-mix(in srgb, currentColor 22%, transparent);
   transform: translateY(0);
+  /* No will-change hint — the conduit-orbit transform animation
+     already auto-promotes each head to a GPU layer for the
+     duration of the animation, and forcing 400+ persistent
+     layers across deep trees would pressure GPU memory more than
+     it would help frame rate. */
 }
 
 /* ─── Thermal trail ──────────────────────────────────────────
@@ -786,9 +797,11 @@
     color-mix(in oklab, currentColor 14%, transparent) 65%,
     color-mix(in oklab, currentColor 52%, transparent) 100%
   );
-  filter: blur(0.35px);
-  /* Base opacity; the depth-phase animation overrides during
-     the helix cycle. `--max-opacity` is already per-particle. */
+  /* No filter:blur — at 0.35px it was sub-pixel and barely
+     perceptible at viewing distance, but every trail with a
+     filter set forces a separate compositor layer + filter
+     pass. With 200+ trails on deep trees that's a measurable
+     hit. The gradient's own soft edge sells the wake. */
   opacity: var(--max-opacity, 1);
 }
 
@@ -820,7 +833,10 @@
     color-mix(in oklab, currentColor 30%, transparent) 50%,
     color-mix(in oklab, currentColor 76%, transparent) 100%
   );
-  filter: blur(0.4px);
+  /* No filter:blur — same reason as the warm-trail rule. White
+     trails are rare (peak only) so the per-particle cost mattered
+     less here, but staying consistent avoids two compositor
+     pipelines. */
 }
 
 /* ─── Conduit bloom ──────────────────────────────────────────
@@ -1216,20 +1232,41 @@
    inexpensive blur budget. Thermal memory is removed altogether
    (see PropagationNode); the aura is now the only atmospheric layer
    and it's static. */
+/* Static auras — every variant is deliberately faint. Glow is
+   PRESENT (so conduits don't look flat against the card) but it
+   recedes; the eye should read it as "atmosphere" rather than
+   "halo". Alpha pulled down ~30-35% from the prior pass and
+   blur radii tightened a touch. Hues match the muted rail
+   colours: cool moonlight for alive, amber (55-58°) for the
+   warm tiers. */
+.conduit-aura-alive {
+  filter:
+    drop-shadow(0 0 4px  color-mix(in srgb, oklch(0.62 0.05 230) 10%, transparent))
+    drop-shadow(0 0 10px color-mix(in srgb, oklch(0.62 0.05 230)  5%, transparent));
+}
 .conduit-aura {
   filter:
-    drop-shadow(0 0 5px  color-mix(in srgb, oklch(0.72 0.16 60) 12%, transparent))
-    drop-shadow(0 0 14px color-mix(in srgb, oklch(0.72 0.16 60)  6%, transparent));
+    drop-shadow(0 0 4px  color-mix(in srgb, oklch(0.62 0.11 55) 13%, transparent))
+    drop-shadow(0 0 12px color-mix(in srgb, oklch(0.62 0.11 55)  7%, transparent));
 }
+
+/* Strong & Peak — SAME amber colour as accelerating (oklch
+   0.62 0.11 55 / 0.63 0.11 55). Only the alpha climbs, by
+   tiny amounts: accel 13/7 → strong 14/7 → peak 15/8. Strong
+   and accel are visually indistinguishable; peak is at most
+   ~10% brighter than accel. No hue shift, no chroma shift,
+   no lightness lift worth speaking of. The conduit indicates
+   CATEGORY (amber vs blue) and nothing more — particle traffic
+   carries the strong-vs-peak story. */
 .conduit-aura-strong {
   filter:
-    drop-shadow(0 0 6px  color-mix(in srgb, oklch(0.74 0.16 60) 16%, transparent))
-    drop-shadow(0 0 18px color-mix(in srgb, oklch(0.74 0.16 60)  8%, transparent));
+    drop-shadow(0 0 4px  color-mix(in srgb, oklch(0.62 0.11 55) 14%, transparent))
+    drop-shadow(0 0 12px color-mix(in srgb, oklch(0.62 0.11 55)  7%, transparent));
 }
 .conduit-aura-peak {
   filter:
-    drop-shadow(0 0 7px  color-mix(in srgb, oklch(0.78 0.17 62) 22%, transparent))
-    drop-shadow(0 0 20px color-mix(in srgb, oklch(0.78 0.17 62) 11%, transparent));
+    drop-shadow(0 0 4px  color-mix(in srgb, oklch(0.63 0.11 55) 15%, transparent))
+    drop-shadow(0 0 12px color-mix(in srgb, oklch(0.63 0.11 55)  8%, transparent));
 }
 
 /* ─── Peak-only: rare white-hot particle head ────────────── */
@@ -1529,6 +1566,7 @@
   /* Hold the atmospheric layer at its midpoint — no breathing, no aura,
      no resonance bloom under reduced motion. */
   .conduit-breath        { animation: none !important; opacity: 0.94; }
+  .conduit-aura-alive,
   .conduit-aura,
   .conduit-aura-strong,
   .conduit-aura-peak     { filter: none; }
