@@ -136,13 +136,16 @@
 	});
 
 	function handleSelect(user: PropagationUser) {
-		// Preview nodes are never selectable as real scouts.
-		if (user.isPreviewNode) return;
+		// Preview nodes ARE selectable now — the inspector renders a special
+		// "Your entry point" card explaining where the user would join the
+		// lineage. The preview row itself stays cursor-default + aria-
+		// disabled in PropagationNode, but click still surfaces the card.
 		selectedTarget = { kind: 'user', user };
 	}
 	function handlePreview(target: PreviewTarget | null) {
-		// Preview nodes also don't surface in the inspector preview pane.
-		if (target?.kind === 'user' && target.user.isPreviewNode) return;
+		// Preview nodes flow through to the inspector so the entry-point
+		// card opens on hover. The inspector branches on isPreviewNode and
+		// renders dedicated content instead of the normal user card.
 		hoveredTarget = target;
 	}
 	function resetToGlobal() {
