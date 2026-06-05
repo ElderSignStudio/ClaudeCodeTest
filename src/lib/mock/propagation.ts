@@ -38,6 +38,19 @@ export type PropagationNodeKind =
 	| 'amplifier'             // intentionally transmitted onward
 	| 'successful-amplifier'; // their transmission carried the signal far
 
+/** Editorial role used by the hover card's "Role in signal" section.
+ *  Derived from PropagationNodeKind plus deterministic per-node jitter:
+ *  passive-listener splits into "Passive Listener" vs "Listener" based on
+ *  whether the user returned to the signal; the other three map 1:1 to
+ *  their node-kind equivalent. Decoupled from PropagationNodeKind so the
+ *  underlying visual / classification model stays unchanged. */
+export type SignalRole =
+	| 'Passive Listener'      // discovered once, didn't return or engage
+	| 'Listener'              // returned to the signal more than once
+	| 'Deep Listener'         // sustained engagement, no forward share
+	| 'Amplifier'             // passed the signal forward
+	| 'Successful Amplifier'; // forward share produced downstream propagation
+
 /* Branch-level activity — a five-tier spectrum from dormant to runaway
    ignition. Each node computes its own tier from ITS OWN subtree (not
    inherited from the root), so a single tree can contain multiple
@@ -152,6 +165,30 @@ export type PropagationUser = {
 	/** Behavioral category — passive / deep / amplifier / successful-amplifier.
 	 *  Only visual-language field on PropagationUser. */
 	nodeKind?: PropagationNodeKind;
+
+	/** Editorial role used by the inspector's "Role in signal" section.
+	 *  Derived deterministically from nodeKind + per-node hash so the same
+	 *  user always reads the same role. Decoupled from `nodeKind` so the
+	 *  underlying classification logic and visual language stay unchanged. */
+	signalRole?: SignalRole;
+	/** Days after origin when this scout first encountered the signal. */
+	firstSignalEventAt?: number;
+	/** Days after origin when this scout passed the signal forward.
+	 *  Only set for Amplifier / Successful Amplifier. ≥ firstSignalEventAt. */
+	amplifiedAt?: number;
+	/** Percentile (1-99) within this scout's role cohort — "earlier than N%
+	 *  of {role}s". Tracks how early this person showed up relative to
+	 *  others playing the same role. */
+	earlierThanPercent?: number;
+	/** Times this scout passed the signal forward as a discrete event.
+	 *  Distinct from `amplifications` (a numerical reach proxy) — this
+	 *  counts share events. Only meaningful for Amplifier/SA. */
+	forwardAmplifications?: number;
+	/** Ordered role progression. When present and length > 1, the inspector
+	 *  renders a compact arrow journey ("Listener → Deep Listener →
+	 *  Amplifier → Successful Amplifier"). Single-stage journeys are
+	 *  omitted from the UI. */
+	signalJourney?: SignalRole[];
 
 	/** Explicit branch-state override (acceleration-model classification).
 	 *  When set, `computeBranchActivity` returns this directly without
@@ -402,6 +439,83 @@ function behaviorFor(kind: PropagationNodeKind): readonly string[] {
 	}
 }
 
+/* Deterministic per-node role + timing fields used by the inspector's
+   "Role in signal" section. Pulled out of makeNode so the logic is in
+   one place and origins / current-user nodes get the same treatment.
+
+   Determinism: every output is computed from the node's id hash so the
+   same scout always reads the same role/timing on every refresh.
+   `nodeKind` chooses the base role; for passive-listener we split the
+   cohort ~50/50 between "Passive Listener" and "Listener" (returned
+   more than once) so the UI demonstrates both. */
+function deriveSignalRole(kind: PropagationNodeKind, hashSeed: number): SignalRole {
+	switch (kind) {
+		case 'passive-listener':
+			return (hashSeed % 100) < 55 ? 'Passive Listener' : 'Listener';
+		case 'deep-listener':       return 'Deep Listener';
+		case 'amplifier':           return 'Amplifier';
+		case 'successful-amplifier': return 'Successful Amplifier';
+	}
+}
+
+/* All shifts below use `>>>` (unsigned right shift) so the result is
+   non-negative even when hashSeed has the high bit set — JS `>>` would
+   sign-extend and `%` would propagate the sign, producing negative
+   percentile / day values. */
+function deriveSignalJourney(role: SignalRole, hashSeed: number): SignalRole[] {
+	switch (role) {
+		case 'Passive Listener': return ['Passive Listener'];
+		case 'Listener':         return ['Passive Listener', 'Listener'];
+		case 'Deep Listener': {
+			const showProgression = ((hashSeed >>> 4) % 100) < 70;
+			return showProgression ? ['Listener', 'Deep Listener'] : ['Deep Listener'];
+		}
+		case 'Amplifier': {
+			const len = ((hashSeed >>> 6) % 100) < 60
+				? 3
+				: ((hashSeed >>> 8) % 100) < 50
+					? 2
+					: 1;
+			if (len === 3) return ['Listener', 'Deep Listener', 'Amplifier'];
+			if (len === 2) return ['Deep Listener', 'Amplifier'];
+			return ['Amplifier'];
+		}
+		case 'Successful Amplifier': {
+			const len = ((hashSeed >>> 6) % 100) < 65
+				? 4
+				: ((hashSeed >>> 8) % 100) < 55
+					? 3
+					: 2;
+			if (len === 4) return ['Listener', 'Deep Listener', 'Amplifier', 'Successful Amplifier'];
+			if (len === 3) return ['Deep Listener', 'Amplifier', 'Successful Amplifier'];
+			return ['Amplifier', 'Successful Amplifier'];
+		}
+	}
+}
+
+function deriveSignalTiming(
+	role: SignalRole,
+	hashSeed: number,
+): { firstSignalEventAt: number; amplifiedAt?: number; earlierThanPercent: number } {
+	const dayBase = ((hashSeed >>> 2) % 80) + 1;
+	const earlyBias =
+		role === 'Successful Amplifier' ? 0.55 :
+		role === 'Amplifier'             ? 0.70 :
+		role === 'Deep Listener'         ? 0.85 :
+		1.00;
+	const firstSignalEventAt = Math.max(1, Math.round(dayBase * earlyBias));
+
+	let amplifiedAt: number | undefined;
+	if (role === 'Amplifier' || role === 'Successful Amplifier') {
+		const lag = (hashSeed >>> 10) % 13;
+		amplifiedAt = firstSignalEventAt + lag;
+	}
+
+	const earlierThanPercent = ((hashSeed >>> 14) % 99) + 1;
+
+	return { firstSignalEventAt, amplifiedAt, earlierThanPercent };
+}
+
 function makeNode(
 	ctx: BuilderCtx,
 	kind: PropagationNodeKind,
@@ -410,6 +524,14 @@ function makeNode(
 	const name = opts.name ?? uniqueName(ctx);
 	const id = opts.id ?? uniqueId(ctx, name);
 	const avatar = opts.avatar ?? dicebear(id + Math.floor(ctx.rand() * 1000));
+	const hashSeed = hashString(id);
+	const signalRole = opts.signalRole ?? deriveSignalRole(kind, hashSeed);
+	const timing = deriveSignalTiming(signalRole, hashSeed);
+	const forwardAmplifications = opts.forwardAmplifications ?? (
+		signalRole === 'Successful Amplifier' ? ((hashSeed >>> 18) % 5) + 3 :
+		signalRole === 'Amplifier'             ? ((hashSeed >>> 18) % 3) + 1 :
+		undefined
+	);
 	return {
 		id,
 		name,
@@ -439,6 +561,12 @@ function makeNode(
 		biggestSubcascadeReach: opts.biggestSubcascadeReach,
 		branchState: opts.branchState,
 		nodeKind: kind,
+		signalRole,
+		firstSignalEventAt: opts.firstSignalEventAt ?? timing.firstSignalEventAt,
+		amplifiedAt: opts.amplifiedAt ?? timing.amplifiedAt,
+		earlierThanPercent: opts.earlierThanPercent ?? timing.earlierThanPercent,
+		forwardAmplifications,
+		signalJourney: opts.signalJourney ?? deriveSignalJourney(signalRole, hashSeed),
 	};
 }
 

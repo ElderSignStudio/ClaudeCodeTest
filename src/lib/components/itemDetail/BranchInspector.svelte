@@ -1,6 +1,42 @@
 <script lang="ts">
-	import type { PropagationForest, PreviewTarget } from '$lib/mock/propagation';
+	import type { PropagationForest, PreviewTarget, SignalRole } from '$lib/mock/propagation';
 	import { findParentInForest } from '$lib/mock/propagation';
+
+	/* Plural of a role name for percentile lines ("Earlier than 32% of
+	   passive listeners"). All roles pluralise by lower-casing and adding
+	   "s" — kept as an explicit map so a future irregular plural can be
+	   added without code changes elsewhere. */
+	const ROLE_PLURAL: Record<SignalRole, string> = {
+		'Passive Listener':    'passive listeners',
+		'Listener':            'listeners',
+		'Deep Listener':       'listeners',
+		'Amplifier':           'amplifiers',
+		'Successful Amplifier': 'amplifiers',
+	};
+
+	/* One-sentence neutral description per role. Personalisation for the
+	   current user lives in the template (the YOUR ROLE block omits these
+	   descriptions and uses second-person copy instead). */
+	const ROLE_DESCRIPTION: Record<SignalRole, string> = {
+		'Passive Listener':    'Listened casually but did not engage further.',
+		'Listener':            'Returned to the signal more than once.',
+		'Deep Listener':       'Developed sustained engagement with the signal.',
+		'Amplifier':           'Passed the signal forward.',
+		'Successful Amplifier': 'Passed the signal forward and created downstream propagation.',
+	};
+
+	/* Subtle role-coloured text class for the role title. Mirrors the
+	   conduit/score palette so the card feels visually connected to the
+	   tree but stays restrained — no glow, no animation. */
+	function roleColorClass(role: SignalRole): string {
+		switch (role) {
+			case 'Passive Listener':    return 'text-base-content/60';
+			case 'Listener':            return 'text-[oklch(0.72_0.07_230)]/78';
+			case 'Deep Listener':       return 'text-[oklch(0.74_0.10_230)]/88';
+			case 'Amplifier':           return 'text-[oklch(0.74_0.13_55)]/85';
+			case 'Successful Amplifier': return 'text-[oklch(0.86_0.12_60)]/94';
+		}
+	}
 
 	/*
 		Contextual inspector. Three editorial states:
@@ -227,6 +263,86 @@
 			</p>
 		{/if}
 
+		<!--
+			ROLE IN SIGNAL — primary explanation of this scout's relationship
+			to the signal. For the current user we switch the eyebrow and
+			use second-person copy; for everyone else we use the neutral
+			third-person sentences from ROLE_DESCRIPTION. The role title is
+			tinted with a subtle palette tied to the conduit/score system
+			(grey → moonlight → amber → near-white) so the card visually
+			echoes the tree's branch state without becoming gamified.
+		-->
+		{#if target.user.signalRole}
+			{@const role = target.user.signalRole}
+			{@const isCu = !!target.user.isCurrentUser}
+			{@const ampedDays = target.user.amplifiedAt}
+			{@const joinedDays = target.user.firstSignalEventAt}
+			{@const pct = target.user.earlierThanPercent}
+			{@const reach = target.user.branchSize}
+			<section class="pt-4 border-t border-white/6">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">
+					{isCu ? 'Your role in signal' : 'Role in signal'}
+				</p>
+				<p class={['text-[14px] font-semibold leading-snug', roleColorClass(role)]}>
+					{role}
+				</p>
+				<div class="mt-1.5 flex flex-col gap-1 text-[12.5px] leading-relaxed text-base-content/74">
+					{#if isCu}
+						<!-- Current-user copy — second person, omits the
+						     descriptive sentence (it's implied by "You"). -->
+						{#if ampedDays !== undefined}
+							<p>You amplified {ampedDays} {ampedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{:else if joinedDays !== undefined}
+							<p>You joined {joinedDays} {joinedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{/if}
+						{#if pct !== undefined}
+							<p>Earlier than {pct}% of {ROLE_PLURAL[role]}.</p>
+						{/if}
+					{:else}
+						<p>{ROLE_DESCRIPTION[role]}</p>
+						{#if ampedDays !== undefined}
+							<p>Amplified {ampedDays} {ampedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{:else if joinedDays !== undefined}
+							<p>{role === 'Passive Listener' ? 'Discovered' : 'Joined'} {joinedDays} {joinedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{/if}
+						{#if pct !== undefined}
+							<p>Earlier than {pct}% of {ROLE_PLURAL[role]}.</p>
+						{/if}
+					{/if}
+					{#if role === 'Successful Amplifier' && reach > 0}
+						<p>Generated a branch that reached {reach} {reach === 1 ? 'scout' : 'scouts'}.</p>
+					{/if}
+				</div>
+			</section>
+		{/if}
+
+		<!--
+			SIGNAL JOURNEY — compact arrow timeline of role progression.
+			Only renders when the journey has more than one stage; passive
+			listeners and single-stage entries skip this section.
+			Visual treatment matches the metadata eyebrows used elsewhere
+			in the card (uppercase / letter-spaced / muted), with arrows
+			rendered in a slightly dimmer tone than the role names so the
+			eye scans stage → stage rather than landing on the arrows.
+		-->
+		{#if target.user.signalJourney && target.user.signalJourney.length > 1}
+			<section>
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-1.5">Signal journey</p>
+				<p class="text-[12px] leading-snug text-base-content/74 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+					{#each target.user.signalJourney as stage, i (i + stage)}
+						{#if i > 0}
+							<span class="text-base-content/35" aria-hidden="true">→</span>
+						{/if}
+						<span class={i === target.user.signalJourney.length - 1
+							? roleColorClass(stage)
+							: 'text-base-content/65'}>
+							{stage}
+						</span>
+					{/each}
+				</p>
+			</section>
+		{/if}
+
 		<!-- Scene chips — anthropological context. -->
 		{#if target.user.scenes && target.user.scenes.length > 0}
 			<div>
@@ -298,7 +414,7 @@
 					</div>
 				{/if}
 				<div class="col-span-2">
-					<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Joined the lineage</dt>
+					<dt class="text-[10px] uppercase tracking-widest text-base-content/45">First signal event</dt>
 					<dd class="mt-1 text-[13px] text-base-content/82">{target.user.discoveredAgo}</dd>
 				</div>
 			</dl>
