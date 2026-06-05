@@ -446,6 +446,39 @@
 		{/if}
 
 		<!--
+			SIGNAL PATH — only on the current user's own real node. Walks
+			up via findParentInForest and reverses to produce ORIGIN → … →
+			USER, mirroring the visual lineage reveal in the tree. Compact
+			text confirmation of the route the signal actually took.
+		-->
+		{#if target.user.isCurrentUser && !target.user.isPreviewNode}
+			{@const lineage = (() => {
+				const out = [];
+				let cur: typeof target.user | null = target.user;
+				while (cur) {
+					out.push(cur);
+					cur = findParentInForest(forest, cur.id);
+				}
+				return out.reverse();
+			})()}
+			{#if lineage.length > 1}
+				<section class="pt-4 border-t border-white/6">
+					<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-1.5">Signal path</p>
+					<p class="text-[12.5px] leading-relaxed text-base-content/78 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+						{#each lineage as step, i (step.id)}
+							{#if i > 0}
+								<span class="text-base-content/35" aria-hidden="true">→</span>
+							{/if}
+							<span class={i === lineage.length - 1 ? 'text-primary/92 font-semibold' : 'text-base-content/82'}>
+								{step.name}
+							</span>
+						{/each}
+					</p>
+				</section>
+			{/if}
+		{/if}
+
+		<!--
 			ROLE IN SIGNAL — primary explanation of this scout's relationship
 			to the signal. For the current user we switch the eyebrow and
 			use second-person copy; for everyone else we use the neutral

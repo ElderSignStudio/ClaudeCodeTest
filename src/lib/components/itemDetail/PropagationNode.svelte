@@ -32,6 +32,11 @@
 		whiteAnchorId = undefined,
 		incomingTrunkActivity = undefined,
 		outgoingTrunkActivity = undefined,
+		lineageIds = null,
+		lineageOrderedIds = null,
+		incomingTrunkOnLineage = false,
+		outgoingTrunkOnLineage = false,
+		trunkLineageIndex = -1,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
@@ -75,7 +80,53 @@
 		 *  section on its way up. Undefined for the last child
 		 *  (no bottom extension is rendered). */
 		outgoingTrunkActivity?: BranchActivityState | undefined;
+		/** Set of ids on the user's personal-lineage chain (ORIGIN → … → USER).
+		 *  When non-null, the tree is in lineage-reveal mode. Nodes in the
+		 *  set keep full opacity; nodes outside the set tag themselves
+		 *  `data-on-lineage="false"` and the CSS dim rules fade them. Null
+		 *  passes through unchanged when no lineage is active. */
+		lineageIds?: Set<string> | null;
+		/** Ordered lineage origin → user. Used to derive --lineage-index for
+		 *  the cascade animation. */
+		lineageOrderedIds?: string[] | null;
+		/** True when this child's TOP STUB sits on the lineage trunk
+		 *  (the vertical segment between an ancestor and the next
+		 *  lineage descendant in the same container). A non-lineage
+		 *  sibling positioned BETWEEN a lineage parent and a lineage
+		 *  descendant within the same children container will be
+		 *  marked true here so its trunk piece participates in the
+		 *  lit path, even though the sibling itself isn't in lineage. */
+		incomingTrunkOnLineage?: boolean;
+		/** True when this child's BOTTOM EXTENSION (the segment going
+		 *  DOWN to the next sibling) sits on the lineage trunk. */
+		outgoingTrunkOnLineage?: boolean;
+		/** Lineage index of the lineage descendant the trunk pieces
+		 *  connect TO (always parent's lineageIndex + 1). Drives the
+		 *  cascade-illuminate animation-delay on the trunk pieces so
+		 *  intermediate siblings' trunk lights up in sync with the
+		 *  lineage descendant below them. */
+		trunkLineageIndex?: number;
 	} = $props();
+
+	/* True when THIS node sits on the user's personal lineage. Used to
+	   tag the row + conduit SVGs with data-on-lineage so the CSS dim
+	   rules under `[data-lineage-active="true"]` know which elements to
+	   recede. When no lineage is active (lineageIds === null), every
+	   node reads as "on lineage" — the data attribute still renders
+	   "true" but the wrapper-level `data-lineage-active` is "false" so
+	   nothing dims. */
+	const isInLineage = $derived(lineageIds === null || lineageIds.has(user.id));
+
+	/* Index in the ordered lineage chain (origin = 0, user = length-1).
+	   -1 when this node is not in the lineage OR the tree isn't in
+	   lineage-reveal mode. Used to compute the cascade animation delay
+	   via the --lineage-index CSS variable. Origin gets no parent-to-
+	   self conduit (top stub / elbow only exist for depth > 0), so the
+	   cascade visually starts with the origin's avatar at index 0 and
+	   each subsequent ancestor's conduit + avatar at index 1, 2, … */
+	const lineageIndex = $derived(
+		lineageOrderedIds === null ? -1 : lineageOrderedIds.indexOf(user.id),
+	);
 
 	/* ── Tree-scoped conduit-path config ────────────────────────
 	   The offset-path's length must reach every conduit's
@@ -171,6 +222,26 @@
 	// first. Preview nodes go to the END of the sibling group so Dan's
 	// inserted preview stays positionally stable.
 	const sortedChildren = $derived(sortNodesByPropagation(user.children));
+
+	/* Position of the next lineage member among THIS node's sorted
+	   children, or -1 when this node isn't in lineage / has no lineage
+	   descendant. Used to compute incoming/outgoing trunk-on-lineage
+	   for each child: siblings at-or-before this position have their
+	   trunk piece on the lineage path (the visual trunk between the
+	   parent's avatar and the lineage descendant passes through them);
+	   siblings after this position don't. */
+	const lineageChildIndexInContainer = $derived.by(() => {
+		if (!lineageOrderedIds) return -1;
+		if (lineageIndex < 0 || lineageIndex >= lineageOrderedIds.length - 1) return -1;
+		const nextLineageId = lineageOrderedIds[lineageIndex + 1];
+		return sortedChildren.findIndex((c) => c.id === nextLineageId);
+	});
+	/* Lineage index of the lineage descendant the trunk pieces below
+	   connect to. Always parent's lineageIndex + 1 when a lineage child
+	   exists in this container. -1 otherwise (no cascade for trunk). */
+	const childrenTrunkLineageIndex = $derived(
+		lineageChildIndexInContainer >= 0 ? lineageIndex + 1 : -1,
+	);
 
 	const hasHiddenTail = $derived(!!(user.hiddenChildren && user.hiddenChildren > 0));
 	const tailStubs = $derived(
@@ -1148,7 +1219,13 @@
 	}
 </script>
 
-<div class="relative" bind:this={wrapperEl}>
+<div
+	class="relative tree-node-wrapper"
+	bind:this={wrapperEl}
+	data-user-id={user.id}
+	data-wrapper-on-lineage={isInLineage ? 'true' : 'false'}
+	style={lineageIndex >= 0 ? `--lineage-index: ${lineageIndex};` : undefined}
+>
 	<!--
 		Parent → child connector. Two segments drawn INSIDE this node's
 		wrapper at x = -20px (the parent children container's pl-5):
@@ -1216,14 +1293,15 @@
 		     below it. -->
 		<svg
 			class={[
-				'absolute pointer-events-none overflow-visible',
+				'absolute pointer-events-none overflow-visible conduit-top-stub',
 				topRailColorClass,
 				conduitGlowClass,
 				topAtmosphereClasses,
 			]}
-			style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;"
+			style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;{incomingTrunkOnLineage && trunkLineageIndex >= 0 ? ` --cascade-index: ${trunkLineageIndex};` : ''}"
 			viewBox="0 0 4 14"
 			aria-hidden="true"
+			data-on-lineage-path={incomingTrunkOnLineage ? 'true' : 'false'}
 		>
 			<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" vector-effect="non-scaling-stroke" />
 			<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" vector-effect="non-scaling-stroke" />
@@ -1247,15 +1325,16 @@
 			     next junction. -->
 			<svg
 				class={[
-					'absolute pointer-events-none overflow-visible',
+					'absolute pointer-events-none overflow-visible conduit-bottom-ext',
 					bottomRailColorClass,
 					conduitGlowClass,
 					bottomAtmosphereClasses,
 				]}
-				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px); --breath-delay: {breathDelay.toFixed(3)}s;"
+				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px); --breath-delay: {breathDelay.toFixed(3)}s;{outgoingTrunkOnLineage && trunkLineageIndex >= 0 ? ` --cascade-index: ${trunkLineageIndex};` : ''}"
 				viewBox="0 0 4 100"
 				preserveAspectRatio="none"
 				aria-hidden="true"
+				data-on-lineage-path={outgoingTrunkOnLineage ? 'true' : 'false'}
 			>
 				<path d="M 2 0 C 3.2 33 0.8 67 2 100" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" vector-effect="non-scaling-stroke" />
 				<path d="M 2 0 C 2.6 33 1.4 67 2 100" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" vector-effect="non-scaling-stroke" />
@@ -1280,7 +1359,7 @@
 		-->
 		<svg
 			class={[
-				'absolute -left-5 top-3.5 pointer-events-none overflow-visible',
+				'absolute -left-5 top-3.5 pointer-events-none overflow-visible conduit-elbow',
 				railColorClass,
 				conduitGlowClass,
 				atmosphereClasses,
@@ -1290,11 +1369,22 @@
 			viewBox="0 0 55 8"
 			style="--breath-delay: {breathDelay.toFixed(3)}s;"
 			aria-hidden="true"
+			data-on-lineage-path={isInLineage ? 'true' : 'false'}
 		>
 			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" />
 			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
 			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="1"   fill="none" />
 		</svg>
+
+		<!-- Lineage traveling pulse — one-shot bright dot per
+		     lineage child (depth > 0). Only rendered while the
+		     lineage reveal is active; Svelte unmounts it the
+		     moment the user deselects so no persistent animation
+		     can linger. Uses the existing --conduit-path so it
+		     follows the real conduit geometry. -->
+		{#if isInLineage && depth > 0 && lineageIds !== null}
+			<div class="lineage-pulse" aria-hidden="true"></div>
+		{/if}
 
 		<!--
 			Conduit signal traffic — small pulses flowing UPWARD through
@@ -1354,7 +1444,13 @@
 				? 'cursor-default opacity-50'
 				: 'cursor-pointer',
 			!user.isPreviewNode && (isSelected
-				? 'bg-accent/12 ring-1 ring-accent/35'
+				? user.isCurrentUser
+					/* Subdued current-user selection panel — the lineage
+					   reveal is the visual hero when the user clicks their
+					   own node, so the panel recedes by ~40% (alpha 12→7,
+					   ring 35→20) instead of competing with the lit path. */
+					? 'bg-accent/7 ring-1 ring-accent/20'
+					: 'bg-accent/12 ring-1 ring-accent/35'
 				: user.isCurrentUser
 					? 'bg-primary/14 ring-1 ring-primary/35 hover:bg-primary/18 cu-row'
 					: 'hover:bg-white/4'),
@@ -1366,6 +1462,7 @@
 		role={user.isPreviewNode ? 'presentation' : 'button'}
 		tabindex={user.isPreviewNode ? undefined : 0}
 		aria-disabled={user.isPreviewNode ? 'true' : undefined}
+		data-row-on-lineage={isInLineage ? 'true' : 'false'}
 	>
 		<!-- Expand/collapse caret. Sized to keep the same flex slot
 		     (w-4 h-4) so the row layout is unchanged, but the visible
@@ -1552,9 +1649,20 @@
 		<!-- Dashed placeholder line uses ml/pl values chosen so the
 		     border-l sits at the same parent_x as a real rail (≈42.5,
 		     under the parent's avatar) and the inner row content aligns
-		     with where real-child rows would start (parent_x=62). -->
+		     with where real-child rows would start (parent_x=62).
+
+		     Positioned ABSOLUTELY (top-full = just below the current
+		     user's row) so it does NOT contribute to the wrapper's
+		     layout height. Earlier versions used `relative` which
+		     extended the wrapper by ~38 px every time the user
+		     amplified — the ResizeObserver then grew pathTotalPx by
+		     the same amount, scaling every particle's flowDur up
+		     ~18 % on deep trees and producing what reads as a
+		     slow-motion bug. Absolute positioning sidesteps the
+		     measurement entirely. -->
 		<div
-			class="relative pl-[19.5px] ml-[42.5px] border-l border-dashed border-primary/32"
+			class="absolute left-0 right-0 pl-[19.5px] ml-[42.5px] border-l border-dashed border-primary/32"
+			style="top: 100%;"
 			aria-hidden="true"
 		>
 			<div class="flex items-center gap-2 py-1.5 pl-1 pr-2">
@@ -1667,12 +1775,17 @@
 					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
 					onParticleArrival={onChildParticleArrival}
 					whiteAnchorId={computedWhiteAnchorId}
+					{lineageIds}
+					{lineageOrderedIds}
 					incomingTrunkActivity={hottestAtAndBelow[i]}
 					outgoingTrunkActivity={
 						i < combinedChildrenActivities.length - 1
 							? hottestAtAndBelow[i + 1]
 							: undefined
 					}
+					incomingTrunkOnLineage={lineageChildIndexInContainer >= 0 && i <= lineageChildIndexInContainer}
+					outgoingTrunkOnLineage={lineageChildIndexInContainer >= 0 && i < lineageChildIndexInContainer}
+					trunkLineageIndex={childrenTrunkLineageIndex}
 				/>
 			{/each}
 
@@ -1764,6 +1877,8 @@
 							isLast={i === tailStubs.length - 1}
 							onParticleArrival={onChildParticleArrival}
 							whiteAnchorId={computedWhiteAnchorId}
+					{lineageIds}
+					{lineageOrderedIds}
 									incomingTrunkActivity={
 								hottestAtAndBelow[sortedChildren.length + i]
 							}

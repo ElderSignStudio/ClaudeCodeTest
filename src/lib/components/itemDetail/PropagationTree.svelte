@@ -23,12 +23,138 @@
 		selectedUserId,
 		onSelect,
 		onPreview,
+		lineageIds = null,
+		lineageOrderedIds = null,
 	}: {
 		forest: PropagationForest;
 		selectedUserId: string | null;
 		onSelect: (user: PropagationUser) => void;
 		onPreview: (target: PreviewTarget | null) => void;
+		/** When the user clicks their OWN real node, the +page derives the
+		 *  ORIGIN → … → USER ancestor chain and passes it here. Every node
+		 *  in the set stays at full opacity; everything else dims via
+		 *  CSS rules under `[data-lineage-active="true"]`. Null when no
+		 *  lineage reveal is active — tree renders normally. */
+		lineageIds?: Set<string> | null;
+		/** Same ids, but ORDERED origin → user. Used by each lineage node
+		 *  to derive its position and set --lineage-index, which drives
+		 *  the cascade-illumination animation-delay so the reveal sweeps
+		 *  from origin downward toward the user. */
+		lineageOrderedIds?: string[] | null;
 	} = $props();
+
+	const lineageActive = $derived(lineageIds !== null && lineageIds.size > 0);
+
+	/* ── Lineage-path SVG overlay ──────────────────────────────────
+	   When the user selects their own real node, we draw a dedicated
+	   highlight path over the tree connecting every avatar on the
+	   ORIGIN → … → USER chain. This is the user's explicit
+	   requirement: a static, unmistakable overlay that makes the
+	   route readable in a screenshot — independent of any dim/boost
+	   on the underlying conduits.
+
+	   The path is built segment-by-segment with an L-shape per pair:
+	     (parent avatar center) → straight down at the conduit RAIL X
+	     → straight right to (child avatar center)
+	   matching the visual geometry the tree already uses for
+	   parent → child connectors.
+
+	   Positions come from getBoundingClientRect (deferred to mount
+	   via $effect, recomputed when lineageOrderedIds or layout
+	   changes). Stored in component state and used to drive `d`.
+	   Pointer-events: none and a moderate-stroke render means it
+	   never blocks interaction and never affects layout. */
+	let scrollRoot: HTMLDivElement | null = $state(null);
+	let scrollContent: HTMLDivElement | null = $state(null);
+	let overlayPathD = $state<string>('');
+	let overlayHeight = $state<number>(0);
+
+	function recomputeLineageOverlay() {
+		if (!lineageOrderedIds || lineageOrderedIds.length < 2 || !scrollContent) {
+			overlayPathD = '';
+			return;
+		}
+		const contentBox = scrollContent.getBoundingClientRect();
+		overlayHeight = scrollContent.scrollHeight;
+		const points: { ax: number; ay: number; railX: number }[] = [];
+		for (const id of lineageOrderedIds) {
+			const wrapper = scrollContent.querySelector(`[data-user-id="${id}"]`) as HTMLElement | null;
+			if (!wrapper) continue;
+			const avatar = wrapper.querySelector('.node-avatar') as HTMLElement | null;
+			if (!avatar) continue;
+			const aBox = avatar.getBoundingClientRect();
+			/* Rail x = the vertical conduit position this child's elbow
+			   feeds into. Find this wrapper's elbow SVG and read its
+			   left edge; if not present (origin nodes have no parent
+			   conduit), fall back to the avatar's left edge. */
+			const elbow = wrapper.querySelector(':scope > .conduit-elbow') as HTMLElement | null;
+			const railX = elbow
+				? elbow.getBoundingClientRect().left - contentBox.left + 2.5
+				: aBox.left - contentBox.left;
+			points.push({
+				ax: aBox.left + aBox.width / 2 - contentBox.left,
+				ay: aBox.top + aBox.height / 2 - contentBox.top,
+				railX,
+			});
+		}
+		if (points.length < 2) {
+			overlayPathD = '';
+			return;
+		}
+		let d = '';
+		for (let i = 0; i < points.length - 1; i++) {
+			const a = points[i];
+			const b = points[i + 1];
+			/* L-shape via the child's rail X: from parent's avatar
+			   center → over to railX at parent's y → down to railX at
+			   child's y → over to child's avatar center. Rounded
+			   stroke-linejoin softens the corners. */
+			if (i === 0) d += `M ${a.ax.toFixed(1)} ${a.ay.toFixed(1)} `;
+			d += `L ${b.railX.toFixed(1)} ${a.ay.toFixed(1)} `;
+			d += `L ${b.railX.toFixed(1)} ${b.ay.toFixed(1)} `;
+			d += `L ${b.ax.toFixed(1)} ${b.ay.toFixed(1)} `;
+		}
+		overlayPathD = d.trim();
+	}
+
+	/* Recompute whenever the chain changes or the tree layout shifts.
+	   ResizeObserver picks up tree-scroll-content size changes; window
+	   resize covers viewport changes. Both unbind on teardown. */
+	$effect(() => {
+		// Read dependencies so the effect re-runs on changes
+		void lineageOrderedIds;
+		void forest;
+		if (typeof requestAnimationFrame !== 'undefined') {
+			requestAnimationFrame(() => recomputeLineageOverlay());
+		}
+	});
+
+	/* When the lineage activates, snap tree-scroll-x.scrollLeft back to 0.
+	   `scrollIntoViewIfNeeded` (fired by the row click) typically scrolls
+	   the tree's horizontal axis to bring Dan's row content into view,
+	   which moves the trunk's vertical rail (where the lineage overlay
+	   path lives) OFF the visible scroll-area. Resetting the scroll
+	   ensures the origin → user path is in view the moment it lights up.
+	   Window scroll is untouched so the user keeps whatever vertical
+	   context they had. */
+	$effect(() => {
+		if (!lineageActive) return;
+		if (!scrollRoot) return;
+		scrollRoot.scrollLeft = 0;
+	});
+	$effect(() => {
+		if (!scrollContent) return;
+		const handler = () => recomputeLineageOverlay();
+		const ro = new ResizeObserver(handler);
+		ro.observe(scrollContent);
+		window.addEventListener('resize', handler);
+		window.addEventListener('scroll', handler, true);
+		return () => {
+			ro.disconnect();
+			window.removeEventListener('resize', handler);
+			window.removeEventListener('scroll', handler, true);
+		};
+	});
 
 	let hiddenRootsExpanded = $state(false);
 
@@ -71,8 +197,8 @@
 		instead of being squeezed by the container. When the tree
 		fits, max-content ≤ container width and no scrollbar appears.
 	-->
-	<div class="tree-scroll-x">
-	<div class="tree-scroll-content">
+	<div class="tree-scroll-x" data-lineage-active={lineageActive ? 'true' : 'false'} bind:this={scrollRoot}>
+	<div class="tree-scroll-content" bind:this={scrollContent}>
 
 	<!-- Roots — each is its own independent origin tree. Sorted by
 	     propagation strength: successful-amplifier → amplifier → deep
@@ -84,6 +210,8 @@
 				{selectedUserId}
 				{onSelect}
 				{onPreview}
+				{lineageIds}
+				{lineageOrderedIds}
 				depth={0}
 			/>
 		{/each}
@@ -148,6 +276,32 @@
 		{/if}
 	{/if}
 
+	<!-- Lineage-path overlay — rendered LAST in DOM so it paints
+	     above every conduit and dimmed branch, but pointer-events:
+	     none keeps the row hit areas intact. Conditional render means
+	     Svelte unmounts it the instant the lineage deactivates — no
+	     persistent state. -->
+	{#if lineageActive && overlayPathD}
+		<svg
+			class="lineage-overlay-svg"
+			width="100%"
+			height={overlayHeight}
+			style="pointer-events: none; position: absolute; top: 0; left: 0; overflow: visible;"
+			aria-hidden="true"
+		>
+			<path
+				d={overlayPathD}
+				fill="none"
+				stroke="oklch(0.88 0.13 65)"
+				stroke-width="2.8"
+				stroke-linecap="round"
+				stroke-linejoin="round"
+				opacity="0.95"
+				style="filter: drop-shadow(0 0 4px oklch(0.88 0.13 65 / 0.65)) drop-shadow(0 0 12px oklch(0.84 0.13 65 / 0.40));"
+			/>
+		</svg>
+	{/if}
+
 	</div><!-- /.tree-scroll-content -->
 	</div><!-- /.tree-scroll-x -->
 </div>
@@ -191,5 +345,6 @@
 	}
 	.tree-scroll-content {
 		min-width: max-content;
+		position: relative;
 	}
 </style>

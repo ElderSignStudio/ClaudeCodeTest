@@ -5,6 +5,7 @@
 	import type { PropagationUser, PreviewTarget } from '$lib/mock/propagation';
 	import {
 		findUserInForest,
+		findParentInForest,
 		removeUserFromForest,
 		markUserInForest,
 		addChildToUserInForest,
@@ -135,6 +136,35 @@
 			: forest;
 	});
 
+	/* Personal-lineage reveal: when the user EXPLICITLY clicks their own
+	   real node (not the preview placeholder, not a hovered third-party
+	   node), the tree highlights every ancestor on the ORIGIN → … → USER
+	   path. Hover doesn't trigger this — only selection does. The set of
+	   ids is computed once here and passed to the tree so each node /
+	   conduit can opt itself in/out of the dim treatment.
+
+	   Walking via `findParentInForest` follows the actual rendered tree
+	   structure, so the chain reflects how the signal really reached the
+	   user (the route insertion lives there). When no current-user node
+	   is selected the set is null and the tree renders normally. */
+	const lineageOrderedIds = $derived.by((): string[] | null => {
+		if (!selectedTarget || selectedTarget.kind !== 'user') return null;
+		const u = selectedTarget.user;
+		if (u.isPreviewNode || !u.isCurrentUser) return null;
+		/* Walk USER → ORIGIN, then reverse. The ordering matters for the
+		   cascade: each lineage node sets --lineage-index to its index in
+		   this array, and the CSS staggers the illumination so the eye
+		   follows ORIGIN → … → USER as a wave. */
+		const reverse: string[] = [];
+		let cur: PropagationUser | null = u;
+		while (cur) {
+			reverse.push(cur.id);
+			cur = findParentInForest(displayedForest, cur.id);
+		}
+		return reverse.reverse();
+	});
+	const lineageIds = $derived(lineageOrderedIds ? new Set(lineageOrderedIds) : null);
+
 	function handleSelect(user: PropagationUser) {
 		// Preview nodes ARE selectable now — the inspector renders a special
 		// "Your entry point" card explaining where the user would join the
@@ -204,6 +234,8 @@
 					selectedUserId={selectedTarget?.kind === 'user' ? selectedTarget.user.id : null}
 					onSelect={handleSelect}
 					onPreview={handlePreview}
+					{lineageIds}
+					{lineageOrderedIds}
 				/>
 			</section>
 
