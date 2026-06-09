@@ -541,6 +541,31 @@
   );
 }
 
+/* Selection-zone elevation — three subtle tinted box-shadows that
+   bring the active card forward from the tree. The shadow is what
+   actually carries the "elevation" feeling; the bg/ring still
+   anchor identity and selection state, but on their own they were
+   reading too flat. Each shadow uses `color-mix` against the
+   relevant CSS variable (`--color-accent` for normal selection,
+   `--color-primary` for the user) so the bloom inherits whatever
+   palette change a future theme might introduce.
+
+   Three tiers, matching the visual hierarchy from the spec:
+     1. Selected non-user → loudest bloom (accent)
+     2. Selected user     → loud bloom (primary, slightly tighter)
+     3. User persistent   → faint bloom (primary, soft + narrow)
+   The selected states always out-bloom the persistent state, so the
+   eye reads "this is what I'm examining" over "this is me". */
+.selection-elev-selected {
+  box-shadow: 0 0 22px -4px color-mix(in srgb, var(--color-accent), transparent 55%);
+}
+.selection-elev-user-sel {
+  box-shadow: 0 0 18px -4px color-mix(in srgb, var(--color-primary), transparent 58%);
+}
+.selection-elev-user-persist {
+  box-shadow: 0 0 10px -6px color-mix(in srgb, var(--color-primary), transparent 78%);
+}
+
 /*
    Edge-types, branch/subtree variables, and special-structure visual
    systems were removed in the visual-language cleanup pass. Tree
@@ -1573,6 +1598,156 @@
   .resonance-flash       { animation: none !important; opacity: 0; }
   .conduit-entry-flash,
   .conduit-entry-filament { animation: none !important; opacity: 0; }
+}
+
+/* ─── Personal lineage reveal ───────────────────────────────
+   When the user clicks their own real node, the +page derives the
+   ORIGIN → … → USER ancestor chain. Three tagged element types
+   carry the reveal:
+
+     ROW   `data-row-on-lineage`     — the clickable avatar+name
+                                       block; dims when not on lineage
+     CONDUIT `data-on-lineage-path` — the 3 SVG segments per node:
+                                       top stub, bottom extension,
+                                       elbow. Each independently
+                                       tagged so a non-lineage
+                                       sibling's TRUNK piece can be
+                                       on-lineage-path (the visual
+                                       trunk between an ancestor and
+                                       a lineage descendant passes
+                                       through siblings between them)
+                                       while its ELBOW stays off.
+     CASCADE `--cascade-index` /     — drives the stepped delay so
+             `--lineage-index`        the path lights up origin → user
+                                       as a wave (150ms / step,
+                                       ~600-900ms total over 4-6 steps).
+
+   The dim treatment lives on rows and individual conduits, NOT on
+   the wrapper, so an intermediate non-lineage sibling can keep its
+   trunk lit while its row + elbow recede. Filter boost uses
+   `currentColor` — branch-state colours stay intact, only intensity
+   changes. Brightness is hue-preserving.
+
+   Animations compose multiplicatively with conduit-breath,
+   particle, and aura animations underneath — atmosphere keeps
+   running. `animation-fill-mode: both` applies the 0% state
+   immediately so no snap occurs when the animation delay starts. */
+[data-row-on-lineage],
+[data-on-lineage-path] {
+  transition: opacity 400ms ease-in-out, filter 400ms ease-in-out;
+}
+
+/* Non-lineage rows dim hard so the lit path stands out unambiguously
+   against context. */
+.tree-scroll-x[data-lineage-active="true"] [data-row-on-lineage="false"] {
+  opacity: 0.28;
+}
+
+/* Off-path conduit pieces dim hard too. Particles overlaid on these
+   still run normally — only the conduit's static rendering recedes. */
+.tree-scroll-x[data-lineage-active="true"] [data-on-lineage-path="false"] {
+  opacity: 0.28;
+}
+
+/* Lineage ROWS cascade-brighten with stepped delay per --lineage-index. */
+.tree-scroll-x[data-lineage-active="true"] [data-row-on-lineage="true"] {
+  animation: lineage-row-illuminate 460ms ease-out both;
+  animation-delay: calc(var(--lineage-index, 0) * 150ms);
+}
+@keyframes lineage-row-illuminate {
+  0%   { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+
+/* Non-lineage PARTICLES dim heavily during the reveal so the route
+   becomes the visual focus. Implemented via `filter: opacity()` rather
+   than `opacity` because the conduit-flow-fast / conduit-flow-slow
+   keyframes already animate opacity directly — `filter` composes
+   multiplicatively without touching animation-duration, timing, or
+   any other property. Particles continue moving at exactly the same
+   speed; they just render at ~15% of their normal peak (target band
+   10-20% per spec). Direct-child selector (`>`) targets the particle
+   wrappers but spares any other descendants.
+
+   The transition is set unconditionally on the data attribute so
+   both the fade-in (when selecting Dan) and the fade-out (when
+   deselecting) are smooth. The deselect transition is short enough
+   (250 ms) to feel instant per the spec, while still avoiding a
+   visual snap. */
+.tree-node-wrapper[data-wrapper-on-lineage] > .conduit-particle {
+  transition: filter 250ms ease-out;
+}
+.tree-scroll-x[data-lineage-active="true"] .tree-node-wrapper[data-wrapper-on-lineage="false"] > .conduit-particle {
+  filter: opacity(0.15);
+}
+
+/* On-path CONDUITS keep at full opacity (no boost filter) — the
+   dedicated lineage-overlay-svg above the tree carries the path
+   emphasis now, so the existing conduits don't need an expensive
+   wide-blur drop-shadow stack (which was creating GPU compositing
+   pressure that made particles APPEAR to slow on heavy trees).
+   Particle animation-duration values are objectively unchanged
+   across the interaction — the prior visual slowdown was rendering
+   load, not timing. */
+.tree-scroll-x[data-lineage-active="true"] [data-on-lineage-path="true"] {
+  animation: lineage-conduit-illuminate 460ms ease-out both;
+  animation-delay: calc(var(--cascade-index, var(--lineage-index, 0)) * 150ms);
+}
+@keyframes lineage-conduit-illuminate {
+  0%   { opacity: 0.55; }
+  100% { opacity: 1; }
+}
+
+/* ─── Lineage traveling pulse ────────────────────────────────
+   A single bright dot per lineage child (depth > 0) that travels
+   from somewhere above the child (parent's visual area) down to
+   the child's avatar. Uses the SAME offset-path the existing
+   conduit particles use, so it follows the real conduit geometry
+   without needing per-conduit path math.
+
+   The animation is ONE-SHOT (`forwards`, iteration-count 1):
+   it appears, traces the segment once, fades, then sits at the
+   final keyframe. The pulse element is removed from the DOM when
+   the lineage deactivates (Svelte unmounts the {#if} block), so
+   no persistent state.
+
+   Per-pulse delay = lineage-index × 150 ms — same beat as the
+   row/conduit cascades, so each pulse "lands" on its destination
+   node JUST as that node finishes brightening. Total reveal time
+   for a 5-step chain: ~150×4 + 760 = 1.36 s. */
+.lineage-pulse {
+  position: absolute;
+  top: 0;
+  left: -19.5px;
+  width: 6px;
+  height: 6px;
+  margin: -3px 0 0 -3px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: oklch(0.93 0.10 70);
+  box-shadow:
+    0 0 7px  oklch(0.93 0.10 70 / 0.95),
+    0 0 16px oklch(0.88 0.12 65 / 0.65),
+    0 0 28px oklch(0.85 0.13 62 / 0.35);
+  mix-blend-mode: screen;
+  offset-path: var(--conduit-path, path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 -716'));
+  offset-rotate: auto;
+  offset-anchor: 50% 50%;
+  offset-distance: 0%;
+  opacity: 0;
+  animation: lineage-pulse-travel 760ms cubic-bezier(0.45, 0.05, 0.55, 1) both;
+  animation-delay: calc(var(--lineage-index, 0) * 150ms);
+}
+@keyframes lineage-pulse-travel {
+  /* Begin slightly above the child — the offset range 14% → 0%
+     corresponds to ~14% of the long offset-path; on a typical
+     iron-weather depth that's ~150-300 px above the child's
+     avatar, which lands near where the parent's avatar sits in
+     this child's local coordinate frame. */
+  0%   { offset-distance: 14%; opacity: 0; }
+  18%  { opacity: 1; }
+  82%  { opacity: 1; }
+  100% { offset-distance: 0%; opacity: 0; }
 }
 
 /* ─── Base ───────────────────────────────────────────────── */
