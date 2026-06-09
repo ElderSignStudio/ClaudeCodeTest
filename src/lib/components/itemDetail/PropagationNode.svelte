@@ -1429,31 +1429,24 @@
 	{/if}
 
 	<!--
-		Row: caret + avatar + name + character. The row uses `role="button"`
-		(not a real <button>) so the inner caret can remain a real button
-		without nesting. Keyboard activation (Enter / Space) is wired manually.
-		Hover / focus preview the user in the inspector without committing the
-		selection. The tree-level mouseleave clears the preview when the
-		pointer exits the lineage area entirely.
+		Row: caret + selection-zone (avatar + name + character).
+
+		The OUTER row is the full-width click target — interaction surface
+		stays generous so users can click anywhere along the row to select
+		the node. But all selection chrome (background, ring, cu-row left
+		rail) lives on an INNER `.row-selection-zone` that sizes to its
+		content (avatar + name + truncated subtitle), so the highlight
+		hugs the node locally instead of stretching across the empty right
+		side of the tree. This keeps the tree reading as a propagation
+		structure rather than a table/list UI.
 	-->
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 	<div
 		class={[
-			'group/row relative w-full flex items-start gap-4 py-1.5 pl-1 pr-2 rounded-md text-left transition-colors duration-150 overflow-visible',
+			'group/row relative w-full flex items-start gap-4 text-left overflow-visible',
 			user.isPreviewNode
 				? 'cursor-default opacity-50'
 				: 'cursor-pointer',
-			!user.isPreviewNode && (isSelected
-				? user.isCurrentUser
-					/* Subdued current-user selection panel — the lineage
-					   reveal is the visual hero when the user clicks their
-					   own node, so the panel recedes by ~40% (alpha 12→7,
-					   ring 35→20) instead of competing with the lit path. */
-					? 'bg-accent/7 ring-1 ring-accent/20'
-					: 'bg-accent/12 ring-1 ring-accent/35'
-				: user.isCurrentUser
-					? 'bg-primary/14 ring-1 ring-primary/35 hover:bg-primary/18 cu-row'
-					: 'hover:bg-white/4'),
 		]}
 		onclick={() => onSelect(user)}
 		onkeydown={(e) => { if (!user.isPreviewNode && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(user); } }}
@@ -1489,20 +1482,49 @@
 		{/if}
 
 		<!--
-			Avatar wrapper composes base node kind silhouette with overlay states.
+			Local selection zone — wraps avatar + name + character so the
+			selection background and ring sit LOCALLY around the node content
+			instead of stretching across the empty right side of the tree.
 
-			  Layer 1 — BASE silhouette (from nodeKind):
-			    passive    → small, dim, desaturated, no decoration
-			    deep       → quiet listener, no glow, no ring
-			    amplifier  → ring + outward ripple
-			    success    → double ring + outward ripple + orbit comet
+			Padding: py-3 pl-4 pr-5 (12px vertical, 16px left, 20px right).
+			Applied uniformly to every state so the user-persistent card
+			shares the exact same geometry as a selected card — only the
+			bg / ring / elevation classes differ. Earlier passes used
+			py-2.5 pl-3 which left the user node feeling shorter and
+			tighter than selected cards because the cu-row left bar
+			visually consumed some of the left inset; bumping to pl-4
+			restores comfortable breathing room around the avatar.
 
-			  Layer 2 — Origin overlay (stackable, static):
-			    .origin-glyph (sibling of avatar) + ORIGIN text label
+			Radius: rounded-lg (8px) — calmer silhouette, less button-like.
 
-			  Layer 3 — Current-user overlay (stackable, static):
-			    primary border on inner avatar + cu-row left rail + bg
+			Elevation: tinted box-shadow via .selection-elev-* classes —
+			selected states keep their louder bloom, the user-persistent
+			state stays faint. Same geometry, hierarchy carried by styling.
 		-->
+		<div
+			class={[
+				'row-selection-zone flex items-start gap-4 min-w-0 max-w-md py-3 pl-4 pr-5 rounded-lg transition duration-150',
+				!user.isPreviewNode && (isSelected
+					? user.isCurrentUser
+						/* Selected USER — primary-tinted card, loud bloom.
+						   Preserves the identity tint (still the user) but
+						   wins the selection competition with brighter
+						   alphas + the user-sel elevation. */
+						? 'bg-primary/15 ring-1 ring-primary/50 cu-row selection-elev-user-sel'
+						/* Selected NON-USER — accent-tinted card, loudest bloom.
+						   Highest visual priority in the tree. */
+						: 'bg-accent/14 ring-1 ring-accent/45 selection-elev-selected'
+					: user.isCurrentUser
+						/* USER PERSISTENT (not selected) — fill bumped one
+						   notch (bg-primary 7 → 9, hover 11 → 13) so the
+						   card reads as "present" rather than "disabled",
+						   while ring, glow, border, and geometry stay
+						   identical. The selected states (14-15%) still
+						   clearly outshine this, preserving the hierarchy. */
+						? 'bg-primary/9 ring-1 ring-primary/22 hover:bg-primary/13 cu-row selection-elev-user-persist'
+						: 'group-hover/row:bg-white/4'),
+			]}
+		>
 		<div
 			class={[
 				'shrink-0 mt-0.5 relative overflow-visible node-avatar',
@@ -1580,8 +1602,10 @@
 			{/if}
 		</div>
 
-		<!-- Name + character. Preview nodes italicize the character. -->
-		<div class="min-w-0 flex-1">
+		<!-- Name + character. Preview nodes italicize the character.
+		     `min-w-0` lets the name truncate when long; no flex-1 so the
+		     selection zone stays content-width instead of stretching. -->
+		<div class="min-w-0">
 			<div class="flex items-baseline gap-2">
 				<p class={[
 					'text-[13px] font-semibold leading-snug truncate',
@@ -1636,6 +1660,8 @@
 			</p>
 		</div>
 
+		</div><!-- /.row-selection-zone -->
+
 	</div>
 
 	<!--
@@ -1645,34 +1671,73 @@
 		exists but hasn't propagated yet" instead of a dead end. Decorative —
 		not selectable, not announced by screen readers as interactive.
 	-->
-	{#if user.isCurrentUser && !user.isPreviewNode && user.children.length === 0 && !user.hiddenChildren}
-		<!-- Dashed placeholder line uses ml/pl values chosen so the
-		     border-l sits at the same parent_x as a real rail (≈42.5,
-		     under the parent's avatar) and the inner row content aligns
-		     with where real-child rows would start (parent_x=62).
+	{#if user.isCurrentUser && user.children.length === 0 && !user.hiddenChildren}
+		<!--
+			GHOST CHILD NODE — uses the EXACT same branch geometry as a
+			real downstream scout. The outer `pl-12 ml-3.5` wrapper
+			mirrors a real children container, and the inner wrapper
+			renders the standard top-stub + elbow SVG pair (same
+			coordinates as any real child wrapper) so the ghost avatar
+			lands at the precise x position a real first-child of Dan
+			would occupy. The conduit + elbow are simply DASHED instead
+			of solid to communicate "future / pending".
 
-		     Positioned ABSOLUTELY (top-full = just below the current
-		     user's row) so it does NOT contribute to the wrapper's
-		     layout height. Earlier versions used `relative` which
-		     extended the wrapper by ~38 px every time the user
-		     amplified — the ResizeObserver then grew pathTotalPx by
-		     the same amount, scaling every particle's flowDur up
-		     ~18 % on deep trees and producing what reads as a
-		     slow-motion bug. Absolute positioning sidesteps the
-		     measurement entirely. -->
-		<div
-			class="absolute left-0 right-0 pl-[19.5px] ml-[42.5px] border-l border-dashed border-primary/32"
-			style="top: 100%;"
-			aria-hidden="true"
-		>
-			<div class="flex items-center gap-2 py-1.5 pl-1 pr-2">
-				<span class="shrink-0 w-4 h-4" aria-hidden="true"></span>
-				<span class="shrink-0 w-7 h-7 flex items-center justify-center">
-					<span class="signal-ember w-2 h-2 rounded-full bg-primary"></span>
-				</span>
-				<p class="text-[11px] italic leading-snug text-primary/55">
-					Signal searching for scouts
-				</p>
+			Layout stability: rendered for both preview and real states
+			with `class:invisible` on preview so the wrapper height
+			stays the same across amplification — ResizeObserver doesn't
+			re-fire, particle flowDur stays constant.
+
+			Non-interactive: aria-hidden, no onclick, no role, no lineage
+			participation, no particles. -->
+		<div class="relative pl-12 ml-3.5" class:invisible={user.isPreviewNode}>
+			<div class="relative pt-3" aria-hidden="true">
+				<!-- Top stub — dashed vertical rail from Dan's row down
+				     through the pt-3 gap to the elbow start. Same x
+				     position as a real child's top-stub (left -21.5,
+				     width 4); height extended to 26 px so it spans
+				     pt-3 (12) + the standard top-stub region (14). -->
+				<svg
+					class="absolute pointer-events-none overflow-visible text-primary/32"
+					style="left: -21.5px; top: 0; width: 4px; height: 26px;"
+					viewBox="0 0 4 26"
+					preserveAspectRatio="none"
+					aria-hidden="true"
+				>
+					<path d="M 2 0 L 2 26" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" fill="none" vector-effect="non-scaling-stroke" />
+				</svg>
+				<!-- Elbow — dashed bezier from rail to ghost avatar.
+				     Same shape as a real child's elbow (55 × 8 viewBox,
+				     M 0.5 0 C 0.5 8 32.5 8 55 8); positioned 12 px
+				     lower than a real elbow (top 26 vs 14) to account
+				     for the pt-3 wrapper offset, so the tip still
+				     lands at the avatar's upper-left curve. -->
+				<svg
+					class="absolute -left-5 pointer-events-none overflow-visible text-primary/32"
+					style="top: 26px;"
+					width="55"
+					height="8"
+					viewBox="0 0 55 8"
+					aria-hidden="true"
+				>
+					<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" fill="none" vector-effect="non-scaling-stroke" />
+				</svg>
+				<!-- Row content — same structural layout as a real child
+				     row (caret slot + inner row mirroring selection-zone
+				     padding) so the ghost avatar aligns with where real
+				     siblings' avatars would sit. -->
+				<div class="flex items-start gap-4">
+					<span class="shrink-0 mt-1 w-4 h-4"></span>
+					<div class="flex items-center gap-2.5 py-3 pl-4 pr-5">
+						<!-- Ghost avatar: empty dashed neutral circle.
+						     31 px (≈ +10 % over a real 28 px scout),
+						     opacity 0.34, neutral base-content palette. -->
+						<div
+							class="shrink-0 w-7.75 h-7.75 rounded-full border border-dashed border-base-content/40 bg-base-content/8"
+							style="opacity: 0.34;"
+						></div>
+						<p class="text-[13px] font-semibold leading-snug text-base-content/55">Searching for scouts</p>
+					</div>
+				</div>
 			</div>
 		</div>
 	{/if}

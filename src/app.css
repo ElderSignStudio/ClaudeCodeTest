@@ -541,6 +541,31 @@
   );
 }
 
+/* Selection-zone elevation — three subtle tinted box-shadows that
+   bring the active card forward from the tree. The shadow is what
+   actually carries the "elevation" feeling; the bg/ring still
+   anchor identity and selection state, but on their own they were
+   reading too flat. Each shadow uses `color-mix` against the
+   relevant CSS variable (`--color-accent` for normal selection,
+   `--color-primary` for the user) so the bloom inherits whatever
+   palette change a future theme might introduce.
+
+   Three tiers, matching the visual hierarchy from the spec:
+     1. Selected non-user → loudest bloom (accent)
+     2. Selected user     → loud bloom (primary, slightly tighter)
+     3. User persistent   → faint bloom (primary, soft + narrow)
+   The selected states always out-bloom the persistent state, so the
+   eye reads "this is what I'm examining" over "this is me". */
+.selection-elev-selected {
+  box-shadow: 0 0 22px -4px color-mix(in srgb, var(--color-accent), transparent 55%);
+}
+.selection-elev-user-sel {
+  box-shadow: 0 0 18px -4px color-mix(in srgb, var(--color-primary), transparent 58%);
+}
+.selection-elev-user-persist {
+  box-shadow: 0 0 10px -6px color-mix(in srgb, var(--color-primary), transparent 78%);
+}
+
 /*
    Edge-types, branch/subtree variables, and special-structure visual
    systems were removed in the visual-language cleanup pass. Tree
