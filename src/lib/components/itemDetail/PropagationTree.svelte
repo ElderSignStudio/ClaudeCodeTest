@@ -25,6 +25,7 @@
 		onPreview,
 		lineageIds = null,
 		lineageOrderedIds = null,
+		currentUserId = null,
 	}: {
 		forest: PropagationForest;
 		selectedUserId: string | null;
@@ -41,6 +42,11 @@
 		 *  the cascade-illumination animation-delay so the reveal sweeps
 		 *  from origin downward toward the user. */
 		lineageOrderedIds?: string[] | null;
+		/** The id of the current viewer's node (Dan). When non-null and
+		 *  the corresponding wrapper is outside the visible tree
+		 *  viewport, an offscreen "Your signal" pill renders at the
+		 *  appropriate edge with a click-to-scroll handler. */
+		currentUserId?: string | null;
 	} = $props();
 
 	const lineageActive = $derived(lineageIds !== null && lineageIds.size > 0);
@@ -154,6 +160,113 @@
 			window.removeEventListener('resize', handler);
 			window.removeEventListener('scroll', handler, true);
 		};
+	});
+
+	/* ── "Your signal" offscreen indicator ──────────────────────────
+	   When the current user's node sits outside the visible portion of
+	   the tree, render a small pill near the appropriate edge with a
+	   click-to-scroll handler. State is recomputed via rAF on:
+	     • initial mount
+	     • window scroll (capture phase covers nested scrollers)
+	     • window resize
+	     • ResizeObserver on the tree content (catches expand/collapse,
+	       lineage activation, ghost placeholder appearance, …)
+	     • forest / currentUserId changes
+	   No depth heuristics — purely DOM bounding-rect math. */
+	let userIndicator = $state<{
+		direction: 'up' | 'down';
+		top: number | null;
+		bottom: number | null;
+		centerX: number;
+	} | null>(null);
+
+	function findCurrentUserAvatar(): HTMLElement | null {
+		if (!currentUserId || !scrollContent) return null;
+		const wrap = scrollContent.querySelector(`[data-user-id="${currentUserId}"]`) as HTMLElement | null;
+		return (wrap?.querySelector('.node-avatar') as HTMLElement | null) ?? null;
+	}
+
+	function recomputeUserIndicator() {
+		const userEl = findCurrentUserAvatar();
+		if (!userEl || !scrollRoot) {
+			userIndicator = null;
+			return;
+		}
+		const userBox = userEl.getBoundingClientRect();
+		const treeBox = scrollRoot.getBoundingClientRect();
+		const vh = window.innerHeight;
+		const visibleTop = Math.max(0, treeBox.top);
+		const visibleBottom = Math.min(vh, treeBox.bottom);
+		/* No part of the tree visible (page scrolled past it entirely);
+		   hide the indicator — the user isn't even looking at this card. */
+		if (visibleBottom <= visibleTop) {
+			userIndicator = null;
+			return;
+		}
+		/* Safe-area offsets — keep the pill clear of page chrome that
+		   sits at the window edges, so it always reads as INSIDE the
+		   Propagation Lineage card rather than as a floating overlay
+		   near the bottom player:
+		     • bottom 96 px ≈ the fixed player bar (~70 px) + breathing
+		       room so the pill is clearly above it
+		     • top 28 px ≈ enough clearance from the fixed app header
+		   The pill prefers the tree's actual edge when there's room,
+		   so on shallow trees it still anchors to the tree's bottom. */
+		const TOP_SAFE = 28;
+		const BOTTOM_SAFE = 96;
+		const buffer = 16;
+		const centerX = treeBox.left + treeBox.width / 2;
+		if (userBox.bottom < visibleTop + buffer) {
+			const naturalTop = visibleTop + 18;
+			userIndicator = { direction: 'up', top: Math.max(TOP_SAFE, naturalTop), bottom: null, centerX };
+		} else if (userBox.top > visibleBottom - buffer) {
+			const naturalBottom = vh - visibleBottom + 18;
+			userIndicator = { direction: 'down', top: null, bottom: Math.max(BOTTOM_SAFE, naturalBottom), centerX };
+		} else {
+			userIndicator = null;
+		}
+	}
+
+	function scrollToCurrentUser() {
+		const userEl = findCurrentUserAvatar();
+		if (!userEl) return;
+		userEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+	}
+
+	$effect(() => {
+		if (!scrollContent || !scrollRoot) return;
+		let rafId: number | null = null;
+		const schedule = () => {
+			if (rafId !== null) return;
+			rafId = requestAnimationFrame(() => {
+				rafId = null;
+				recomputeUserIndicator();
+			});
+		};
+		schedule();
+		const ro = new ResizeObserver(schedule);
+		ro.observe(scrollContent);
+		ro.observe(scrollRoot);
+		window.addEventListener('scroll', schedule, { passive: true, capture: true });
+		window.addEventListener('resize', schedule);
+		return () => {
+			if (rafId !== null) cancelAnimationFrame(rafId);
+			ro.disconnect();
+			window.removeEventListener('scroll', schedule, { capture: true });
+			window.removeEventListener('resize', schedule);
+		};
+	});
+
+	/* Re-measure when reactive inputs change (forest swap, current user
+	   id change, lineage activation that may shift Dan's row). Deferred
+	   to next frame so DOM has settled. */
+	$effect(() => {
+		void forest;
+		void currentUserId;
+		void lineageActive;
+		if (typeof requestAnimationFrame !== 'undefined') {
+			requestAnimationFrame(() => recomputeUserIndicator());
+		}
 	});
 
 	let hiddenRootsExpanded = $state(false);
@@ -306,6 +419,28 @@
 	</div><!-- /.tree-scroll-x -->
 </div>
 
+<!-- Offscreen "Your signal" pill — position:fixed so it overlays the
+     tree card from the top-level stacking context. Visibility +
+     direction + edge position computed in the script via DOM bounding
+     rects (no depth heuristics). Click smoothly scrolls Dan into view. -->
+{#if userIndicator}
+	<button
+		type="button"
+		class="lineage-find-me-pill"
+		style="left: {userIndicator.centerX}px; {userIndicator.top !== null ? `top: ${userIndicator.top}px;` : `bottom: ${userIndicator.bottom}px;`}"
+		onclick={scrollToCurrentUser}
+		aria-label="Scroll to your signal"
+	>
+		{#if userIndicator.direction === 'up'}
+			<span aria-hidden="true">↑</span>
+			<span>Your signal</span>
+		{:else}
+			<span>Your signal</span>
+			<span aria-hidden="true">↓</span>
+		{/if}
+	</button>
+{/if}
+
 <style>
 	/*
 		Horizontal scroll behaviour for the tree body.
@@ -346,5 +481,68 @@
 	.tree-scroll-content {
 		min-width: max-content;
 		position: relative;
+	}
+
+	/* "Your signal" offscreen indicator — quiet navigation marker
+	   anchored to the visible edge of the tree card. Reads as a
+	   minimap hint, not a button: small text, soft tint, no neon
+	   glow. The ::before pseudo-element adds a subtle vertical
+	   gradient fade behind the pill so it feels embedded into the
+	   tree's edge rather than floating above it. */
+	.lineage-find-me-pill {
+		position: fixed;
+		transform: translateX(-50%);
+		display: inline-flex;
+		align-items: center;
+		gap: 0.35rem;
+		padding: 0.3rem 0.7rem;
+		border-radius: 9999px;
+		background-color: color-mix(in srgb, var(--color-primary), transparent 84%);
+		color: oklch(from var(--color-primary) calc(l + 0.04) c h / 0.85);
+		border: 1px solid color-mix(in srgb, var(--color-primary), transparent 70%);
+		box-shadow: 0 1px 6px -3px color-mix(in srgb, var(--color-primary), transparent 70%);
+		font-size: 10.5px;
+		font-weight: 500;
+		letter-spacing: 0.02em;
+		line-height: 1;
+		cursor: pointer;
+		pointer-events: auto;
+		/* Above the fixed bottom player (z-50) so the pill stays
+		   clickable even when it sits near the tree's bottom edge. */
+		z-index: 60;
+		transition: background-color 200ms ease, box-shadow 200ms ease, color 200ms ease;
+		backdrop-filter: blur(6px);
+		-webkit-backdrop-filter: blur(6px);
+	}
+	/* Subtle vertical fade behind the pill — extends ~32 px above and
+	   below from the pill center, creating the impression that the
+	   tree edge softly dissolves into the pill. Pointer-events none so
+	   clicks always hit the pill itself. */
+	.lineage-find-me-pill::before {
+		content: '';
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
+		width: calc(100% + 96px);
+		height: 64px;
+		border-radius: 9999px;
+		background: radial-gradient(
+			ellipse at center,
+			color-mix(in srgb, var(--color-primary), transparent 90%) 0%,
+			color-mix(in srgb, var(--color-primary), transparent 97%) 45%,
+			transparent 80%
+		);
+		pointer-events: none;
+		z-index: -1;
+	}
+	.lineage-find-me-pill:hover {
+		background-color: color-mix(in srgb, var(--color-primary), transparent 76%);
+		color: oklch(from var(--color-primary) calc(l + 0.06) c h / 0.95);
+		box-shadow: 0 2px 9px -3px color-mix(in srgb, var(--color-primary), transparent 60%);
+	}
+	.lineage-find-me-pill:focus-visible {
+		outline: 2px solid color-mix(in srgb, var(--color-primary), transparent 40%);
+		outline-offset: 2px;
 	}
 </style>

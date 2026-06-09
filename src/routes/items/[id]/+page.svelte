@@ -236,6 +236,7 @@
 					onPreview={handlePreview}
 					{lineageIds}
 					{lineageOrderedIds}
+					currentUserId={CURRENT_USER_ID}
 				/>
 			</section>
 
