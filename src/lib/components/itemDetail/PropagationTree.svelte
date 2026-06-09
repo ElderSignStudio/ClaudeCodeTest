@@ -180,19 +180,23 @@
 		centerX: number;
 	} | null>(null);
 
-	function findCurrentUserAvatar(): HTMLElement | null {
+	function findCurrentUser(): { wrapper: HTMLElement; avatar: HTMLElement } | null {
 		if (!currentUserId || !scrollContent) return null;
-		const wrap = scrollContent.querySelector(`[data-user-id="${currentUserId}"]`) as HTMLElement | null;
-		return (wrap?.querySelector('.node-avatar') as HTMLElement | null) ?? null;
+		const wrapper = scrollContent.querySelector(`[data-user-id="${currentUserId}"]`) as HTMLElement | null;
+		if (!wrapper) return null;
+		const avatar = wrapper.querySelector('.node-avatar') as HTMLElement | null;
+		if (!avatar) return null;
+		return { wrapper, avatar };
 	}
 
 	function recomputeUserIndicator() {
-		const userEl = findCurrentUserAvatar();
-		if (!userEl || !scrollRoot) {
+		const u = findCurrentUser();
+		if (!u || !scrollRoot) {
 			userIndicator = null;
 			return;
 		}
-		const userBox = userEl.getBoundingClientRect();
+		const userBox = u.avatar.getBoundingClientRect();
+		const wrapBox = u.wrapper.getBoundingClientRect();
 		const treeBox = scrollRoot.getBoundingClientRect();
 		const vh = window.innerHeight;
 		const visibleTop = Math.max(0, treeBox.top);
@@ -206,16 +210,26 @@
 		/* Safe-area offsets — keep the pill clear of page chrome that
 		   sits at the window edges, so it always reads as INSIDE the
 		   Propagation Lineage card rather than as a floating overlay
-		   near the bottom player:
-		     • bottom 96 px ≈ the fixed player bar (~70 px) + breathing
-		       room so the pill is clearly above it
-		     • top 28 px ≈ enough clearance from the fixed app header
-		   The pill prefers the tree's actual edge when there's room,
-		   so on shallow trees it still anchors to the tree's bottom. */
-		const TOP_SAFE = 28;
-		const BOTTOM_SAFE = 96;
+		   near the bottom player. */
+		/* TOP_SAFE/BOTTOM_SAFE include extra room for the 22 px dashed
+		   guide segment that extends OUT of the pill toward the
+		   off-screen branch — the line itself must stay inside the
+		   visible card, not behind the header or player. */
+		const TOP_SAFE = 50;
+		const BOTTOM_SAFE = 120;
 		const buffer = 16;
-		const centerX = treeBox.left + treeBox.width / 2;
+		/* Branch-column alignment: position the pill above the actual
+		   rail that leads down to the user's row, not the tree's
+		   horizontal center. The rail in each child wrapper is rendered
+		   at left=-21.5 px with width 4 px, so its center sits at
+		   wrapBox.left − 19.5 px in viewport coords. Clamping to the
+		   visible tree's horizontal range keeps the pill inside the
+		   card if the rail itself happens to be horizontally
+		   scrolled off-screen. */
+		const railCenterX = wrapBox.left - 19.5;
+		const visibleLeft = Math.max(scrollRoot.getBoundingClientRect().left, 0);
+		const visibleRight = scrollRoot.getBoundingClientRect().right;
+		const centerX = Math.max(visibleLeft + 36, Math.min(visibleRight - 36, railCenterX));
 		if (userBox.bottom < visibleTop + buffer) {
 			const naturalTop = visibleTop + 18;
 			userIndicator = { direction: 'up', top: Math.max(TOP_SAFE, naturalTop), bottom: null, centerX };
@@ -228,9 +242,9 @@
 	}
 
 	function scrollToCurrentUser() {
-		const userEl = findCurrentUserAvatar();
-		if (!userEl) return;
-		userEl.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+		const u = findCurrentUser();
+		if (!u) return;
+		u.avatar.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
 	}
 
 	$effect(() => {
@@ -427,17 +441,12 @@
 	<button
 		type="button"
 		class="lineage-find-me-pill"
+		data-direction={userIndicator.direction}
 		style="left: {userIndicator.centerX}px; {userIndicator.top !== null ? `top: ${userIndicator.top}px;` : `bottom: ${userIndicator.bottom}px;`}"
 		onclick={scrollToCurrentUser}
 		aria-label="Scroll to your signal"
 	>
-		{#if userIndicator.direction === 'up'}
-			<span aria-hidden="true">↑</span>
-			<span>Your signal</span>
-		{:else}
-			<span>Your signal</span>
-			<span aria-hidden="true">↓</span>
-		{/if}
+		Your signal
 	</button>
 {/if}
 
@@ -483,63 +492,86 @@
 		position: relative;
 	}
 
-	/* "Your signal" offscreen indicator — quiet navigation marker
-	   anchored to the visible edge of the tree card. Reads as a
-	   minimap hint, not a button: small text, soft tint, no neon
-	   glow. The ::before pseudo-element adds a subtle vertical
-	   gradient fade behind the pill so it feels embedded into the
-	   tree's edge rather than floating above it. */
+	/* "Your signal" offscreen indicator — quiet locator anchored
+	   directly above (or below) the user's branch column, not
+	   centered in the viewport. Reads as a temporary signpost
+	   attached to the branch:
+	     • the pill itself is a small label (smaller padding, lower
+	       opacity, thinner border, no shadow) — not a CTA
+	     • ::after draws a short dashed guide line extending OUT of
+	       the pill toward the off-screen part of the branch
+	     • ::before adds a faint vertical halo behind the pill so it
+	       feels embedded into the tree's edge rather than floating */
 	.lineage-find-me-pill {
 		position: fixed;
 		transform: translateX(-50%);
 		display: inline-flex;
 		align-items: center;
-		gap: 0.35rem;
-		padding: 0.3rem 0.7rem;
+		padding: 0.2rem 0.6rem;
 		border-radius: 9999px;
-		background-color: color-mix(in srgb, var(--color-primary), transparent 84%);
-		color: oklch(from var(--color-primary) calc(l + 0.04) c h / 0.85);
-		border: 1px solid color-mix(in srgb, var(--color-primary), transparent 70%);
-		box-shadow: 0 1px 6px -3px color-mix(in srgb, var(--color-primary), transparent 70%);
-		font-size: 10.5px;
+		background-color: color-mix(in srgb, var(--color-primary), transparent 88%);
+		color: oklch(from var(--color-primary) calc(l + 0.04) c h / 0.78);
+		border: 1px solid color-mix(in srgb, var(--color-primary), transparent 80%);
+		font-size: 9.75px;
 		font-weight: 500;
-		letter-spacing: 0.02em;
+		letter-spacing: 0.04em;
 		line-height: 1;
 		cursor: pointer;
 		pointer-events: auto;
 		/* Above the fixed bottom player (z-50) so the pill stays
 		   clickable even when it sits near the tree's bottom edge. */
 		z-index: 60;
-		transition: background-color 200ms ease, box-shadow 200ms ease, color 200ms ease;
+		transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
 		backdrop-filter: blur(6px);
 		-webkit-backdrop-filter: blur(6px);
 	}
-	/* Subtle vertical fade behind the pill — extends ~32 px above and
-	   below from the pill center, creating the impression that the
-	   tree edge softly dissolves into the pill. Pointer-events none so
-	   clicks always hit the pill itself. */
+	/* Subtle vertical fade behind the pill — creates the impression
+	   that the tree edge softly dissolves into the pill. Pointer-
+	   events none so clicks always hit the pill itself. */
 	.lineage-find-me-pill::before {
 		content: '';
 		position: absolute;
 		left: 50%;
 		top: 50%;
 		transform: translate(-50%, -50%);
-		width: calc(100% + 96px);
-		height: 64px;
+		width: calc(100% + 80px);
+		height: 56px;
 		border-radius: 9999px;
 		background: radial-gradient(
 			ellipse at center,
-			color-mix(in srgb, var(--color-primary), transparent 90%) 0%,
+			color-mix(in srgb, var(--color-primary), transparent 92%) 0%,
 			color-mix(in srgb, var(--color-primary), transparent 97%) 45%,
 			transparent 80%
 		);
 		pointer-events: none;
 		z-index: -1;
 	}
+	/* Short dashed guide segment — extends ~22 px from the pill toward
+	   the off-screen branch it refers to. Direction-aware via the
+	   data-direction attribute: 'down' → line below the pill, 'up' →
+	   line above. The line is the same primary tint as the pill's
+	   border so the pill reads as the cap of a branch stub. */
+	.lineage-find-me-pill::after {
+		content: '';
+		position: absolute;
+		left: 50%;
+		width: 0;
+		height: 22px;
+		border-left: 1px dashed color-mix(in srgb, var(--color-primary), transparent 62%);
+		pointer-events: none;
+	}
+	.lineage-find-me-pill[data-direction='down']::after {
+		top: 100%;
+		transform: translate(-50%, 0);
+	}
+	.lineage-find-me-pill[data-direction='up']::after {
+		bottom: 100%;
+		transform: translate(-50%, 0);
+	}
 	.lineage-find-me-pill:hover {
-		background-color: color-mix(in srgb, var(--color-primary), transparent 76%);
-		color: oklch(from var(--color-primary) calc(l + 0.06) c h / 0.95);
-		box-shadow: 0 2px 9px -3px color-mix(in srgb, var(--color-primary), transparent 60%);
+		background-color: color-mix(in srgb, var(--color-primary), transparent 80%);
+		color: oklch(from var(--color-primary) calc(l + 0.06) c h / 0.92);
+		border-color: color-mix(in srgb, var(--color-primary), transparent 65%);
 	}
 	.lineage-find-me-pill:focus-visible {
 		outline: 2px solid color-mix(in srgb, var(--color-primary), transparent 40%);
