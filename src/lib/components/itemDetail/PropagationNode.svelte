@@ -1401,16 +1401,6 @@
 			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="1"   fill="none" />
 		</svg>
 
-		<!-- Lineage traveling pulse — one-shot bright dot per
-		     lineage child (depth > 0). Only rendered while the
-		     lineage reveal is active; Svelte unmounts it the
-		     moment the user deselects so no persistent animation
-		     can linger. Uses the existing --conduit-path so it
-		     follows the real conduit geometry. -->
-		{#if isInLineage && depth > 0 && lineageIds !== null}
-			<div class="lineage-pulse" aria-hidden="true"></div>
-		{/if}
-
 		<!--
 			Conduit signal traffic — small pulses flowing UPWARD through
 			the edge (child → parent). The wrapper follows the rail+elbow
