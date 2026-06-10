@@ -182,6 +182,13 @@
 		selectedTarget = null;
 		hoveredTarget = null;
 	}
+	/* Post-amplify reveal trigger. PropagationTree watches this
+	   counter; every true increment (i.e., the user just amplified)
+	   kicks off the locator-fade → smooth-scroll → highlight
+	   sequence inside the tree. Toggling amplify OFF does NOT bump
+	   it — there's no destination to glide to. */
+	let revealNonce = $state(0);
+
 	function handleToggleAmplify() {
 		const wasAmplified = isAmplifiedByCurrentUser;
 		isAmplifiedByCurrentUser = !wasAmplified;
@@ -192,6 +199,10 @@
 			&& selectedTarget.user.id === CURRENT_USER_ID
 		) {
 			selectedTarget = null;
+		}
+		// Just turned amplify ON → trigger the reveal sequence.
+		if (!wasAmplified) {
+			revealNonce++;
 		}
 	}
 </script>
@@ -237,6 +248,7 @@
 					{lineageIds}
 					{lineageOrderedIds}
 					currentUserId={CURRENT_USER_ID}
+					{revealNonce}
 				/>
 			</section>
 
