@@ -1030,10 +1030,25 @@
 			}
 			const neededPathPx = PATH_TO_RAIL_TOP + maxOffsetTop + CLIP_MARGIN_PX + PATH_BUFFER_PX;
 			const pathTotalPx = Math.max(BASELINE_PATH_PX, neededPathPx);
-			const endY = 14 - (pathTotalPx - 70);
 			const cycleScale = pathTotalPx / BASELINE_PATH_PX;
-			// Only update context if values actually changed — avoids
-			// re-triggering descendants' effects for no-op measurements.
+			/* Only update context if values actually changed — avoids
+			   re-triggering descendants' effects for no-op measurements.
+
+			   `--conduit-path` itself is now written via the reactive
+			   style attribute on the root wrapper template (see below)
+			   using treeConfig.pathTotalPx. The previous imperative
+			   `rootEl.style.setProperty('--conduit-path', …)` was a
+			   bug: any subsequent Svelte update to the wrapper's
+			   `style={…}` binding (e.g. `--lineage-index` flipping in
+			   on user-node selection) calls setAttribute('style', …)
+			   under the hood, replacing the entire inline style
+			   attribute and wiping the imperatively-set CSS variable.
+			   Particles then fell back to the 800-px CSS default path
+			   while still carrying their measured-tree `--flow-dur`
+			   (40 s+ for low-orbit), which read as ~5× slow-motion.
+			   Routing both variables through the same Svelte-managed
+			   style attribute keeps them coexisting through every
+			   reactivity update. */
 			if (
 				treeConfig.pathTotalPx !== pathTotalPx ||
 				treeConfig.cycleScale !== cycleScale
@@ -1041,10 +1056,6 @@
 				treeConfig.pathTotalPx = pathTotalPx;
 				treeConfig.cycleScale = cycleScale;
 			}
-			rootEl.style.setProperty(
-				'--conduit-path',
-				`path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 ${endY}')`,
-			);
 		}
 
 		const observer = new ResizeObserver(measure);
@@ -1224,7 +1235,21 @@
 	bind:this={wrapperEl}
 	data-user-id={user.id}
 	data-wrapper-on-lineage={isInLineage ? 'true' : 'false'}
-	style={lineageIndex >= 0 ? `--lineage-index: ${lineageIndex};` : undefined}
+	style={
+		/* Compose both inline CSS variables in one reactive style
+		   binding so neither clobbers the other when the other
+		   changes. The root wrapper carries `--conduit-path`
+		   (CSS-inherited by every descendant particle); any
+		   wrapper on the lineage path additionally carries
+		   `--lineage-index`. See the comment in measure() above
+		   for the regression this avoids. */
+		[
+			depth === 0
+				? `--conduit-path: path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 ${14 - (treeConfig.pathTotalPx - 70)}');`
+				: null,
+			lineageIndex >= 0 ? `--lineage-index: ${lineageIndex};` : null,
+		].filter(Boolean).join(' ') || undefined
+	}
 >
 	<!--
 		Parent → child connector. Two segments drawn INSIDE this node's
