@@ -2009,6 +2009,114 @@ function buildDanDeepLineage(ctx: BuilderCtx): ArchetypeResult {
 	};
 }
 
+/* 23. Dan-long-lineage — DEBUG SURFACE.
+
+   Same lineage depth as `dan-deep-lineage` (Marco placed at depth 5
+   so amplifying inserts Dan at depth 6) but the forest is much
+   taller: a single root with several large amplifier subtrees as
+   siblings to the lineage chain. The lineage path renders in the
+   MIDDLE of the tree vertically — a large amplifier subtree above
+   pushes Dan further down, and additional subtrees below extend
+   the tail. Total ~90 nodes → many viewport-heights of vertical
+   scroll, useful for exercising the "Your signal" locator pill in
+   both directions (scroll past Dan downward → up-pointing pill;
+   scroll above him → down-pointing pill).
+
+   Pinned to /items/low-orbit (sourceScoutId = 'marco'). */
+function buildDanLongLineage(ctx: BuilderCtx): ArchetypeResult {
+	const branch = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	/* Recursive subtree generator. `depth` controls the approximate
+	   node count: sub(2)≈8, sub(3)≈14, sub(4)≈25, sub(5)≈42. The
+	   shape alternates amplifier / deep-listener / passive-listener
+	   so each branch adds variation rather than visual repetition. */
+	const sub = (depth: number, state: BranchActivityState = 'alive'): PropagationUser => {
+		if (depth <= 0) return branch('passive-listener', state);
+		if (depth === 1) {
+			return branch('deep-listener', state, [
+				branch('passive-listener', state),
+				branch('passive-listener', state),
+			]);
+		}
+		return branch('amplifier', state, [
+			sub(depth - 1, state),
+			sub(depth - 2, state),
+			branch('deep-listener', state, [branch('passive-listener', state)]),
+		]);
+	};
+
+	/* Marco at depth 5 — identity matches KNOWN_SCOUTS so
+	   `rebrandRootAs` finds him via `findInNode` and skips the
+	   root rebrand. */
+	const marcoDeep = makeNode(ctx, 'amplifier', {
+		id: 'marco',
+		name: 'Marco',
+		avatar: dicebear('MarcoAmb'),
+		character: 'Underground connector',
+		branchState: 'accelerating',
+		children: [
+			branch('deep-listener', 'alive', [
+				branch('passive-listener', 'alive'),
+				branch('passive-listener', 'alive'),
+			]),
+			branch('passive-listener', 'alive'),
+		],
+	});
+
+	/* Lean lineage chain — each ancestor adds only one small sibling
+	   so the chain itself stays a thin vertical thread (~18 nodes).
+	   Keeping it lean is what lets the larger non-lineage siblings
+	   under the origin render ABOVE it in branchSize-descending sort,
+	   positioning Dan in the middle of the visible tree. */
+	const ancestor4 = branch('amplifier', 'accelerating', [
+		marcoDeep,
+		branch('deep-listener', 'alive', [branch('passive-listener', 'alive')]),
+	]);
+	const ancestor3 = branch('amplifier', 'accelerating', [
+		ancestor4,
+		branch('deep-listener', 'alive', [branch('passive-listener', 'alive')]),
+	]);
+	const ancestor2 = branch('amplifier', 'accelerating', [
+		ancestor3,
+		branch('deep-listener', 'alive'),
+	]);
+	const ancestor1 = branch('amplifier', 'accelerating', [
+		ancestor2,
+		branch('deep-listener', 'alive', [branch('passive-listener', 'alive')]),
+	]);
+
+	/* Big amplifier sibling renders BEFORE the lineage path
+	   (larger branchSize). This is what pushes Dan down vertically. */
+	const bigSibAbove = sub(5, 'alive');
+
+	/* Tail siblings render after the lineage. tailA is also
+	   bigger than ancestor1, so the actual render order under
+	   the origin is:
+	     bigSibAbove (~42) → tailA (~25) → ancestor1 (~18) → tailB (~8)
+	   placing Dan roughly two-thirds down the tree. */
+	const tailA = sub(4, 'alive');
+	const tailB = sub(3, 'alive');
+	const tailC = branch('deep-listener', 'alive', [
+		branch('passive-listener', 'alive'),
+		branch('passive-listener', 'alive'),
+	]);
+
+	const origin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [bigSibAbove, ancestor1, tailA, tailB, tailC],
+	});
+
+	return {
+		roots: [origin],
+		hiddenRootUsers: [],
+	};
+}
+
 const ARCHETYPES = [
 	{ name: 'hub-dominant',         build: buildHubDominant         },
 	{ name: 'fragmented',           build: buildFragmented          },
@@ -2032,6 +2140,7 @@ const ARCHETYPES = [
 	{ name: 'reignition',           build: buildReignition          },
 	{ name: 'conduit-compare',      build: buildConduitCompare      },
 	{ name: 'dan-deep-lineage',     build: buildDanDeepLineage      },
+	{ name: 'dan-long-lineage',     build: buildDanLongLineage      },
 ] as const;
 
 /* Items whose forest is pinned to a specific archetype for design-system
@@ -2069,6 +2178,15 @@ const PINNED_ARCHETYPES: Record<string, string> = {
 	   (sourceScoutId = 'marco') to test the personal-lineage overlay
 	   on a 7-node ORIGIN → … → MARCO → DAN chain. */
 	'edge-of-field':      'dan-deep-lineage',
+	/* Long + deep calibration — same depth-5 Marco / depth-6 Dan
+	   placement as dan-deep-lineage, but the surrounding forest is
+	   much taller (~90 nodes) with a large amplifier sibling above
+	   the lineage that pushes Dan into the middle vertically. Visit
+	   /items/low-orbit (sourceScoutId = 'marco') to exercise the
+	   "Your signal" offscreen locator pill in BOTH directions:
+	   scroll the page down past Dan to test the up-pointing
+	   variant, scroll back up to test the down-pointing variant. */
+	'low-orbit':          'dan-long-lineage',
 };
 
 /* Archetype names that should NEVER appear via random rotation —
@@ -2253,6 +2371,11 @@ const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; o
 		summary: 'Debug surface — Marco is placed at depth 5, so amplifying inserts Dan at depth 6 and produces a 7-node ORIGIN → … → MARCO → DAN ancestor chain for testing the lineage-reveal overlay on a long path.',
 		crossingNote: 'Calibration tree — a deliberately deep ancestor chain ending in Marco, with route insertion placing Dan a further level below.',
 		originNote: 'A calibration surface for visually verifying the personal-lineage overlay on a chain longer than the typical 2-node sourceScout → Dan case.',
+	},
+	'dan-long-lineage': {
+		summary: 'Debug surface — same depth-6 placement as dan-deep-lineage, but the surrounding forest is much taller (~90 nodes) with a large amplifier sibling above the lineage that drops Dan into the middle of the tree vertically.',
+		crossingNote: 'Calibration tree — a long Marco-anchored lineage threaded through a tall multi-branch forest, used to exercise the offscreen "Your signal" locator pill in both directions.',
+		originNote: 'A calibration surface for visually verifying the locator pill on a tree taller than the viewport, where Dan can be either above or below the visible area depending on scroll position.',
 	},
 };
 
