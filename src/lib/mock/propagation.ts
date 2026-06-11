@@ -2117,6 +2117,102 @@ function buildDanLongLineage(ctx: BuilderCtx): ArchetypeResult {
 	};
 }
 
+/* 24. Dan-origin-peers — DEBUG SURFACE.
+
+   Five sibling origins where Dan is one of the origins (id='dan',
+   `isOrigin: true`, no children). Two other origins also have no
+   children; two have multi-level subtrees (children + grand-
+   children). Useful for visually validating how empty-origin nodes
+   render NEXT TO origins with descendants — the rail / elbow /
+   children-container geometry on the populated origins, and the
+   single-row terminal treatment on the childless ones.
+
+   Roots are sorted at render time by branchSize (descending) within
+   the same node-kind rank, so the rendered vertical order is:
+     1. amplifier with grand-children (~5 nodes)
+     2. amplifier with grand-children (~4 nodes)
+     3. childless amplifier
+     4. childless amplifier
+     5. Dan (childless amplifier, isCurrentUser)
+   placing the childless cluster directly below the populated ones
+   for side-by-side comparison.
+
+   Pinned to /items/soft-border (sourceScoutId='dan'). Because the
+   route's source scout IS Dan, +page.svelte resolves
+   routeSourceScoutId to null (Dan can't be inserted into his own
+   route) and falls back to "use forest as-is with Dan marked
+   isCurrentUser when amplified". Toggling Amplify OFF removes Dan
+   from view via removeUserFromForest. */
+function buildDanOriginPeers(ctx: BuilderCtx): ArchetypeResult {
+	const node = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	const populatedOriginA = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [
+			node('amplifier', 'alive', [
+				node('passive-listener', 'alive'),
+				node('passive-listener', 'alive'),
+			]),
+			node('deep-listener', 'alive', [
+				node('passive-listener', 'alive'),
+			]),
+			node('passive-listener', 'alive'),
+		],
+	});
+
+	const populatedOriginB = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'accelerating',
+		children: [
+			node('deep-listener', 'alive', [
+				node('passive-listener', 'alive'),
+				node('passive-listener', 'alive'),
+			]),
+			node('passive-listener', 'alive'),
+		],
+	});
+
+	const childlessOriginC = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [],
+	});
+	const childlessOriginD = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [],
+	});
+
+	/* Dan — childless origin. id/name/avatar/character match
+	   KNOWN_SCOUTS['dan'] so `rebrandRootAs` finds him via
+	   `findInNode` and skips any rebrand. */
+	const danOrigin = makeNode(ctx, 'amplifier', {
+		id: 'dan',
+		name: 'Dan',
+		avatar: dicebear('DanOuter'),
+		character: 'Early signal hunter',
+		isOrigin: true,
+		branchState: 'alive',
+		children: [],
+	});
+
+	return {
+		roots: [
+			populatedOriginA,
+			populatedOriginB,
+			childlessOriginC,
+			childlessOriginD,
+			danOrigin,
+		],
+		hiddenRootUsers: [],
+	};
+}
+
 const ARCHETYPES = [
 	{ name: 'hub-dominant',         build: buildHubDominant         },
 	{ name: 'fragmented',           build: buildFragmented          },
@@ -2141,6 +2237,7 @@ const ARCHETYPES = [
 	{ name: 'conduit-compare',      build: buildConduitCompare      },
 	{ name: 'dan-deep-lineage',     build: buildDanDeepLineage      },
 	{ name: 'dan-long-lineage',     build: buildDanLongLineage      },
+	{ name: 'dan-origin-peers',     build: buildDanOriginPeers      },
 ] as const;
 
 /* Items whose forest is pinned to a specific archetype for design-system
@@ -2187,6 +2284,14 @@ const PINNED_ARCHETYPES: Record<string, string> = {
 	   scroll the page down past Dan to test the up-pointing
 	   variant, scroll back up to test the down-pointing variant. */
 	'low-orbit':          'dan-long-lineage',
+	/* Multi-origin layout calibration — Dan rendered as one of
+	   five sibling origins, three of which (including Dan) are
+	   childless and two of which have children + grandchildren.
+	   Visit /items/soft-border (sourceScoutId='dan') to validate
+	   the rail / elbow / children-container geometry of populated
+	   origins next to the terminal single-row treatment of
+	   childless ones. */
+	'soft-border':        'dan-origin-peers',
 };
 
 /* Archetype names that should NEVER appear via random rotation —
@@ -2376,6 +2481,11 @@ const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; o
 		summary: 'Debug surface — same depth-6 placement as dan-deep-lineage, but the surrounding forest is much taller (~90 nodes) with a large amplifier sibling above the lineage that drops Dan into the middle of the tree vertically.',
 		crossingNote: 'Calibration tree — a long Marco-anchored lineage threaded through a tall multi-branch forest, used to exercise the offscreen "Your signal" locator pill in both directions.',
 		originNote: 'A calibration surface for visually verifying the locator pill on a tree taller than the viewport, where Dan can be either above or below the visible area depending on scroll position.',
+	},
+	'dan-origin-peers': {
+		summary: 'Debug surface — Dan rendered as one of five sibling origins, three of which (including Dan) are childless and two of which have children + grandchildren.',
+		crossingNote: 'Calibration tree — multi-origin layout, used to validate the rail / elbow / children-container geometry of populated origins beside the terminal single-row treatment of childless ones.',
+		originNote: 'A calibration surface for visually comparing populated origins next to childless origins (including Dan as a childless origin).',
 	},
 };
 
