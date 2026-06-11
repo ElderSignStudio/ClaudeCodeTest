@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PropagationForest, PreviewTarget, SignalRole, BranchActivityState } from '$lib/mock/propagation';
+	import type { PropagationForest, PropagationUser, PreviewTarget, SignalRole, BranchActivityState } from '$lib/mock/propagation';
 	import { findParentInForest, computeBranchActivity } from '$lib/mock/propagation';
 
 	/* Branch-state colour for the "Branch momentum" line on the entry-
@@ -111,6 +111,121 @@
 		target !== null && target.kind === 'user'
 			? findParentInForest(forest, target.user.id)
 			: null,
+	);
+
+	/* Largest branchSize anywhere in the visible forest — drives the
+	   "Created the largest branch" bullet in WHY THIS MATTERS. Walks
+	   both visible roots and hidden roots so a quiet origin that
+	   happens to hold the max isn't overlooked. */
+	const maxBranchInForest = $derived.by(() => {
+		let max = 0;
+		function walk(u: PropagationUser) {
+			if (u.branchSize > max) max = u.branchSize;
+			for (const c of u.children) walk(c);
+		}
+		for (const r of forest.roots) walk(r);
+		for (const r of forest.hiddenRootUsers) walk(r);
+		return max;
+	});
+
+	/* WHY THIS MATTERS — editorial explanation of the selected
+	   scout's contribution, structured as ONE headline statement
+	   plus up to THREE supporting bullets so the section reads as
+	   "explanation, then evidence" rather than a flat metric dump.
+
+	   Headline rules:
+	     • A qualitative scale statement when the branch is notable
+	       (largest in forest / one of the largest / a large
+	       downstream branch). The headline conveys SIGNIFICANCE;
+	       the count appears below as supporting evidence.
+	     • Falls back to a strong-timing statement
+	       ("Helped establish the signal early") when scale doesn't
+	       qualify but the scout was very early (≥90 %).
+	     • Otherwise null — the section still renders if at least
+	       two supporting bullets qualify, but no headline.
+
+	   Supporting bullets — emitted in narrative order:
+	     1. Timing — "Amplified earlier than X% of amplifiers"
+	     2. Activity — "Produced X successful forward shares"
+	     3. Scale evidence — "Generated X downstream scouts"
+	     4. Structural — "Connected listening circles" / "Bridged…"
+	   Capped at 3 so the section stays concise.
+
+	   No formulas, percentile breakpoints, or category names
+	   surface in the rendered copy. Section hides entirely when
+	   the scout has no headline AND fewer than two supporting
+	   bullets (passive listeners, anonymous stubs, fresh childless
+	   origins, etc.). */
+	const whyThisMatters = $derived.by((): { headline: string | null; supporting: string[] } => {
+		if (
+			!target
+			|| target.kind !== 'user'
+			|| target.user.isPreviewNode
+			|| isAnonymousStub
+		) return { headline: null, supporting: [] };
+		const u = target.user;
+		const isAmplifierRole = u.signalRole === 'Amplifier' || u.signalRole === 'Successful Amplifier';
+
+		// ── HEADLINE — the strongest qualitative significance line.
+		let headline: string | null = null;
+		if (u.branchSize > 0) {
+			if (u.branchSize === maxBranchInForest && u.branchSize >= 10) {
+				headline = 'Created the largest branch in this signal';
+			} else if (u.branchSize >= Math.max(20, Math.floor(maxBranchInForest * 0.6))) {
+				headline = 'Created one of the largest branches';
+			} else if (u.branchSize >= 25) {
+				headline = 'Created a large downstream branch';
+			}
+		}
+		if (
+			!headline
+			&& isAmplifierRole
+			&& typeof u.earlierThanPercent === 'number'
+			&& u.earlierThanPercent >= 90
+		) {
+			headline = 'Helped establish the signal early';
+		}
+
+		// ── SUPPORTING — in narrative order: timing → activity → scale evidence → structural.
+		const supporting: string[] = [];
+
+		if (
+			isAmplifierRole
+			&& typeof u.earlierThanPercent === 'number'
+			&& u.earlierThanPercent >= 65
+		) {
+			const role: SignalRole = u.signalRole as SignalRole;
+			supporting.push(`Amplified earlier than ${u.earlierThanPercent}% of ${ROLE_PLURAL[role]}`);
+		}
+
+		if (
+			typeof u.forwardAmplifications === 'number'
+			&& u.forwardAmplifications > 0
+			&& u.branchSize > 0
+		) {
+			supporting.push(`Produced ${u.forwardAmplifications} successful forward ${u.forwardAmplifications === 1 ? 'share' : 'shares'}`);
+		}
+
+		if (u.branchSize > 0) {
+			supporting.push(`Generated ${u.branchSize} downstream ${u.branchSize === 1 ? 'scout' : 'scouts'}`);
+		}
+
+		if (supporting.length < 3 && u.scenes && u.scenes.length >= 2) {
+			supporting.push(u.scenes.length >= 3
+				? 'Bridged separate listening circles'
+				: 'Connected listening circles');
+		}
+
+		return { headline, supporting: supporting.slice(0, 3) };
+	});
+
+	/* Used by the template to decide whether the section renders.
+	   A headline alone is enough (it's a complete statement); two
+	   or more supporting bullets are enough on their own. A single
+	   supporting bullet with no headline reads as a thin list and
+	   is suppressed. */
+	const whyHasContent = $derived(
+		whyThisMatters.headline !== null || whyThisMatters.supporting.length >= 2,
 	);
 </script>
 
@@ -585,6 +700,51 @@
 					{target.user.noveltyTierAtDiscovery}{#if typeof target.user.fameIndexAtDiscovery === 'number'} <span class="text-base-content/35">·</span> <span class="font-mono tabular-nums text-base-content/55">Fame Index {target.user.fameIndexAtDiscovery}</span>{/if}
 				</p>
 			</div>
+		{/if}
+
+		<!--
+			WHY THIS MATTERS — editorial layer explaining the selected
+			scout's contribution in human terms BEFORE the raw metrics
+			below. Structured as ONE headline statement (the
+			qualitative significance) plus up to three supporting
+			bullets (the evidence). Selection logic lives in the
+			`whyThisMatters` derived; visibility is gated by
+			`whyHasContent`.
+
+			Visual hierarchy:
+			  • Headline gets `font-medium` + brighter alpha + a
+			    larger line — slightly more weight than the bullets,
+			    NOT a badge, NOT dramatically larger.
+			  • Supporting bullets follow the same dot-style as
+			    before, dimmed one alpha-step so the headline reads
+			    as the primary line.
+
+			Same `pt-4 border-t border-white/6` motif as the metrics
+			block below it so the two read as paired sections in the
+			inspector's lower half.
+		-->
+		{#if whyHasContent}
+			<section class="pt-4 border-t border-white/6">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2.5">Why this matters</p>
+				{#if whyThisMatters.headline}
+					<p class={[
+						'text-[13.5px] leading-snug font-medium text-base-content/94',
+						whyThisMatters.supporting.length > 0 && 'mb-3',
+					]}>
+						{whyThisMatters.headline}
+					</p>
+				{/if}
+				{#if whyThisMatters.supporting.length > 0}
+					<ul class="space-y-1.5">
+						{#each whyThisMatters.supporting as reason (reason)}
+							<li class="text-[12.5px] leading-relaxed text-base-content/78 flex items-start gap-2">
+								<span class="shrink-0 mt-1.75 w-1 h-1 rounded-full bg-accent/55" aria-hidden="true"></span>
+								<span>{reason}</span>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</section>
 		{/if}
 
 		<!--
