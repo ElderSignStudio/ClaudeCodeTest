@@ -1,6 +1,78 @@
 <script lang="ts">
-	import type { PropagationForest, PreviewTarget } from '$lib/mock/propagation';
-	import { findParentInForest } from '$lib/mock/propagation';
+	import type { PropagationForest, PreviewTarget, SignalRole, BranchActivityState } from '$lib/mock/propagation';
+	import { findParentInForest, computeBranchActivity } from '$lib/mock/propagation';
+
+	/* Branch-state colour for the "Branch momentum" line on the entry-
+	   point card. Mirrors the conduit / inline-score palette so the card
+	   feels visually tied to the tree without re-introducing badges. */
+	function branchStateColorClass(state: BranchActivityState): string {
+		switch (state) {
+			case 'dead':                return 'text-base-content/55';
+			case 'alive':               return 'text-[oklch(0.72_0.07_230)]/82';
+			case 'accelerating':        return 'text-[oklch(0.72_0.13_55)]/82';
+			case 'strong-accelerating': return 'text-[oklch(0.76_0.13_55)]/88';
+			case 'peak-accelerating':   return 'text-[oklch(0.84_0.13_58)]/94';
+		}
+	}
+
+	function branchStateLabel(state: BranchActivityState): string {
+		switch (state) {
+			case 'dead':                return 'Dead';
+			case 'alive':               return 'Alive';
+			case 'accelerating':        return 'Accelerating';
+			case 'strong-accelerating': return 'Strong';
+			case 'peak-accelerating':   return 'Peak';
+		}
+	}
+
+	/* Static role ladder for the YOUR POSSIBLE JOURNEY section. This is
+	   NOT a prediction — it's the same five-stage relationship-with-
+	   signal ladder real nodes can move through, presented as the user's
+	   potential entry path. Kept as a single source of truth so future
+	   changes to the role taxonomy update both places. */
+	const POSSIBLE_JOURNEY: SignalRole[] = [
+		'Passive Listener',
+		'Listener',
+		'Deep Listener',
+		'Amplifier',
+		'Successful Amplifier',
+	];
+
+	/* Plural of a role name for percentile lines ("Earlier than 32% of
+	   passive listeners"). All roles pluralise by lower-casing and adding
+	   "s" — kept as an explicit map so a future irregular plural can be
+	   added without code changes elsewhere. */
+	const ROLE_PLURAL: Record<SignalRole, string> = {
+		'Passive Listener':    'passive listeners',
+		'Listener':            'listeners',
+		'Deep Listener':       'listeners',
+		'Amplifier':           'amplifiers',
+		'Successful Amplifier': 'amplifiers',
+	};
+
+	/* One-sentence neutral description per role. Personalisation for the
+	   current user lives in the template (the YOUR ROLE block omits these
+	   descriptions and uses second-person copy instead). */
+	const ROLE_DESCRIPTION: Record<SignalRole, string> = {
+		'Passive Listener':    'Listened casually but did not engage further.',
+		'Listener':            'Returned to the signal more than once.',
+		'Deep Listener':       'Developed sustained engagement with the signal.',
+		'Amplifier':           'Passed the signal forward.',
+		'Successful Amplifier': 'Passed the signal forward and created downstream propagation.',
+	};
+
+	/* Subtle role-coloured text class for the role title. Mirrors the
+	   conduit/score palette so the card feels visually connected to the
+	   tree but stays restrained — no glow, no animation. */
+	function roleColorClass(role: SignalRole): string {
+		switch (role) {
+			case 'Passive Listener':    return 'text-base-content/60';
+			case 'Listener':            return 'text-[oklch(0.72_0.07_230)]/78';
+			case 'Deep Listener':       return 'text-[oklch(0.74_0.10_230)]/88';
+			case 'Amplifier':           return 'text-[oklch(0.74_0.13_55)]/85';
+			case 'Successful Amplifier': return 'text-[oklch(0.86_0.12_60)]/94';
+		}
+	}
 
 	/*
 		Contextual inspector. Three editorial states:
@@ -44,7 +116,7 @@
 
 <aside class="flex flex-col gap-5">
 
-	<!-- Eyebrow — switches label between global / branch / cluster context -->
+	<!-- Eyebrow — switches label between global / branch / cluster / entry-point context -->
 	<div class="flex items-center gap-2 px-1">
 		{#if !target}
 			<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
@@ -52,6 +124,9 @@
 		{:else if target.kind === 'cluster'}
 			<span class="w-0.5 h-3.5 rounded-full bg-base-content/40" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Cluster context</p>
+		{:else if target.user.isPreviewNode}
+			<span class="w-0.5 h-3.5 rounded-full bg-primary/55" aria-hidden="true"></span>
+			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Your entry point</p>
 		{:else}
 			<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Branch context</p>
@@ -165,6 +240,149 @@
 			</div>
 		{/if}
 
+	{:else if target.user.isPreviewNode}
+		<!-- ─────────────────────── ENTRY-POINT PLACEHOLDER ───────────────────────
+			Shown when the user hovers / clicks the greyed-out current-user
+			placeholder ("Amplify to be included here"). The card explains
+			WHERE the user would enter the lineage and the CONTEXT of that
+			entry — without predicting impact or fabricating future scores.
+
+			Data sources:
+			  parent           = findParentInForest(forest, placeholder.id)
+			                     (the route-source scout)
+			  parentBranchState = computeBranchActivity(parent)
+			  siblings         = parent.children minus the placeholder itself
+
+			If parent is missing for any reason (origin-stories items
+			occasionally lack a route insertion point), the card falls
+			back to "You would enter this lineage here." and omits the
+			parent-derived fields.
+		-->
+		{@const parent = parentOfTarget}
+		{@const parentBranchState = parent ? computeBranchActivity(parent) : null}
+		{@const siblings = parent
+			? parent.children.filter((c) => c.id !== target.user.id).slice(0, 3)
+			: []}
+
+		<!-- Header — avatar (grayscaled to echo the placeholder's tree look) +
+		     name + muted subtitle + small ENTRY POINT chip below. -->
+		<div class="flex items-center gap-3">
+			<div class="w-11 h-11 rounded-full overflow-hidden border border-primary/35">
+				{#if target.user.avatar}
+					<img src={target.user.avatar} alt="" class="w-full h-full object-cover grayscale opacity-72" />
+				{:else}
+					<div class="w-full h-full bg-base-content/12"></div>
+				{/if}
+			</div>
+			<div class="min-w-0">
+				<p class="text-[15px] font-bold text-base-content/95 truncate">{target.user.name}</p>
+				<p class="text-[12px] text-base-content/55 truncate italic">Not in this lineage yet</p>
+			</div>
+		</div>
+		<div class="flex items-center gap-2 -mt-2">
+			<span class="text-[9px] uppercase tracking-widest font-semibold px-1.5 py-0.5 rounded border border-primary/40 text-primary/82 bg-primary/8">
+				Entry point
+			</span>
+		</div>
+
+		<!-- Main explanation — second-person, no prediction. -->
+		<div class="flex flex-col gap-1.5">
+			<p class="text-[13px] leading-relaxed text-base-content/82">
+				You have not engaged with this signal yet.
+			</p>
+			{#if parent}
+				<p class="text-[13px] leading-relaxed text-base-content/74">
+					You would enter through
+					<span class="text-accent/92 font-semibold">{parent.name}</span>.
+				</p>
+			{:else}
+				<p class="text-[13px] leading-relaxed text-base-content/74">
+					You would enter this lineage here.
+				</p>
+			{/if}
+		</div>
+
+		<!-- CURRENT BRANCH — factual context about the branch the user would
+		     join. Renders only fields we actually have. -->
+		{#if parent && parentBranchState}
+			<section class="pt-4 border-t border-white/6">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Current branch</p>
+				<dl class="flex flex-col gap-3">
+					<div>
+						<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Branch momentum</dt>
+						<dd class={['mt-1 text-[14px] font-semibold leading-snug', branchStateColorClass(parentBranchState)]}>
+							{branchStateLabel(parentBranchState)}
+						</dd>
+					</div>
+					{#if parent.branchSize > 0}
+						<div>
+							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Branch community</dt>
+							<dd class="mt-1 text-[13px] text-base-content/82">
+								<span class="font-semibold tabular-nums">{parent.branchSize}</span>
+								<span class="text-base-content/55">{parent.branchSize === 1 ? 'scout' : 'scouts'}</span>
+							</dd>
+						</div>
+					{/if}
+					{#if parent.scenes && parent.scenes.length > 0}
+						<div>
+							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Listening circles</dt>
+							<dd class="mt-1 text-[13px] text-base-content/74 leading-snug">
+								{parent.scenes.join(' · ')}
+							</dd>
+						</div>
+					{/if}
+				</dl>
+			</section>
+		{/if}
+
+		<!-- PEOPLE NEARBY — parent + up to 3 siblings around the placeholder.
+		     Compact rows; no avatars to keep the section quiet — names +
+		     character only, like the cluster summary style. -->
+		{#if parent || siblings.length > 0}
+			<section class="pt-4 border-t border-white/6">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2.5">People nearby</p>
+				<ul class="flex flex-col gap-2">
+					{#if parent}
+						<li>
+							<p class="text-[13px] text-base-content/88 leading-snug">{parent.name}</p>
+							<p class="text-[11px] text-base-content/55 leading-snug">{parent.character}</p>
+						</li>
+					{/if}
+					{#each siblings as sib (sib.id)}
+						<li>
+							<p class="text-[13px] text-base-content/82 leading-snug">{sib.name}</p>
+							<p class="text-[11px] text-base-content/55 leading-snug">{sib.character}</p>
+						</li>
+					{/each}
+				</ul>
+			</section>
+		{/if}
+
+		<!-- YOUR POSSIBLE JOURNEY — static role ladder, NOT a prediction.
+		     Same visual treatment as the SIGNAL JOURNEY block on real
+		     nodes so the affordance is recognisable, but every stage is
+		     rendered in muted text (no role-coloured "current" stage,
+		     since the user hasn't started yet). -->
+		<section>
+			<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-1.5">Your possible journey</p>
+			<p class="text-[12px] leading-snug text-base-content/65 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+				{#each POSSIBLE_JOURNEY as stage, i (stage)}
+					{#if i > 0}
+						<span class="text-base-content/35" aria-hidden="true">→</span>
+					{/if}
+					<span>{stage}</span>
+				{/each}
+			</p>
+		</section>
+
+		<!-- Optional CTA — small muted line, no button. Wording reflects
+		     the Outer Signal model where the lineage begins at Listener,
+		     not at Amplifier — amplification is a later stage of an
+		     already-joined journey. -->
+		<p class="text-[11px] text-base-content/52 italic pt-1">
+			Your journey begins when you listen.
+		</p>
+
 	{:else if isAnonymousStub}
 		<!-- ─────────────────────── ANONYMOUS STUB ─────────────────────── -->
 
@@ -225,6 +443,119 @@
 			<p class="text-[13px] leading-relaxed text-base-content/74">
 				{target.user.behaviorNote}
 			</p>
+		{/if}
+
+		<!--
+			SIGNAL PATH — only on the current user's own real node. Walks
+			up via findParentInForest and reverses to produce ORIGIN → … →
+			USER, mirroring the visual lineage reveal in the tree. Compact
+			text confirmation of the route the signal actually took.
+		-->
+		{#if target.user.isCurrentUser && !target.user.isPreviewNode}
+			{@const lineage = (() => {
+				const out = [];
+				let cur: typeof target.user | null = target.user;
+				while (cur) {
+					out.push(cur);
+					cur = findParentInForest(forest, cur.id);
+				}
+				return out.reverse();
+			})()}
+			{#if lineage.length > 1}
+				<section class="pt-4 border-t border-white/6">
+					<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-1.5">Signal path</p>
+					<p class="text-[12.5px] leading-relaxed text-base-content/78 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+						{#each lineage as step, i (step.id)}
+							{#if i > 0}
+								<span class="text-base-content/35" aria-hidden="true">→</span>
+							{/if}
+							<span class={i === lineage.length - 1 ? 'text-primary/92 font-semibold' : 'text-base-content/82'}>
+								{step.name}
+							</span>
+						{/each}
+					</p>
+				</section>
+			{/if}
+		{/if}
+
+		<!--
+			ROLE IN SIGNAL — primary explanation of this scout's relationship
+			to the signal. For the current user we switch the eyebrow and
+			use second-person copy; for everyone else we use the neutral
+			third-person sentences from ROLE_DESCRIPTION. The role title is
+			tinted with a subtle palette tied to the conduit/score system
+			(grey → moonlight → amber → near-white) so the card visually
+			echoes the tree's branch state without becoming gamified.
+		-->
+		{#if target.user.signalRole}
+			{@const role = target.user.signalRole}
+			{@const isCu = !!target.user.isCurrentUser}
+			{@const ampedDays = target.user.amplifiedAt}
+			{@const joinedDays = target.user.firstSignalEventAt}
+			{@const pct = target.user.earlierThanPercent}
+			{@const reach = target.user.branchSize}
+			<section class="pt-4 border-t border-white/6">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">
+					{isCu ? 'Your role in signal' : 'Role in signal'}
+				</p>
+				<p class={['text-[14px] font-semibold leading-snug', roleColorClass(role)]}>
+					{role}
+				</p>
+				<div class="mt-1.5 flex flex-col gap-1 text-[12.5px] leading-relaxed text-base-content/74">
+					{#if isCu}
+						<!-- Current-user copy — second person, omits the
+						     descriptive sentence (it's implied by "You"). -->
+						{#if ampedDays !== undefined}
+							<p>You amplified {ampedDays} {ampedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{:else if joinedDays !== undefined}
+							<p>You joined {joinedDays} {joinedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{/if}
+						{#if pct !== undefined}
+							<p>Earlier than {pct}% of {ROLE_PLURAL[role]}.</p>
+						{/if}
+					{:else}
+						<p>{ROLE_DESCRIPTION[role]}</p>
+						{#if ampedDays !== undefined}
+							<p>Amplified {ampedDays} {ampedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{:else if joinedDays !== undefined}
+							<p>{role === 'Passive Listener' ? 'Discovered' : 'Joined'} {joinedDays} {joinedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{/if}
+						{#if pct !== undefined}
+							<p>Earlier than {pct}% of {ROLE_PLURAL[role]}.</p>
+						{/if}
+					{/if}
+					{#if role === 'Successful Amplifier' && reach > 0}
+						<p>Generated a branch that reached {reach} {reach === 1 ? 'scout' : 'scouts'}.</p>
+					{/if}
+				</div>
+			</section>
+		{/if}
+
+		<!--
+			SIGNAL JOURNEY — compact arrow timeline of role progression.
+			Only renders when the journey has more than one stage; passive
+			listeners and single-stage entries skip this section.
+			Visual treatment matches the metadata eyebrows used elsewhere
+			in the card (uppercase / letter-spaced / muted), with arrows
+			rendered in a slightly dimmer tone than the role names so the
+			eye scans stage → stage rather than landing on the arrows.
+		-->
+		{#if target.user.signalJourney && target.user.signalJourney.length > 1}
+			<section>
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-1.5">Signal journey</p>
+				<p class="text-[12px] leading-snug text-base-content/74 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+					{#each target.user.signalJourney as stage, i (i + stage)}
+						{#if i > 0}
+							<span class="text-base-content/35" aria-hidden="true">→</span>
+						{/if}
+						<span class={i === target.user.signalJourney.length - 1
+							? roleColorClass(stage)
+							: 'text-base-content/65'}>
+							{stage}
+						</span>
+					{/each}
+				</p>
+			</section>
 		{/if}
 
 		<!-- Scene chips — anthropological context. -->
@@ -298,7 +629,7 @@
 					</div>
 				{/if}
 				<div class="col-span-2">
-					<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Joined the lineage</dt>
+					<dt class="text-[10px] uppercase tracking-widest text-base-content/45">First signal event</dt>
 					<dd class="mt-1 text-[13px] text-base-content/82">{target.user.discoveredAgo}</dd>
 				</div>
 			</dl>

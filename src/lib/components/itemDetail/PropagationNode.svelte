@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getContext, setContext } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import type { PropagationUser, PreviewTarget, BranchActivityState } from '$lib/mock/propagation';
 	import { sortNodesByPropagation, computeBranchActivity } from '$lib/mock/propagation';
@@ -30,9 +31,13 @@
 		isLast = false,
 		onParticleArrival = undefined,
 		whiteAnchorId = undefined,
-		inheritedLabeledState = undefined,
 		incomingTrunkActivity = undefined,
 		outgoingTrunkActivity = undefined,
+		lineageIds = null,
+		lineageOrderedIds = null,
+		incomingTrunkOnLineage = false,
+		outgoingTrunkOnLineage = false,
+		trunkLineageIndex = -1,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
@@ -59,14 +64,6 @@
 		 *  of all slots rolling non-white still yields at least one
 		 *  visible ignition somewhere in the subtree. */
 		whiteAnchorId?: string | undefined;
-		/** The branch state most recently *labeled* up this lineage —
-		 *  i.e. either the origin's state, or the state of the most
-		 *  recent transition-labeled ancestor. Used to decide whether
-		 *  THIS node should render its own transition label: if this
-		 *  node's local subtree classifies differently from what was
-		 *  last labeled above, it's a transition point and gets a
-		 *  label. */
-		inheritedLabeledState?: BranchActivityState | undefined;
 		/** State of the vertical trunk segment ABOVE this child's elbow
 		 *  (i.e. the segment that this child's "top stub" renders).
 		 *  Per the trunk-accumulation rule, this is the MAX state of
@@ -84,7 +81,70 @@
 		 *  section on its way up. Undefined for the last child
 		 *  (no bottom extension is rendered). */
 		outgoingTrunkActivity?: BranchActivityState | undefined;
+		/** Set of ids on the user's personal-lineage chain (ORIGIN → … → USER).
+		 *  When non-null, the tree is in lineage-reveal mode. Nodes in the
+		 *  set keep full opacity; nodes outside the set tag themselves
+		 *  `data-on-lineage="false"` and the CSS dim rules fade them. Null
+		 *  passes through unchanged when no lineage is active. */
+		lineageIds?: Set<string> | null;
+		/** Ordered lineage origin → user. Used to derive --lineage-index for
+		 *  the cascade animation. */
+		lineageOrderedIds?: string[] | null;
+		/** True when this child's TOP STUB sits on the lineage trunk
+		 *  (the vertical segment between an ancestor and the next
+		 *  lineage descendant in the same container). A non-lineage
+		 *  sibling positioned BETWEEN a lineage parent and a lineage
+		 *  descendant within the same children container will be
+		 *  marked true here so its trunk piece participates in the
+		 *  lit path, even though the sibling itself isn't in lineage. */
+		incomingTrunkOnLineage?: boolean;
+		/** True when this child's BOTTOM EXTENSION (the segment going
+		 *  DOWN to the next sibling) sits on the lineage trunk. */
+		outgoingTrunkOnLineage?: boolean;
+		/** Lineage index of the lineage descendant the trunk pieces
+		 *  connect TO (always parent's lineageIndex + 1). Drives the
+		 *  cascade-illuminate animation-delay on the trunk pieces so
+		 *  intermediate siblings' trunk lights up in sync with the
+		 *  lineage descendant below them. */
+		trunkLineageIndex?: number;
 	} = $props();
+
+	/* True when THIS node sits on the user's personal lineage. Used to
+	   tag the row + conduit SVGs with data-on-lineage so the CSS dim
+	   rules under `[data-lineage-active="true"]` know which elements to
+	   recede. When no lineage is active (lineageIds === null), every
+	   node reads as "on lineage" — the data attribute still renders
+	   "true" but the wrapper-level `data-lineage-active` is "false" so
+	   nothing dims. */
+	const isInLineage = $derived(lineageIds === null || lineageIds.has(user.id));
+
+	/* Index in the ordered lineage chain (origin = 0, user = length-1).
+	   -1 when this node is not in the lineage OR the tree isn't in
+	   lineage-reveal mode. Used to compute the cascade animation delay
+	   via the --lineage-index CSS variable. Origin gets no parent-to-
+	   self conduit (top stub / elbow only exist for depth > 0), so the
+	   cascade visually starts with the origin's avatar at index 0 and
+	   each subsequent ancestor's conduit + avatar at index 1, 2, … */
+	const lineageIndex = $derived(
+		lineageOrderedIds === null ? -1 : lineageOrderedIds.indexOf(user.id),
+	);
+
+	/* "Unheard origin" — an origin that has not yet recruited any
+	   scout: no rendered children, no hidden tail. Drives a quiet
+	   atmospheric overlay (dashed outer ring + slow orbiting beacon
+	   + "Searching for first scout" microcopy) communicating
+	   "signal unresolved", NOT "weak / unsuccessful". The state
+	   evaporates the instant a first child appears (Svelte unmounts
+	   the {#if} blocks; the `out:fade` transitions then carry the
+	   visual decorations out over 300 ms). Preview placeholders
+	   keep their own dashed-border treatment and never enter this
+	   state. */
+	const isUnheardOrigin = $derived(
+		!!user.isOrigin
+			&& user.children.length === 0
+			&& !user.hiddenChildren
+			&& !user.isPreviewNode,
+	);
 
 	/* ── Tree-scoped conduit-path config ────────────────────────
 	   The offset-path's length must reach every conduit's
@@ -139,31 +199,6 @@
 		computeBranchActivity(user),
 	);
 
-	/* ─── Branch-state transition labels ─────────────────────────
-	   `effectiveActivity` (above) IS this node's local subtree state
-	   now; we re-export it as `localActivity` to keep the label
-	   template's intent explicit. The label fires only when the
-	   local state differs from the most recently labeled ancestor's
-	   state (`inheritedLabeledState` from props). Otherwise the
-	   inherited value passes through unchanged, so a long quiet
-	   trunk shows the label only once at its top, not on every node.
-	   Return transitions (PEAK → ALIVE → PEAK) work naturally
-	   because the second PEAK still differs from the intervening
-	   ALIVE. */
-	const localActivity = $derived<BranchActivityState>(effectiveActivity!);
-	const labeledStateAbove = $derived<BranchActivityState | undefined>(
-		depth === 0 ? localActivity : inheritedLabeledState,
-	);
-	const showTransitionLabel = $derived(
-		depth > 0 &&
-		!user.isPreviewNode &&
-		labeledStateAbove !== undefined &&
-		localActivity !== labeledStateAbove,
-	);
-	const labeledStateForChildren = $derived<BranchActivityState | undefined>(
-		showTransitionLabel ? localActivity : labeledStateAbove,
-	);
-
 	/* White-hot ignition safety anchor.
 
 	   When THIS node is a peak-accelerating ORIGIN (depth 0), pick one
@@ -195,10 +230,6 @@
 		return ids[hash32(user.id + '|white-anchor') % ids.length];
 	});
 
-	/* Debug switch — shows DEAD / ALIVE / ACCELERATING labels next to
-	   each root. Flip to false to hide. */
-	const DEBUG_BRANCH_LABELS = true;
-
 	let expanded = $state(true);
 	let tailExpanded = $state(false);
 
@@ -209,6 +240,26 @@
 	// first. Preview nodes go to the END of the sibling group so Dan's
 	// inserted preview stays positionally stable.
 	const sortedChildren = $derived(sortNodesByPropagation(user.children));
+
+	/* Position of the next lineage member among THIS node's sorted
+	   children, or -1 when this node isn't in lineage / has no lineage
+	   descendant. Used to compute incoming/outgoing trunk-on-lineage
+	   for each child: siblings at-or-before this position have their
+	   trunk piece on the lineage path (the visual trunk between the
+	   parent's avatar and the lineage descendant passes through them);
+	   siblings after this position don't. */
+	const lineageChildIndexInContainer = $derived.by(() => {
+		if (!lineageOrderedIds) return -1;
+		if (lineageIndex < 0 || lineageIndex >= lineageOrderedIds.length - 1) return -1;
+		const nextLineageId = lineageOrderedIds[lineageIndex + 1];
+		return sortedChildren.findIndex((c) => c.id === nextLineageId);
+	});
+	/* Lineage index of the lineage descendant the trunk pieces below
+	   connect to. Always parent's lineageIndex + 1 when a lineage child
+	   exists in this container. -1 otherwise (no cascade for trunk). */
+	const childrenTrunkLineageIndex = $derived(
+		lineageChildIndexInContainer >= 0 ? lineageIndex + 1 : -1,
+	);
 
 	const hasHiddenTail = $derived(!!(user.hiddenChildren && user.hiddenChildren > 0));
 	const tailStubs = $derived(
@@ -997,10 +1048,25 @@
 			}
 			const neededPathPx = PATH_TO_RAIL_TOP + maxOffsetTop + CLIP_MARGIN_PX + PATH_BUFFER_PX;
 			const pathTotalPx = Math.max(BASELINE_PATH_PX, neededPathPx);
-			const endY = 14 - (pathTotalPx - 70);
 			const cycleScale = pathTotalPx / BASELINE_PATH_PX;
-			// Only update context if values actually changed — avoids
-			// re-triggering descendants' effects for no-op measurements.
+			/* Only update context if values actually changed — avoids
+			   re-triggering descendants' effects for no-op measurements.
+
+			   `--conduit-path` itself is now written via the reactive
+			   style attribute on the root wrapper template (see below)
+			   using treeConfig.pathTotalPx. The previous imperative
+			   `rootEl.style.setProperty('--conduit-path', …)` was a
+			   bug: any subsequent Svelte update to the wrapper's
+			   `style={…}` binding (e.g. `--lineage-index` flipping in
+			   on user-node selection) calls setAttribute('style', …)
+			   under the hood, replacing the entire inline style
+			   attribute and wiping the imperatively-set CSS variable.
+			   Particles then fell back to the 800-px CSS default path
+			   while still carrying their measured-tree `--flow-dur`
+			   (40 s+ for low-orbit), which read as ~5× slow-motion.
+			   Routing both variables through the same Svelte-managed
+			   style attribute keeps them coexisting through every
+			   reactivity update. */
 			if (
 				treeConfig.pathTotalPx !== pathTotalPx ||
 				treeConfig.cycleScale !== cycleScale
@@ -1008,10 +1074,6 @@
 				treeConfig.pathTotalPx = pathTotalPx;
 				treeConfig.cycleScale = cycleScale;
 			}
-			rootEl.style.setProperty(
-				'--conduit-path',
-				`path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 ${endY}')`,
-			);
 		}
 
 		const observer = new ResizeObserver(measure);
@@ -1156,21 +1218,6 @@
 		};
 	});
 
-	/* Short, terse forms of the branch-state names used by the
-	   transition chip. Origins keep the existing
-	   "peak accelerating" / "strong accelerating" full form via a
-	   separate code path; transitions use the abbreviated form so
-	   they read as quieter section markers, not full classifications. */
-	function shortStateLabel(state: BranchActivityState): string {
-		switch (state) {
-			case 'peak-accelerating':   return 'peak';
-			case 'strong-accelerating': return 'strong';
-			case 'accelerating':        return 'accelerating';
-			case 'alive':               return 'alive';
-			case 'dead':                return 'dead';
-		}
-	}
-
 	function nodeKindClass(u: PropagationUser): string {
 		if (u.isPreviewNode) return '';
 		switch (u.nodeKind) {
@@ -1201,7 +1248,27 @@
 	}
 </script>
 
-<div class="relative" bind:this={wrapperEl}>
+<div
+	class="relative tree-node-wrapper"
+	bind:this={wrapperEl}
+	data-user-id={user.id}
+	data-wrapper-on-lineage={isInLineage ? 'true' : 'false'}
+	style={
+		/* Compose both inline CSS variables in one reactive style
+		   binding so neither clobbers the other when the other
+		   changes. The root wrapper carries `--conduit-path`
+		   (CSS-inherited by every descendant particle); any
+		   wrapper on the lineage path additionally carries
+		   `--lineage-index`. See the comment in measure() above
+		   for the regression this avoids. */
+		[
+			depth === 0
+				? `--conduit-path: path('M 35 22 C 12.5 22 -19.5 22 -19.5 14 L -19.5 ${14 - (treeConfig.pathTotalPx - 70)}');`
+				: null,
+			lineageIndex >= 0 ? `--lineage-index: ${lineageIndex};` : null,
+		].filter(Boolean).join(' ') || undefined
+	}
+>
 	<!--
 		Parent → child connector. Two segments drawn INSIDE this node's
 		wrapper at x = -20px (the parent children container's pl-5):
@@ -1269,14 +1336,15 @@
 		     below it. -->
 		<svg
 			class={[
-				'absolute pointer-events-none overflow-visible',
+				'absolute pointer-events-none overflow-visible conduit-top-stub',
 				topRailColorClass,
 				conduitGlowClass,
 				topAtmosphereClasses,
 			]}
-			style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;"
+			style="left: -21.5px; top: 0; width: 4px; height: 14px; --breath-delay: {breathDelay.toFixed(3)}s;{incomingTrunkOnLineage && trunkLineageIndex >= 0 ? ` --cascade-index: ${trunkLineageIndex};` : ''}"
 			viewBox="0 0 4 14"
 			aria-hidden="true"
+			data-on-lineage-path={incomingTrunkOnLineage ? 'true' : 'false'}
 		>
 			<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" vector-effect="non-scaling-stroke" />
 			<path d="M 2 0 L 2 14" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" vector-effect="non-scaling-stroke" />
@@ -1300,15 +1368,16 @@
 			     next junction. -->
 			<svg
 				class={[
-					'absolute pointer-events-none overflow-visible',
+					'absolute pointer-events-none overflow-visible conduit-bottom-ext',
 					bottomRailColorClass,
 					conduitGlowClass,
 					bottomAtmosphereClasses,
 				]}
-				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px); --breath-delay: {breathDelay.toFixed(3)}s;"
+				style="left: -21.5px; top: 20px; width: 4px; height: calc(100% - 20px); --breath-delay: {breathDelay.toFixed(3)}s;{outgoingTrunkOnLineage && trunkLineageIndex >= 0 ? ` --cascade-index: ${trunkLineageIndex};` : ''}"
 				viewBox="0 0 4 100"
 				preserveAspectRatio="none"
 				aria-hidden="true"
+				data-on-lineage-path={outgoingTrunkOnLineage ? 'true' : 'false'}
 			>
 				<path d="M 2 0 C 3.2 33 0.8 67 2 100" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" vector-effect="non-scaling-stroke" />
 				<path d="M 2 0 C 2.6 33 1.4 67 2 100" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" vector-effect="non-scaling-stroke" />
@@ -1333,7 +1402,7 @@
 		-->
 		<svg
 			class={[
-				'absolute -left-5 top-3.5 pointer-events-none overflow-visible',
+				'absolute -left-5 top-3.5 pointer-events-none overflow-visible conduit-elbow',
 				railColorClass,
 				conduitGlowClass,
 				atmosphereClasses,
@@ -1343,6 +1412,7 @@
 			viewBox="0 0 55 8"
 			style="--breath-delay: {breathDelay.toFixed(3)}s;"
 			aria-hidden="true"
+			data-on-lineage-path={isInLineage ? 'true' : 'false'}
 		>
 			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="3.5" stroke-opacity="0.12" fill="none" />
 			<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="2"   stroke-opacity="0.32" fill="none" />
@@ -1392,25 +1462,24 @@
 	{/if}
 
 	<!--
-		Row: caret + avatar + name + character. The row uses `role="button"`
-		(not a real <button>) so the inner caret can remain a real button
-		without nesting. Keyboard activation (Enter / Space) is wired manually.
-		Hover / focus preview the user in the inspector without committing the
-		selection. The tree-level mouseleave clears the preview when the
-		pointer exits the lineage area entirely.
+		Row: caret + selection-zone (avatar + name + character).
+
+		The OUTER row is the full-width click target — interaction surface
+		stays generous so users can click anywhere along the row to select
+		the node. But all selection chrome (background, ring, cu-row left
+		rail) lives on an INNER `.row-selection-zone` that sizes to its
+		content (avatar + name + truncated subtitle), so the highlight
+		hugs the node locally instead of stretching across the empty right
+		side of the tree. This keeps the tree reading as a propagation
+		structure rather than a table/list UI.
 	-->
 	<!-- svelte-ignore a11y_no_noninteractive_tabindex -->
 	<div
 		class={[
-			'group/row relative w-full flex items-start gap-4 py-1.5 pl-1 pr-2 rounded-md text-left transition-colors duration-150 overflow-visible',
+			'group/row relative w-full flex items-start gap-4 text-left overflow-visible',
 			user.isPreviewNode
 				? 'cursor-default opacity-50'
 				: 'cursor-pointer',
-			!user.isPreviewNode && (isSelected
-				? 'bg-accent/12 ring-1 ring-accent/35'
-				: user.isCurrentUser
-					? 'bg-primary/14 ring-1 ring-primary/35 hover:bg-primary/18 cu-row'
-					: 'hover:bg-white/4'),
 		]}
 		onclick={() => onSelect(user)}
 		onkeydown={(e) => { if (!user.isPreviewNode && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(user); } }}
@@ -1419,6 +1488,7 @@
 		role={user.isPreviewNode ? 'presentation' : 'button'}
 		tabindex={user.isPreviewNode ? undefined : 0}
 		aria-disabled={user.isPreviewNode ? 'true' : undefined}
+		data-row-on-lineage={isInLineage ? 'true' : 'false'}
 	>
 		<!-- Expand/collapse caret. Sized to keep the same flex slot
 		     (w-4 h-4) so the row layout is unchanged, but the visible
@@ -1445,47 +1515,61 @@
 		{/if}
 
 		<!--
-			Avatar wrapper composes base node kind silhouette with overlay states.
+			Local selection zone — wraps avatar + name + character so the
+			selection background and ring sit LOCALLY around the node content
+			instead of stretching across the empty right side of the tree.
 
-			  Layer 1 — BASE silhouette (from nodeKind):
-			    passive    → small, dim, desaturated, no decoration
-			    deep       → quiet listener, no glow, no ring
-			    amplifier  → ring + outward ripple
-			    success    → double ring + outward ripple + orbit comet
+			Padding: py-3 pl-4 pr-5 (12px vertical, 16px left, 20px right).
+			Applied uniformly to every state so the user-persistent card
+			shares the exact same geometry as a selected card — only the
+			bg / ring / elevation classes differ. Earlier passes used
+			py-2.5 pl-3 which left the user node feeling shorter and
+			tighter than selected cards because the cu-row left bar
+			visually consumed some of the left inset; bumping to pl-4
+			restores comfortable breathing room around the avatar.
 
-			  Layer 2 — Origin overlay (stackable, static):
-			    .origin-glyph (sibling of avatar) + ORIGIN text label
+			Radius: rounded-lg (8px) — calmer silhouette, less button-like.
 
-			  Layer 3 — Current-user overlay (stackable, static):
-			    primary border on inner avatar + cu-row left rail + bg
+			Elevation: tinted box-shadow via .selection-elev-* classes —
+			selected states keep their louder bloom, the user-persistent
+			state stays faint. Same geometry, hierarchy carried by styling.
 		-->
+		<div
+			class={[
+				'row-selection-zone flex items-start gap-4 min-w-0 max-w-md py-3 pl-4 pr-5 rounded-lg transition duration-150',
+				!user.isPreviewNode && (isSelected
+					? user.isCurrentUser
+						/* Selected USER — primary-tinted card, loud bloom.
+						   Preserves the identity tint (still the user) but
+						   wins the selection competition with brighter
+						   alphas + the user-sel elevation. */
+						? 'bg-primary/15 ring-1 ring-primary/50 cu-row selection-elev-user-sel'
+						/* Selected NON-USER — accent-tinted card, loudest bloom.
+						   Highest visual priority in the tree. */
+						: 'bg-accent/14 ring-1 ring-accent/45 selection-elev-selected'
+					: user.isCurrentUser
+						/* USER PERSISTENT (not selected) — fill bumped one
+						   notch (bg-primary 7 → 9, hover 11 → 13) so the
+						   card reads as "present" rather than "disabled",
+						   while ring, glow, border, and geometry stay
+						   identical. The selected states (14-15%) still
+						   clearly outshine this, preserving the hierarchy. */
+						? 'bg-primary/9 ring-1 ring-primary/22 hover:bg-primary/13 cu-row selection-elev-user-persist'
+						: 'group-hover/row:bg-white/4'),
+			]}
+		>
 		<div
 			class={[
 				'shrink-0 mt-0.5 relative overflow-visible node-avatar',
 				!user.isPreviewNode && nodeKindClass(user),
+				/* Suppress the kind-halo (.nk-amp::after /
+				   .nk-success::after) when this origin hasn't
+				   recruited a scout — the dashed ring becomes the
+				   outermost ring instead. Removed automatically the
+				   instant the origin gains a first child. */
+				isUnheardOrigin && 'unheard-origin',
 			]}
 		>
-			{#if DEBUG_BRANCH_LABELS && showTransitionLabel}
-				<!-- Incoming-segment annotation — anchored to the LEFT
-				     of the avatar where the incoming conduit elbow
-				     arrives, so it visually labels the SEGMENT, not the
-				     node. Absolute-positioned (no layout impact), tiny
-				     italic typography, leading line glyph trailing back
-				     along the conduit. pointer-events-none so clicks
-				     pass through to the row underneath. -->
-				<span
-					class={[
-						'absolute right-full top-1/2 -translate-y-1/2 mr-1 pointer-events-none',
-						'whitespace-nowrap text-[10px] uppercase tracking-widest font-mono italic opacity-70',
-						localActivity === 'peak-accelerating'    && 'text-[oklch(0.92_0.10_70)]',
-						localActivity === 'strong-accelerating'  && 'text-[oklch(0.80_0.18_55)]',
-						localActivity === 'accelerating'         && 'text-warning',
-						localActivity === 'alive'                && 'text-primary',
-						localActivity === 'dead'                 && 'text-base-content/40',
-					]}
-					aria-label={`incoming branch segment: ${shortStateLabel(localActivity)}`}
-				><span class="opacity-55 not-italic" aria-hidden="true">─</span> {shortStateLabel(localActivity)}</span>
-			{/if}
 			{#if user.nodeKind === 'successful-amplifier' && !user.isPreviewNode}
 				<!-- Outward broadcast ripple for successful amplifiers,
 				     composing with the orbit comet and double-ring halo. -->
@@ -1555,10 +1639,57 @@
 				     doesn't compete with transmission rings. -->
 				<span class="origin-glyph" aria-hidden="true"></span>
 			{/if}
+			{#if isUnheardOrigin}
+				<!-- UNHEARD-ORIGIN visual layer. Two decorations layered
+				     ABOVE the existing avatar styling — neither touches the
+				     avatar border, size, or color palette. `out:fade` fires
+				     when the origin recruits its first child and the
+				     {#if} unmounts the decorations; no entry animation so
+				     a freshly-mounted unheard origin looks "already that
+				     way". -->
+				<svg
+					class="unheard-origin-ring"
+					width="36"
+					height="36"
+					viewBox="0 0 36 36"
+					aria-hidden="true"
+					out:fade={{ duration: 300 }}
+				>
+					<!-- Dashed outer ring drawn as an SVG circle so dash
+					     length / gap / stroke weight are explicitly
+					     controlled (browser-default `border-style: dashed`
+					     ties dash length to border-width and reads as
+					     noisy at 1 px). 36 × 36 container → radius 17.5
+					     keeps the stroke just inside the viewBox; the
+					     ring sits ~4 px outside the 28 × 28 avatar so it
+					     reads as an outer orbit rather than an attached
+					     border. Stroke alpha 0.22 + dash 3.5/4.5 makes
+					     the ring patient + quiet; the beacon already
+					     carries any motion. -->
+					<circle
+						cx="18"
+						cy="18"
+						r="17.25"
+						fill="none"
+						stroke="oklch(0.82 0.02 245 / 0.22)"
+						stroke-width="1"
+						stroke-dasharray="3.5 4.5"
+					/>
+				</svg>
+				<span
+					class="unheard-origin-beacon"
+					aria-hidden="true"
+					out:fade={{ duration: 300 }}
+				>
+					<span class="unheard-origin-beacon-dot"></span>
+				</span>
+			{/if}
 		</div>
 
-		<!-- Name + character. Preview nodes italicize the character. -->
-		<div class="min-w-0 flex-1">
+		<!-- Name + character. Preview nodes italicize the character.
+		     `min-w-0` lets the name truncate when long; no flex-1 so the
+		     selection zone stays content-width instead of stretching. -->
+		<div class="min-w-0">
 			<div class="flex items-baseline gap-2">
 				<p class={[
 					'text-[13px] font-semibold leading-snug truncate',
@@ -1574,14 +1705,35 @@
 				]}>
 					{user.name}
 				</p>
-				{#if user.isOrigin && !user.isPreviewNode}
-					<!-- ORIGIN chip only — origins have no incoming segment,
-					     so they don't get a state annotation. The branch
-					     state of an origin can be read from the visual
-					     character of its outgoing conduits + the row-state
-					     chips that appear on its first internal transitions. -->
-					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
+				{#if user.branchSize > 0 && !user.isPreviewNode}
+					<!-- Propagation score — sits immediately after the scout
+					     name on the same baseline. Colour follows the node's
+					     own branch state so the score reads as an attribute
+					     of the scout, not a separate metric. Slightly smaller
+					     than the name (text-[11px] vs 13px), slightly
+					     brighter than the subtitle (alpha 60-82 vs subtitle
+					     /60); reads as metadata, never competes with the
+					     name. No glow, no pulse, no animation. -->
+					<span
+						class={[
+							'shrink-0 text-[11px] tabular-nums leading-none',
+							effectiveActivity === 'peak-accelerating'   ? 'text-[oklch(0.82_0.14_58)]/82'
+							: effectiveActivity === 'strong-accelerating' ? 'text-[oklch(0.75_0.14_55)]/72'
+							: effectiveActivity === 'accelerating'        ? 'text-[oklch(0.70_0.13_55)]/65'
+							: effectiveActivity === 'alive'               ? 'text-[oklch(0.72_0.07_230)]/62'
+							:                                                'text-base-content/42',
+						]}
+						aria-label={`branch size ${user.branchSize}`}
+					>+{user.branchSize}</span>
 				{/if}
+				<!-- EXPERIMENT: in-row ORIGIN chip removed. The left-edge
+				     `.origin-glyph` is now the sole in-tree marker for
+				     origins; the term itself remains discoverable via
+				     the side panel's "Origin scout" header when an
+				     origin row is selected. `user.isOrigin` is still
+				     used everywhere else (sorting, glyph rendering,
+				     dashed unresolved ring eligibility, inspector
+				     copy) — only this textual label was removed. -->
 			</div>
 			<p class={[
 				'text-[11px] leading-snug truncate',
@@ -1593,16 +1745,28 @@
 			]}>
 				{user.character}
 			</p>
+			{#if isUnheardOrigin && !user.isCurrentUser}
+				<!-- Atmospheric status — observational tone, not
+				     instructional. Suppressed for the current
+				     user's own unheard origin because the row already
+				     renders a dedicated ghost-child placeholder
+				     ("Searching for scouts") below the avatar, which
+				     carries the same meaning more meaningfully for
+				     the user (it marks where future descendants will
+				     appear). For non-user unheard origins, the
+				     inline microcopy is the only "still searching"
+				     hint. -->
+				<p
+					class="text-[10.5px] leading-snug text-base-content/40 italic truncate"
+					out:fade={{ duration: 300 }}
+				>
+					Searching for first scout
+				</p>
+			{/if}
 		</div>
 
-		<!-- Branch-size hint on the right edge. Neutral readout — no
-		     branch-mass / hub visual weighting (those systems were
-		     removed in the cleanup pass). -->
-		{#if user.branchSize > 0}
-			<span class="shrink-0 mt-1.5 text-[10px] font-mono tabular-nums text-base-content/45">
-				+{user.branchSize}
-			</span>
-		{/if}
+		</div><!-- /.row-selection-zone -->
+
 	</div>
 
 	<!--
@@ -1612,23 +1776,73 @@
 		exists but hasn't propagated yet" instead of a dead end. Decorative —
 		not selectable, not announced by screen readers as interactive.
 	-->
-	{#if user.isCurrentUser && !user.isPreviewNode && user.children.length === 0 && !user.hiddenChildren}
-		<!-- Dashed placeholder line uses ml/pl values chosen so the
-		     border-l sits at the same parent_x as a real rail (≈42.5,
-		     under the parent's avatar) and the inner row content aligns
-		     with where real-child rows would start (parent_x=62). -->
-		<div
-			class="relative pl-[19.5px] ml-[42.5px] border-l border-dashed border-primary/32"
-			aria-hidden="true"
-		>
-			<div class="flex items-center gap-2 py-1.5 pl-1 pr-2">
-				<span class="shrink-0 w-4 h-4" aria-hidden="true"></span>
-				<span class="shrink-0 w-7 h-7 flex items-center justify-center">
-					<span class="signal-ember w-2 h-2 rounded-full bg-primary"></span>
-				</span>
-				<p class="text-[11px] italic leading-snug text-primary/55">
-					Signal searching for scouts
-				</p>
+	{#if user.isCurrentUser && user.children.length === 0 && !user.hiddenChildren}
+		<!--
+			GHOST CHILD NODE — uses the EXACT same branch geometry as a
+			real downstream scout. The outer `pl-12 ml-3.5` wrapper
+			mirrors a real children container, and the inner wrapper
+			renders the standard top-stub + elbow SVG pair (same
+			coordinates as any real child wrapper) so the ghost avatar
+			lands at the precise x position a real first-child of Dan
+			would occupy. The conduit + elbow are simply DASHED instead
+			of solid to communicate "future / pending".
+
+			Layout stability: rendered for both preview and real states
+			with `class:invisible` on preview so the wrapper height
+			stays the same across amplification — ResizeObserver doesn't
+			re-fire, particle flowDur stays constant.
+
+			Non-interactive: aria-hidden, no onclick, no role, no lineage
+			participation, no particles. -->
+		<div class="relative pl-12 ml-3.5" class:invisible={user.isPreviewNode}>
+			<div class="relative pt-3" aria-hidden="true">
+				<!-- Top stub — dashed vertical rail from Dan's row down
+				     through the pt-3 gap to the elbow start. Same x
+				     position as a real child's top-stub (left -21.5,
+				     width 4); height extended to 26 px so it spans
+				     pt-3 (12) + the standard top-stub region (14). -->
+				<svg
+					class="absolute pointer-events-none overflow-visible text-primary/32"
+					style="left: -21.5px; top: 0; width: 4px; height: 26px;"
+					viewBox="0 0 4 26"
+					preserveAspectRatio="none"
+					aria-hidden="true"
+				>
+					<path d="M 2 0 L 2 26" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" fill="none" vector-effect="non-scaling-stroke" />
+				</svg>
+				<!-- Elbow — dashed bezier from rail to ghost avatar.
+				     Same shape as a real child's elbow (55 × 8 viewBox,
+				     M 0.5 0 C 0.5 8 32.5 8 55 8); positioned 12 px
+				     lower than a real elbow (top 26 vs 14) to account
+				     for the pt-3 wrapper offset, so the tip still
+				     lands at the avatar's upper-left curve. -->
+				<svg
+					class="absolute -left-5 pointer-events-none overflow-visible text-primary/32"
+					style="top: 26px;"
+					width="55"
+					height="8"
+					viewBox="0 0 55 8"
+					aria-hidden="true"
+				>
+					<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" fill="none" vector-effect="non-scaling-stroke" />
+				</svg>
+				<!-- Row content — same structural layout as a real child
+				     row (caret slot + inner row mirroring selection-zone
+				     padding) so the ghost avatar aligns with where real
+				     siblings' avatars would sit. -->
+				<div class="flex items-start gap-4">
+					<span class="shrink-0 mt-1 w-4 h-4"></span>
+					<div class="flex items-center gap-2.5 py-3 pl-4 pr-5">
+						<!-- Ghost avatar: empty dashed neutral circle.
+						     31 px (≈ +10 % over a real 28 px scout),
+						     opacity 0.34, neutral base-content palette. -->
+						<div
+							class="shrink-0 w-7.75 h-7.75 rounded-full border border-dashed border-base-content/40 bg-base-content/8"
+							style="opacity: 0.34;"
+						></div>
+						<p class="text-[13px] font-semibold leading-snug text-base-content/55">Searching for scouts</p>
+					</div>
+				</div>
 			</div>
 		</div>
 	{/if}
@@ -1731,13 +1945,17 @@
 					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
 					onParticleArrival={onChildParticleArrival}
 					whiteAnchorId={computedWhiteAnchorId}
-					inheritedLabeledState={labeledStateForChildren}
+					{lineageIds}
+					{lineageOrderedIds}
 					incomingTrunkActivity={hottestAtAndBelow[i]}
 					outgoingTrunkActivity={
 						i < combinedChildrenActivities.length - 1
 							? hottestAtAndBelow[i + 1]
 							: undefined
 					}
+					incomingTrunkOnLineage={lineageChildIndexInContainer >= 0 && i <= lineageChildIndexInContainer}
+					outgoingTrunkOnLineage={lineageChildIndexInContainer >= 0 && i < lineageChildIndexInContainer}
+					trunkLineageIndex={childrenTrunkLineageIndex}
 				/>
 			{/each}
 
@@ -1829,8 +2047,9 @@
 							isLast={i === tailStubs.length - 1}
 							onParticleArrival={onChildParticleArrival}
 							whiteAnchorId={computedWhiteAnchorId}
-							inheritedLabeledState={labeledStateForChildren}
-							incomingTrunkActivity={
+					{lineageIds}
+					{lineageOrderedIds}
+									incomingTrunkActivity={
 								hottestAtAndBelow[sortedChildren.length + i]
 							}
 							outgoingTrunkActivity={
