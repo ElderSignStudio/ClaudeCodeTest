@@ -1726,11 +1726,14 @@
 						aria-label={`branch size ${user.branchSize}`}
 					>+{user.branchSize}</span>
 				{/if}
-				{#if user.isOrigin && !user.isPreviewNode}
-					<!-- ORIGIN chip — sits after the score so the visual order
-					     reads "Alice +34 ORIGIN": name, metadata, role badge. -->
-					<span class="text-[10px] uppercase tracking-widest text-accent/82 shrink-0">origin</span>
-				{/if}
+				<!-- EXPERIMENT: in-row ORIGIN chip removed. The left-edge
+				     `.origin-glyph` is now the sole in-tree marker for
+				     origins; the term itself remains discoverable via
+				     the side panel's "Origin scout" header when an
+				     origin row is selected. `user.isOrigin` is still
+				     used everywhere else (sorting, glyph rendering,
+				     dashed unresolved ring eligibility, inspector
+				     copy) — only this textual label was removed. -->
 			</div>
 			<p class={[
 				'text-[11px] leading-snug truncate',
