@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { getContext, setContext } from 'svelte';
 	import { fade } from 'svelte/transition';
-	import { ChevronDown, ChevronRight } from 'lucide-svelte';
+	import { ChevronDown, ChevronRight, Radio } from 'lucide-svelte';
 	import type { PropagationUser, PreviewTarget, BranchActivityState } from '$lib/mock/propagation';
 	import { sortNodesByPropagation, computeBranchActivity } from '$lib/mock/propagation';
 	import Self from './PropagationNode.svelte';
@@ -38,6 +38,7 @@
 		incomingTrunkOnLineage = false,
 		outgoingTrunkOnLineage = false,
 		trunkLineageIndex = -1,
+		onAmplify = undefined,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
@@ -107,6 +108,14 @@
 		 *  intermediate siblings' trunk lights up in sync with the
 		 *  lineage descendant below them. */
 		trunkLineageIndex?: number;
+		/** Optional callback that triggers the same top-level
+		 *  Amplify action as the hero button. When this node is the
+		 *  current user in State B (has played, not yet amplified,
+		 *  no children) the ghost-child placeholder renders a small
+		 *  inline Amplify button wired to this callback. Undefined
+		 *  for the non-current-user case — the button never appears
+		 *  on rows other than Dan's. */
+		onAmplify?: (() => void) | undefined;
 	} = $props();
 
 	/* True when THIS node sits on the user's personal lineage. Used to
@@ -1776,31 +1785,36 @@
 		exists but hasn't propagated yet" instead of a dead end. Decorative —
 		not selectable, not announced by screen readers as interactive.
 	-->
-	{#if user.isCurrentUser && user.children.length === 0 && !user.hiddenChildren}
+	{#if user.isCurrentUser && user.children.length === 0 && !user.hiddenChildren && !user.isPreviewNode}
 		<!--
 			GHOST CHILD NODE — uses the EXACT same branch geometry as a
-			real downstream scout. The outer `pl-12 ml-3.5` wrapper
-			mirrors a real children container, and the inner wrapper
-			renders the standard top-stub + elbow SVG pair (same
-			coordinates as any real child wrapper) so the ghost avatar
-			lands at the precise x position a real first-child of Dan
-			would occupy. The conduit + elbow are simply DASHED instead
-			of solid to communicate "future / pending".
+			real downstream scout. Renders whenever the current user is
+			in the tree (State B or C) and has no children yet, so the
+			placeholder is visible from the moment of Play. Copy adapts
+			to lifecycle state:
 
-			Layout stability: rendered for both preview and real states
-			with `class:invisible` on preview so the wrapper height
-			stays the same across amplification — ResizeObserver doesn't
-			re-fire, particle flowDur stays constant.
+			  • State B (listener kind, no amplifications) — primary
+			    "Searching for scouts", secondary "Amplify to boost
+			    this signal", plus a small inline Amplify button wired
+			    to the same handler as the hero button.
+			  • State C (amplifier kind / amplifications > 0) —
+			    "Amplified · searching for scouts", no secondary line,
+			    no button. The signal is already on its way.
 
-			Non-interactive: aria-hidden, no onclick, no role, no lineage
-			participation, no particles. -->
-		<div class="relative pl-12 ml-3.5" class:invisible={user.isPreviewNode}>
-			<div class="relative pt-3" aria-hidden="true">
-				<!-- Top stub — dashed vertical rail from Dan's row down
-				     through the pt-3 gap to the elbow start. Same x
-				     position as a real child's top-stub (left -21.5,
-				     width 4); height extended to 26 px so it spans
-				     pt-3 (12) + the standard top-stub region (14). -->
+			Outer `pl-12 ml-3.5` wrapper mirrors a real children
+			container; inner wrapper renders the standard top-stub +
+			elbow SVG pair (same coordinates as any real child wrapper)
+			so the ghost avatar lands at the precise x position a real
+			first-child of Dan would occupy. Conduit + elbow are
+			DASHED instead of solid to communicate "future / pending".
+
+			Decorative elements (rails, avatar circle) carry their
+			own aria-hidden; the inline Amplify button is NOT hidden
+			from assistive tech so keyboard / screen-reader users can
+			reach it. -->
+		{@const hasAmplified = user.amplifications > 0 || user.nodeKind === 'amplifier'}
+		<div class="relative pl-12 ml-3.5">
+			<div class="relative pt-3">
 				<svg
 					class="absolute pointer-events-none overflow-visible text-primary/32"
 					style="left: -21.5px; top: 0; width: 4px; height: 26px;"
@@ -1810,12 +1824,6 @@
 				>
 					<path d="M 2 0 L 2 26" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" fill="none" vector-effect="non-scaling-stroke" />
 				</svg>
-				<!-- Elbow — dashed bezier from rail to ghost avatar.
-				     Same shape as a real child's elbow (55 × 8 viewBox,
-				     M 0.5 0 C 0.5 8 32.5 8 55 8); positioned 12 px
-				     lower than a real elbow (top 26 vs 14) to account
-				     for the pt-3 wrapper offset, so the tip still
-				     lands at the avatar's upper-left curve. -->
 				<svg
 					class="absolute -left-5 pointer-events-none overflow-visible text-primary/32"
 					style="top: 26px;"
@@ -1826,21 +1834,37 @@
 				>
 					<path d="M 0.5 0 C 0.5 8 32.5 8 55 8" stroke="currentColor" stroke-width="1" stroke-dasharray="3 3" fill="none" vector-effect="non-scaling-stroke" />
 				</svg>
-				<!-- Row content — same structural layout as a real child
-				     row (caret slot + inner row mirroring selection-zone
-				     padding) so the ghost avatar aligns with where real
-				     siblings' avatars would sit. -->
 				<div class="flex items-start gap-4">
-					<span class="shrink-0 mt-1 w-4 h-4"></span>
-					<div class="flex items-center gap-2.5 py-3 pl-4 pr-5">
-						<!-- Ghost avatar: empty dashed neutral circle.
-						     31 px (≈ +10 % over a real 28 px scout),
-						     opacity 0.34, neutral base-content palette. -->
+					<span class="shrink-0 mt-1 w-4 h-4" aria-hidden="true"></span>
+					<div class="flex items-start gap-2.5 py-3 pl-4 pr-5">
 						<div
-							class="shrink-0 w-7.75 h-7.75 rounded-full border border-dashed border-base-content/40 bg-base-content/8"
+							class="shrink-0 mt-0.5 w-7.75 h-7.75 rounded-full border border-dashed border-base-content/40 bg-base-content/8"
 							style="opacity: 0.34;"
+							aria-hidden="true"
 						></div>
-						<p class="text-[13px] font-semibold leading-snug text-base-content/55">Searching for scouts</p>
+						<div class="flex flex-col gap-1">
+							<p class="text-[13px] font-semibold leading-snug text-base-content/55">
+								{hasAmplified ? 'Amplified · searching for scouts' : 'Searching for scouts'}
+							</p>
+							{#if !hasAmplified}
+								<div class="flex items-center gap-2 flex-wrap">
+									<p class="text-[11px] leading-snug text-base-content/45 italic">
+										Amplify to boost this signal
+									</p>
+									{#if onAmplify}
+										<button
+											type="button"
+											class="inline-flex items-center gap-1 h-5 px-2 rounded-full text-[10.5px] font-semibold text-accent border border-accent/46 bg-black/30 hover:bg-accent/16 hover:border-accent/65 transition-colors"
+											onclick={(e) => { e.stopPropagation(); onAmplify?.(); }}
+											title="Amplify this signal"
+										>
+											<Radio size={9} />
+											Amplify
+										</button>
+									{/if}
+								</div>
+							{/if}
+						</div>
 					</div>
 				</div>
 			</div>
@@ -1956,6 +1980,7 @@
 					incomingTrunkOnLineage={lineageChildIndexInContainer >= 0 && i <= lineageChildIndexInContainer}
 					outgoingTrunkOnLineage={lineageChildIndexInContainer >= 0 && i < lineageChildIndexInContainer}
 					trunkLineageIndex={childrenTrunkLineageIndex}
+					{onAmplify}
 				/>
 			{/each}
 
@@ -2057,6 +2082,7 @@
 									? hottestAtAndBelow[sortedChildren.length + i + 1]
 									: undefined
 							}
+							{onAmplify}
 						/>
 					{/each}
 				{/if}

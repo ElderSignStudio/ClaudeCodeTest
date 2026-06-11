@@ -26,7 +26,9 @@
 		lineageIds = null,
 		lineageOrderedIds = null,
 		currentUserId = null,
+		hasPlayed = true,
 		revealNonce = 0,
+		onAmplify = undefined,
 	}: {
 		forest: PropagationForest;
 		selectedUserId: string | null;
@@ -48,6 +50,14 @@
 		 *  viewport, an offscreen "Your signal" pill renders at the
 		 *  appropriate edge with a click-to-scroll handler. */
 		currentUserId?: string | null;
+		/** Lifecycle gate — `false` means the user is in State A
+		 *  (preview node only). The locator pill switches into a
+		 *  more subdued "Play to join" variant that points at the
+		 *  preview node's location instead of the real user node;
+		 *  copy and styling distinguish it from the active "Your
+		 *  signal" pill. Defaults to `true` so callers that don't
+		 *  pass the prop get the existing post-play behaviour. */
+		hasPlayed?: boolean;
 		/** Monotonic counter from the parent: increments on every fresh
 		 *  insertion of Dan into the tree (amplify-on transition). When
 		 *  it changes, the tree runs the post-amplify reveal sequence:
@@ -56,6 +66,12 @@
 		 *  row before settling. Defaulting to 0 means SSR / first-mount
 		 *  never triggers a reveal — only true increments do. */
 		revealNonce?: number;
+		/** Same handler the hero's Amplify button uses. Passed
+		 *  through to PropagationNode so the ghost-child placeholder
+		 *  under the user's row can render an inline "Amplify" button
+		 *  in State B (played, not amplified). Undefined when no
+		 *  inline action is wanted. */
+		onAmplify?: (() => void) | undefined;
 	} = $props();
 
 	const lineageActive = $derived(lineageIds !== null && lineageIds.size > 0);
@@ -191,7 +207,17 @@
 
 	function findCurrentUser(): { wrapper: HTMLElement; avatar: HTMLElement } | null {
 		if (!currentUserId || !scrollContent) return null;
-		const wrapper = scrollContent.querySelector(`[data-user-id="${currentUserId}"]`) as HTMLElement | null;
+		/* In State A the page inserts a preview placeholder under
+		   the route's source scout with id `${currentUserId}-preview`
+		   instead of the real user node. The locator pill should
+		   still appear (it teaches WHERE the user will land) so we
+		   fall back to the preview node when the real node isn't
+		   in the DOM. The pill copy / styling is then varied by the
+		   `hasPlayed` prop, not by which node we found. */
+		const realId = currentUserId;
+		const previewId = `${currentUserId}-preview`;
+		const lookupId = hasPlayed ? realId : previewId;
+		const wrapper = scrollContent.querySelector(`[data-user-id="${lookupId}"]`) as HTMLElement | null;
 		if (!wrapper) return null;
 		const avatar = wrapper.querySelector('.node-avatar') as HTMLElement | null;
 		if (!avatar) return null;
@@ -462,6 +488,7 @@
 				{lineageIds}
 				{lineageOrderedIds}
 				depth={0}
+				{onAmplify}
 			/>
 		{/each}
 	</div>
@@ -486,6 +513,7 @@
 						{onSelect}
 						{onPreview}
 						depth={0}
+						{onAmplify}
 					/>
 				{/each}
 			</div>
@@ -565,11 +593,12 @@
 		class="lineage-find-me-pill"
 		data-direction={userIndicator.direction}
 		data-fading={pillFading ? 'true' : 'false'}
+		data-variant={hasPlayed ? 'active' : 'preview'}
 		style="left: {userIndicator.centerX}px; {userIndicator.top !== null ? `top: ${userIndicator.top}px;` : `bottom: ${userIndicator.bottom}px;`}"
 		onclick={scrollToCurrentUser}
-		aria-label="Scroll to your signal"
+		aria-label={hasPlayed ? 'Scroll to your signal' : 'Scroll to your future place in the lineage'}
 	>
-		Your signal
+		{hasPlayed ? 'Your signal' : 'Play to join'}
 	</button>
 {/if}
 
@@ -677,6 +706,26 @@
 	.lineage-find-me-pill[data-fading='true'] {
 		animation: none;
 		opacity: 0;
+	}
+	/* Preview variant — fires in State A (the user hasn't played
+	   yet so there's no real "Your signal" node, just a preview
+	   placeholder). Reads as anticipatory: same shape and beacon,
+	   lower contrast across bg / border / text, and the halo +
+	   guide line dim in proportion. Deliberately NOT a disabled
+	   grey — the pill is fully clickable and scrolls to the
+	   preview node so the user can see WHERE they'll land. */
+	.lineage-find-me-pill[data-variant='preview'] {
+		background-color: color-mix(in srgb, var(--color-primary), transparent 92%);
+		border-color: color-mix(in srgb, var(--color-primary), transparent 84%);
+		color: oklch(from var(--color-primary) calc(l + 0.04) c h / 0.72);
+	}
+	.lineage-find-me-pill[data-variant='preview']::after {
+		border-left-color: color-mix(in srgb, var(--color-primary), transparent 72%);
+	}
+	.lineage-find-me-pill[data-variant='preview']:hover {
+		background-color: color-mix(in srgb, var(--color-primary), transparent 84%);
+		color: oklch(from var(--color-primary) calc(l + 0.06) c h / 0.86);
+		border-color: color-mix(in srgb, var(--color-primary), transparent 70%);
 	}
 	/* Subtle vertical fade behind the pill — creates the impression
 	   that the tree edge softly dissolves into the pill. Pointer-

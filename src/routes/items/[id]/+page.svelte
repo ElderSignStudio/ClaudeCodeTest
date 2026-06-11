@@ -65,16 +65,34 @@
 			: null,
 	);
 
-	// Initial amplified state.
-	//   - With a route in context: ALWAYS start unamplified. The route wins
-	//     over any existing Dan node in the mock forest — the user has not
-	//     yet amplified *through this specific route*. (Future: check a
-	//     per-route discovery record.)
-	//   - Without a route: mirror Dan's presence in the forest, so origin-
-	//     route pages where Dan is genuinely the origin start "Amplified".
+	/* Three-state user lifecycle:
+	     A — Not yet in tree:    !hasPlayed && !isAmplified  → preview node
+	     B — In tree, listener:   hasPlayed && !isAmplified  → real user node, deep-listener kind
+	     C — Amplified:                       isAmplified    → real user node, amplifier kind
+	   Once amplified, hasPlayed is implicitly true (you can't amplify
+	   without having played). The transitions Play (A→B) and Amplify
+	   (B→C) both fire `revealNonce++` so the tree smooth-scrolls and
+	   highlights the user's row, reusing the same reveal sequence in
+	   both cases (per spec — no new animation language). */
+	let hasPlayed                = $state(false);
 	let isAmplifiedByCurrentUser = $state(false);
+
+	/* Initialisation — only re-runs when route changes (the data
+	   prop is replaced). User-driven Play / Amplify mutations to the
+	   two state booleans don't trip these dependencies. */
 	$effect(() => {
-		isAmplifiedByCurrentUser = routeSourceScoutId ? false : userAlreadyInForest;
+		if (routeSourceScoutId) {
+			// Route in context — user hasn't traversed this route yet.
+			hasPlayed = false;
+			isAmplifiedByCurrentUser = false;
+		} else {
+			// Origin-stories items, or items whose source scout IS Dan.
+			// Mirror his existing position in the forest; if he's already
+			// an origin there, treat that as State C (he brought the signal
+			// in himself).
+			hasPlayed = userAlreadyInForest;
+			isAmplifiedByCurrentUser = userAlreadyInForest;
+		}
 	});
 
 	function makeCurrentUserNode(): PropagationUser {
@@ -95,12 +113,38 @@
 		};
 	}
 
+	/* State B — the user joined the lineage as a listener (played the
+	   signal) but hasn't amplified it forward yet. Same identity as
+	   makeCurrentUserNode but `nodeKind: 'deep-listener'` and zero
+	   amplifications so the inspector reads "you discovered this
+	   signal but haven't passed it forward" rather than "you
+	   amplified". Ghost-child placeholder under the row is
+	   suppressed for this kind (see PropagationNode) — there's no
+	   downstream branch to wait on until they amplify. */
+	function makeListenerNode(): PropagationUser {
+		return {
+			id: CURRENT_USER_ID,
+			name: danScout?.name ?? 'Dan',
+			avatar: danScout?.avatar ?? '',
+			character: 'Your signal',
+			amplifications: 0,
+			branchSize: 0,
+			discoveredAgo: 'Just now',
+			behaviorNote: 'You discovered this signal through this branch.',
+			scenes: [],
+			children: [],
+			depthLevels: 0,
+			isCurrentUser: true,
+			nodeKind: 'deep-listener',
+		};
+	}
+
 	function makePreviewNode(): PropagationUser {
 		return {
 			id: `${CURRENT_USER_ID}-preview`,
 			name: danScout?.name ?? 'Dan',
 			avatar: danScout?.avatar ?? '',
-			character: 'Amplify to be included here',
+			character: 'Play to be included here',
 			amplifications: 0,
 			branchSize: 0,
 			discoveredAgo: '',
@@ -117,9 +161,13 @@
 		// mock forest. Strip Dan first, then insert under the route.
 		if (routeSourceScoutId) {
 			const baseWithoutUser = removeUserFromForest(forest, CURRENT_USER_ID);
-			return isAmplifiedByCurrentUser
-				? addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makeCurrentUserNode())
-				: addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makePreviewNode());
+			if (isAmplifiedByCurrentUser) {
+				return addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makeCurrentUserNode());
+			}
+			if (hasPlayed) {
+				return addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makeListenerNode());
+			}
+			return addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makePreviewNode());
 		}
 
 		// No route context (Origin Stories item, or item whose source scout IS
@@ -166,10 +214,22 @@
 	const lineageIds = $derived(lineageOrderedIds ? new Set(lineageOrderedIds) : null);
 
 	function handleSelect(user: PropagationUser) {
-		// Preview nodes ARE selectable now — the inspector renders a special
-		// "Your entry point" card explaining where the user would join the
-		// lineage. The preview row itself stays cursor-default + aria-
-		// disabled in PropagationNode, but click still surfaces the card.
+		// Toggle: clicking the already-selected node deselects.
+		// Applies uniformly to origins, leaves, the user node, the
+		// preview placeholder — every selectable row in the tree. On
+		// deselect the inspector returns to its default global state
+		// and any selection-driven tree highlighting (e.g. the lineage
+		// reveal triggered by selecting your own node) tears down with
+		// it.
+		if (selectedTarget?.kind === 'user' && selectedTarget.user.id === user.id) {
+			selectedTarget = null;
+			return;
+		}
+		// Preview nodes ARE selectable — the inspector renders a special
+		// "Your entry point" card explaining where the user would join
+		// the lineage. The preview row itself stays cursor-default +
+		// aria-disabled in PropagationNode, but click still surfaces
+		// the card.
 		selectedTarget = { kind: 'user', user };
 	}
 	function handlePreview(target: PreviewTarget | null) {
@@ -182,18 +242,46 @@
 		selectedTarget = null;
 		hoveredTarget = null;
 	}
-	/* Post-amplify reveal trigger. PropagationTree watches this
-	   counter; every true increment (i.e., the user just amplified)
-	   kicks off the locator-fade → smooth-scroll → highlight
-	   sequence inside the tree. Toggling amplify OFF does NOT bump
-	   it — there's no destination to glide to. */
+	/* Post-amplify / post-play reveal trigger. PropagationTree
+	   watches this counter; every true increment kicks off the
+	   locator-fade → smooth-scroll → highlight sequence inside the
+	   tree. Fired on Play (A→B insertion) AND Amplify (B→C
+	   transition) — both moments are the user "moving into" the
+	   tree and deserve the same reveal language. Toggling amplify
+	   OFF does NOT bump it (there's no destination to glide to). */
 	let revealNonce = $state(0);
 
+	function handlePlay() {
+		// State A → State B. Idempotent: a second Play after we're
+		// already in the tree is a no-op (the button might be wired
+		// to play the song's audio in the future; for now there's no
+		// re-play visual). Origin-stories items keep this in lockstep
+		// with `isAmplifiedByCurrentUser` since they don't have a
+		// listener-only middle state — the user IS the origin.
+		if (hasPlayed) return;
+		hasPlayed = true;
+		if (!routeSourceScoutId) {
+			// No-route items have no "play then amplify" sequence —
+			// the user joining IS the amplification.
+			isAmplifiedByCurrentUser = true;
+		}
+		revealNonce++;
+	}
+
 	function handleToggleAmplify() {
+		// Disabled in State A — the spec teaches "Play before Amplify"
+		// by removing the action entirely from the un-played state.
+		// The button itself is also `disabled` in the ItemHero, but
+		// this guard is defensive in case the handler is reached via
+		// another path.
+		if (!hasPlayed) return;
 		const wasAmplified = isAmplifiedByCurrentUser;
 		isAmplifiedByCurrentUser = !wasAmplified;
-		// If the user un-amplifies and their own node was selected, clear
-		// the selection so the inspector doesn't reference a vanished node.
+		// If the user un-amplifies and their own node was selected,
+		// clear the selection so the inspector doesn't reference a
+		// vanished node. (After un-amplify they remain in State B —
+		// the listener node still exists, so we keep the selection
+		// only when it points at that surviving node.)
 		if (wasAmplified
 			&& selectedTarget?.kind === 'user'
 			&& selectedTarget.user.id === CURRENT_USER_ID
@@ -218,7 +306,9 @@
 		{item}
 		{forest}
 		isAmplified={isAmplifiedByCurrentUser}
+		{hasPlayed}
 		onReset={resetToGlobal}
+		onPlay={handlePlay}
 		onToggleAmplify={handleToggleAmplify}
 	/>
 
@@ -248,7 +338,9 @@
 					{lineageIds}
 					{lineageOrderedIds}
 					currentUserId={CURRENT_USER_ID}
+					{hasPlayed}
 					{revealNonce}
+					onAmplify={handleToggleAmplify}
 				/>
 			</section>
 
