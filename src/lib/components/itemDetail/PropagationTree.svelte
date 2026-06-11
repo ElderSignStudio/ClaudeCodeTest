@@ -26,6 +26,7 @@
 		lineageIds = null,
 		lineageOrderedIds = null,
 		currentUserId = null,
+		revealNonce = 0,
 	}: {
 		forest: PropagationForest;
 		selectedUserId: string | null;
@@ -47,6 +48,14 @@
 		 *  viewport, an offscreen "Your signal" pill renders at the
 		 *  appropriate edge with a click-to-scroll handler. */
 		currentUserId?: string | null;
+		/** Monotonic counter from the parent: increments on every fresh
+		 *  insertion of Dan into the tree (amplify-on transition). When
+		 *  it changes, the tree runs the post-amplify reveal sequence:
+		 *  fade the locator pill out, smooth-scroll Dan into the
+		 *  middle-third of the viewport, then briefly highlight his
+		 *  row before settling. Defaulting to 0 means SSR / first-mount
+		 *  never triggers a reveal — only true increments do. */
+		revealNonce?: number;
 	} = $props();
 
 	const lineageActive = $derived(lineageIds !== null && lineageIds.size > 0);
@@ -190,6 +199,13 @@
 	}
 
 	function recomputeUserIndicator() {
+		/* While the post-amplify reveal sequence is running we freeze the
+		   indicator — `pillFading` owns the visual state (fading to
+		   opacity 0), and once the scroll completes Dan is in view so the
+		   pill should disappear naturally. Recomputing during the fade
+		   would yank the element out of the DOM mid-transition and kill
+		   the handoff animation. */
+		if (revealInProgress) return;
 		const u = findCurrentUser();
 		if (!u || !scrollRoot) {
 			userIndicator = null;
@@ -246,6 +262,82 @@
 		if (!u) return;
 		u.avatar.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
 	}
+
+	/* ── Post-amplify reveal sequence ──────────────────────────────
+	   Triggered by the parent bumping `revealNonce` when the user
+	   amplifies (i.e., Dan transitions from preview-or-absent into a
+	   real node in the forest). The three steps follow the spec:
+	     1. Concurrent locator fade-out + smooth page scroll. The
+	        scroll target places Dan ≈ 40 % from the top of the
+	        viewport — solidly inside the "middle third" the spec
+	        asks for, without dead-centering.
+	     2. After the scroll settles, briefly raise a calm "I'm
+	        here" highlight on Dan's row (brighter bg + soft glow).
+	     3. Settle back to the persistent "Your signal" styling and
+	        let the indicator recompute (it will now be null because
+	        Dan is in view). */
+	let pillFading       = $state(false);
+	let revealInProgress = $state(false);
+	let lastRevealNonce  = $state(0);
+
+	function sleep(ms: number): Promise<void> {
+		return new Promise((resolve) => setTimeout(resolve, ms));
+	}
+
+	async function runRevealSequence() {
+		/* Wait two frames so the freshly-inserted Dan node is in the
+		   DOM with stable layout before we measure it. */
+		await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
+		const u = findCurrentUser();
+		if (!u) return;
+		revealInProgress = true;
+		/* Begin the locator fade-out (no-op visually if the pill wasn't
+		   visible; harmless to set in either case). The CSS transition
+		   carries opacity to 0 over ~300 ms while the scroll begins. */
+		pillFading = true;
+		/* Smooth-scroll the PAGE so Dan sits ≈ 40 % from the top.
+		   Using window.scrollTo with behavior:'smooth' inherits the
+		   browser's default ease curve (close enough to ease-in-out
+		   for this duration). The tree itself is rendered inside the
+		   normal page flow so the page scroll is the right axis. */
+		const userBox = u.avatar.getBoundingClientRect();
+		const targetTop = Math.max(0, window.scrollY + userBox.top - window.innerHeight * 0.4);
+		window.scrollTo({ top: targetTop, behavior: 'smooth' });
+		/* Wait for the scroll to land. ~900 ms covers the typical
+		   browser smooth-scroll duration for distances up to a few
+		   thousand pixels; if the scroll is shorter we just spend
+		   the leftover time idle, which still feels calm. */
+		await sleep(900);
+		/* Reveal flash — find Dan's row-selection-zone and toggle a
+		   class that triggers the one-shot keyframe animation. We do
+		   this imperatively (rather than via a reactive attribute on
+		   the scroll root) because CSS can't dynamically match a
+		   descendant's data-user-id against a value held on a
+		   parent. Class lives on the actual node so the animation
+		   resolves locally and resumes the baseline styling on
+		   completion. */
+		const u2 = findCurrentUser();
+		const selectionZone = u2?.wrapper.querySelector('.row-selection-zone') as HTMLElement | null;
+		if (selectionZone) selectionZone.classList.add('reveal-flash-active');
+		await sleep(1000);
+		if (selectionZone) selectionZone.classList.remove('reveal-flash-active');
+		pillFading = false;
+		revealInProgress = false;
+		/* Now that the sequence is over the indicator should
+		   recompute naturally — Dan is in view, so it stays null. */
+		recomputeUserIndicator();
+	}
+
+	$effect(() => {
+		/* Watch revealNonce; on a true increment (not the initial 0),
+		   run the sequence. lastRevealNonce is local state so a
+		   forest swap that re-mounts the component won't replay the
+		   reveal — only fresh increments do. */
+		if (revealNonce > lastRevealNonce) {
+			lastRevealNonce = revealNonce;
+			runRevealSequence();
+		}
+	});
 
 	$effect(() => {
 		if (!scrollContent || !scrollRoot) return;
@@ -324,7 +416,11 @@
 		instead of being squeezed by the container. When the tree
 		fits, max-content ≤ container width and no scrollbar appears.
 	-->
-	<div class="tree-scroll-x" data-lineage-active={lineageActive ? 'true' : 'false'} bind:this={scrollRoot}>
+	<div
+		class="tree-scroll-x"
+		data-lineage-active={lineageActive ? 'true' : 'false'}
+		bind:this={scrollRoot}
+	>
 	<div class="tree-scroll-content" bind:this={scrollContent}>
 
 	<!-- Roots — each is its own independent origin tree. Sorted by
@@ -442,6 +538,7 @@
 		type="button"
 		class="lineage-find-me-pill"
 		data-direction={userIndicator.direction}
+		data-fading={pillFading ? 'true' : 'false'}
 		style="left: {userIndicator.centerX}px; {userIndicator.top !== null ? `top: ${userIndicator.top}px;` : `bottom: ${userIndicator.bottom}px;`}"
 		onclick={scrollToCurrentUser}
 		aria-label="Scroll to your signal"
@@ -507,12 +604,16 @@
 		transform: translateX(-50%);
 		display: inline-flex;
 		align-items: center;
-		padding: 0.2rem 0.6rem;
+		/* Discoverability pass — pill silhouette grows ~15-20 %
+		   (padding 0.2→0.3 / 0.6→0.85 rem, font 9.75→10.75 px),
+		   bg / border / text each step ~10-15 % toward higher
+		   contrast. Beacon, glow, and positioning untouched. */
+		padding: 0.3rem 0.85rem;
 		border-radius: 9999px;
-		background-color: color-mix(in srgb, var(--color-primary), transparent 88%);
-		color: oklch(from var(--color-primary) calc(l + 0.04) c h / 0.78);
-		border: 1px solid color-mix(in srgb, var(--color-primary), transparent 80%);
-		font-size: 9.75px;
+		background-color: color-mix(in srgb, var(--color-primary), transparent 86%);
+		color: oklch(from var(--color-primary) calc(l + 0.04) c h / 0.88);
+		border: 1px solid color-mix(in srgb, var(--color-primary), transparent 74%);
+		font-size: 10.75px;
 		font-weight: 500;
 		letter-spacing: 0.04em;
 		line-height: 1;
@@ -521,9 +622,35 @@
 		/* Above the fixed bottom player (z-50) so the pill stays
 		   clickable even when it sits near the tree's bottom edge. */
 		z-index: 60;
-		transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+		transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease, opacity 300ms ease-in-out;
 		backdrop-filter: blur(6px);
 		-webkit-backdrop-filter: blur(6px);
+		/* Idle beacon — slow opacity cycle plus a barely-there outer
+		   shadow expansion. Reads as a distant navigation light, not
+		   as a CTA. Paused on hover/focus so interaction reads
+		   crisply. The animation only touches opacity and box-shadow
+		   so the pill's bg / border / text color cycles stay
+		   independent (see :hover overrides further down). */
+		animation: lineage-pill-beacon 3s ease-in-out infinite;
+	}
+	@keyframes lineage-pill-beacon {
+		0%, 100% {
+			opacity: 0.75;
+			box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-primary), transparent 100%);
+		}
+		50% {
+			opacity: 1;
+			box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary), transparent 92%);
+		}
+	}
+	/* Locator handoff — when the post-amplify reveal sequence begins
+	   it sets data-fading="true" on the pill. The animation halts
+	   (no more cycling) and the opacity transition takes the pill
+	   smoothly to 0 over ~300 ms, concurrent with the page
+	   smooth-scroll that brings Dan into view. */
+	.lineage-find-me-pill[data-fading='true'] {
+		animation: none;
+		opacity: 0;
 	}
 	/* Subtle vertical fade behind the pill — creates the impression
 	   that the tree edge softly dissolves into the pill. Pointer-
@@ -557,7 +684,10 @@
 		left: 50%;
 		width: 0;
 		height: 22px;
-		border-left: 1px dashed color-mix(in srgb, var(--color-primary), transparent 62%);
+		/* Stepped ~6 % toward higher opacity (62→56 %) so it stays
+		   visually balanced with the larger, slightly brighter pill
+		   above. Same height — guide length is unchanged. */
+		border-left: 1px dashed color-mix(in srgb, var(--color-primary), transparent 56%);
 		pointer-events: none;
 	}
 	.lineage-find-me-pill[data-direction='down']::after {
@@ -568,13 +698,63 @@
 		bottom: 100%;
 		transform: translate(-50%, 0);
 	}
+	.lineage-find-me-pill:hover,
+	.lineage-find-me-pill:focus-visible {
+		/* Cancel the idle beacon on interaction so the affordance
+		   reads at full opacity / no shadow ring — a stable, crisp
+		   button under the cursor. (Using `animation: none` rather
+		   than `animation-play-state: paused` so the explicit
+		   `opacity: 1` here actually wins; a paused animation still
+		   asserts its current frame's opacity.) */
+		animation: none;
+		opacity: 1;
+	}
 	.lineage-find-me-pill:hover {
-		background-color: color-mix(in srgb, var(--color-primary), transparent 80%);
-		color: oklch(from var(--color-primary) calc(l + 0.06) c h / 0.92);
-		border-color: color-mix(in srgb, var(--color-primary), transparent 65%);
+		/* Hover stays ~10 % denser than the resting tones above,
+		   matching the brighter resting palette in this pass. */
+		background-color: color-mix(in srgb, var(--color-primary), transparent 76%);
+		color: oklch(from var(--color-primary) calc(l + 0.06) c h / 0.97);
+		border-color: color-mix(in srgb, var(--color-primary), transparent 58%);
 	}
 	.lineage-find-me-pill:focus-visible {
 		outline: 2px solid color-mix(in srgb, var(--color-primary), transparent 40%);
 		outline-offset: 2px;
+	}
+
+	/* ── Post-amplify reveal flash ─────────────────────────────────
+	   When the reveal sequence reaches step B, the script sets
+	   `data-reveal-flash-user="<id>"` on .tree-scroll-x. We target
+	   the matching wrapper's row-selection-zone — the same element
+	   that carries the persistent "Your signal" cu-row styling — and
+	   run a one-shot 1 s keyframe animation that briefly raises the
+	   bg tint and adds an outer glow, then settles back to baseline.
+
+	   The trailing 100 % keyframe holds nothing (animation:
+	   forwards is NOT set), so when the animation ends the
+	   underlying class styles (bg-primary/9, etc.) resume
+	   unchanged. No scale, no spring, no bounce. */
+	@keyframes lineage-reveal-flash {
+		0% {
+			background-color: color-mix(in srgb, var(--color-primary), transparent 91%);
+			box-shadow: 0 0 0 0 transparent;
+		}
+		35% {
+			background-color: color-mix(in srgb, var(--color-primary), transparent 72%);
+			box-shadow:
+				0 0 22px 4px color-mix(in srgb, var(--color-primary), transparent 65%),
+				0 0 0 1px color-mix(in srgb, var(--color-primary), transparent 55%);
+		}
+		100% {
+			background-color: color-mix(in srgb, var(--color-primary), transparent 91%);
+			box-shadow: 0 0 0 0 transparent;
+		}
+	}
+	/* The reveal-flash-active class is added imperatively by the
+	   script (`runRevealSequence`) to Dan's row-selection-zone after
+	   the smooth-scroll lands, and removed 1 s later. :global is
+	   required because .row-selection-zone lives inside the child
+	   PropagationNode component's scoped CSS namespace. */
+	:global(.row-selection-zone.reveal-flash-active) {
+		animation: lineage-reveal-flash 1000ms ease-in-out;
 	}
 </style>
