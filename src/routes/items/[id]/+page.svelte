@@ -262,7 +262,7 @@
 					class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
 					style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 				>
-					<BranchInspector forest={displayedForest} target={activeTarget} />
+					<BranchInspector forest={displayedForest} target={activeTarget} {lineageOrderedIds} />
 				</div>
 			</aside>
 		</div>

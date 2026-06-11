@@ -96,9 +96,17 @@
 	let {
 		forest,
 		target,
+		lineageOrderedIds = null,
 	}: {
 		forest: PropagationForest;
 		target: PreviewTarget | null;
+		/** Ordered ORIGIN → … → USER chain from the page when a
+		 *  lineage reveal is active (i.e., the user has clicked
+		 *  their own real node). When non-null AND the currently
+		 *  active target is one of the scouts in this chain, the
+		 *  inspector switches to "Lineage context" mode and
+		 *  emphasises ancestry instead of branch metrics. */
+		lineageOrderedIds?: string[] | null;
 	} = $props();
 
 	const isAnonymousStub = $derived(
@@ -227,6 +235,100 @@
 	const whyHasContent = $derived(
 		whyThisMatters.headline !== null || whyThisMatters.supporting.length >= 2,
 	);
+
+	/* ── Lineage Context mode ──────────────────────────────────
+	   When the page has a lineage reveal active (lineageOrderedIds
+	   is non-null) AND the currently-active target is one of the
+	   scouts on that chain, the inspector switches into a dedicated
+	   ancestry-focused presentation: SIGNAL PATH + narrative +
+	   supporting lineage facts, and the branch-analysis sections
+	   (Why This Matters, role/journey/scenes/novelty, metrics)
+	   step aside.
+
+	   Triggers cleanly for any lineage member the user lands on
+	   (Dan selected → all his ancestors highlighted in the tree;
+	   hovering Gisli or any ancestor shows lineage context for
+	   that scout). When the user clicks OUT of the lineage path,
+	   selectedTarget changes, lineageOrderedIds re-derives to
+	   null on the page side, and the inspector returns to Branch
+	   Context naturally. */
+	const isLineageContext = $derived(
+		lineageOrderedIds !== null
+			&& lineageOrderedIds.length >= 2
+			&& target !== null
+			&& target.kind === 'user'
+			&& !target.user.isPreviewNode
+			&& lineageOrderedIds.includes(target.user.id),
+	);
+
+	/* Resolved PropagationUser objects for every step on the chain,
+	   ORIGIN → … → USER. Used to render the path with names instead
+	   of bare ids, and to look up the origin's name for supporting
+	   copy. Walks the forest once per change. */
+	const lineageScouts = $derived.by((): PropagationUser[] => {
+		if (!isLineageContext || !lineageOrderedIds) return [];
+		const out: PropagationUser[] = [];
+		function findIn(u: PropagationUser, id: string): PropagationUser | null {
+			if (u.id === id) return u;
+			for (const c of u.children) {
+				const hit = findIn(c, id);
+				if (hit) return hit;
+			}
+			return null;
+		}
+		for (const id of lineageOrderedIds) {
+			let found: PropagationUser | null = null;
+			for (const r of forest.roots) {
+				found = findIn(r, id);
+				if (found) break;
+			}
+			if (found) out.push(found);
+		}
+		return out;
+	});
+
+	const lineageDepth = $derived(
+		isLineageContext && lineageOrderedIds && target?.kind === 'user'
+			? lineageOrderedIds.indexOf(target.user.id)
+			: -1,
+	);
+
+	const lineageOrigin = $derived<PropagationUser | null>(lineageScouts[0] ?? null);
+
+	/* Positional label — supporting fact, not the panel's main
+	   point. Choices stay editorial (no formulas surface): "Origin
+	   scout" / "Your signal" / depth-bucketed amplifier labels. */
+	const lineagePosition = $derived.by((): string | null => {
+		if (!isLineageContext || !target || target.kind !== 'user') return null;
+		const u = target.user;
+		if (u.isOrigin) return 'Origin scout';
+		if (u.isCurrentUser) return 'Your signal';
+		if (lineageDepth <= 2) return 'Early amplifier';
+		if (lineageDepth <= 4) return 'Mid-chain amplifier';
+		return 'Deep lineage node';
+	});
+
+	/* One-sentence editorial narrative, varied so different lineage
+	   selections don't all read identically. The wording targets
+	   "how did the signal get here" rather than precise stats. */
+	const lineageNarrative = $derived.by((): string => {
+		if (!isLineageContext || !target || target.kind !== 'user' || !lineageOrderedIds) return '';
+		const u = target.user;
+		const depth = lineageDepth;
+		const totalGens = lineageOrderedIds.length - 1;
+		if (u.isCurrentUser && lineageOrigin) {
+			return `You entered this signal through ${lineageOrigin.name}'s branch.`;
+		}
+		if (u.isOrigin) {
+			const word = totalGens === 1 ? 'generation' : 'generations';
+			return `Brought this signal in from outside. The lineage runs ${totalGens} ${word} down to you.`;
+		}
+		if (depth >= 5) {
+			return 'Sits deep inside a long-running propagation chain.';
+		}
+		const word = depth === 1 ? 'generation' : 'generations';
+		return `${depth} ${word} from origin — the signal moved through several amplifiers to reach this point.`;
+	});
 </script>
 
 <aside class="flex flex-col gap-5">
@@ -242,6 +344,9 @@
 		{:else if target.user.isPreviewNode}
 			<span class="w-0.5 h-3.5 rounded-full bg-primary/55" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Your entry point</p>
+		{:else if isLineageContext}
+			<span class="w-0.5 h-3.5 rounded-full bg-primary/65" aria-hidden="true"></span>
+			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Lineage context</p>
 		{:else}
 			<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Branch context</p>
@@ -560,38 +665,79 @@
 			</p>
 		{/if}
 
-		<!--
-			SIGNAL PATH — only on the current user's own real node. Walks
-			up via findParentInForest and reverses to produce ORIGIN → … →
-			USER, mirroring the visual lineage reveal in the tree. Compact
-			text confirmation of the route the signal actually took.
-		-->
-		{#if target.user.isCurrentUser && !target.user.isPreviewNode}
-			{@const lineage = (() => {
-				const out = [];
-				let cur: typeof target.user | null = target.user;
-				while (cur) {
-					out.push(cur);
-					cur = findParentInForest(forest, cur.id);
-				}
-				return out.reverse();
-			})()}
-			{#if lineage.length > 1}
-				<section class="pt-4 border-t border-white/6">
+		{#if isLineageContext}
+			<!--
+				LINEAGE CONTEXT mode — replaces the branch-analysis
+				sections below (role / journey / scenes / novelty / why
+				this matters / metrics) with an ancestry-focused
+				presentation:
+
+				  • SIGNAL PATH — the full ORIGIN → … → USER chain,
+				    rendered with subdued arrows. The currently
+				    inspected scout is highlighted in the panel's
+				    accent / semibold so it reads "this scout is here
+				    in the route" without becoming a breadcrumb
+				    navigation component.
+				  • Narrative — one editorial sentence answering
+				    "how did the signal get here?".
+				  • Supporting lineage facts — Depth from origin,
+				    Origin, Branch, Position. These remain secondary
+				    to the path + narrative above.
+
+				The block triggers any time the inspector's active
+				target is a member of the revealed lineage, so hovering
+				ancestor scouts during a path-to-origin reveal also
+				shows lineage context for them.
+			-->
+			<section class="pt-4 border-t border-white/6 flex flex-col gap-3">
+				<div>
 					<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-1.5">Signal path</p>
-					<p class="text-[12.5px] leading-relaxed text-base-content/78 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-						{#each lineage as step, i (step.id)}
+					<p class="text-[12.5px] leading-relaxed flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+						{#each lineageScouts as step, i (step.id)}
 							{#if i > 0}
 								<span class="text-base-content/35" aria-hidden="true">→</span>
 							{/if}
-							<span class={i === lineage.length - 1 ? 'text-primary/92 font-semibold' : 'text-base-content/82'}>
+							<span class={step.id === target.user.id
+								? 'text-accent/92 font-semibold'
+								: 'text-base-content/68'}>
 								{step.name}
 							</span>
 						{/each}
 					</p>
-				</section>
-			{/if}
-		{/if}
+				</div>
+
+				{#if lineageNarrative}
+					<p class="text-[13px] leading-relaxed text-base-content/78">
+						{lineageNarrative}
+					</p>
+				{/if}
+
+				<dl class="grid grid-cols-2 gap-x-4 gap-y-3 mt-1">
+					<div>
+						<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Depth from origin</dt>
+						<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">
+							{lineageDepth} {lineageDepth === 1 ? 'generation' : 'generations'}
+						</dd>
+					</div>
+					{#if lineageOrigin}
+						<div>
+							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Origin</dt>
+							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineageOrigin.name}</dd>
+						</div>
+						<div>
+							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Branch</dt>
+							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineageOrigin.name}'s branch</dd>
+						</div>
+					{/if}
+					{#if lineagePosition}
+						<div>
+							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Position</dt>
+							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineagePosition}</dd>
+						</div>
+					{/if}
+				</dl>
+			</section>
+		{:else}
 
 		<!--
 			ROLE IN SIGNAL — primary explanation of this scout's relationship
@@ -727,8 +873,19 @@
 			<section class="pt-4 border-t border-white/6">
 				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2.5">Why this matters</p>
 				{#if whyThisMatters.headline}
+					<!-- Headline — true headline treatment: a touch
+					     larger than body copy, semibold, in the warm
+					     "contribution" amber that already marks the
+					     Successful Amplifier role title (oklch hue 60,
+					     not the cyan brand accent). That distinguishes
+					     the answer from links / accent decoration
+					     elsewhere in the panel and gives it an
+					     editorial, "this is the thing" feel.
+					     `leading-tight` keeps the line set crisp; the
+					     bullets below carry their own line-height. No
+					     badge, no icon, no background, no underline. -->
 					<p class={[
-						'text-[13.5px] leading-snug font-medium text-base-content/94',
+						'text-[15.5px] leading-tight font-semibold text-[oklch(0.86_0.12_60)]/94',
 						whyThisMatters.supporting.length > 0 && 'mb-3',
 					]}>
 						{whyThisMatters.headline}
@@ -794,6 +951,7 @@
 				</div>
 			</dl>
 		</section>
+		{/if}<!-- /isLineageContext else -->
 
 	{/if}
 </aside>
