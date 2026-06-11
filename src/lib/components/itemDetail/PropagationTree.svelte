@@ -379,7 +379,33 @@
 
 	// Sort roots by propagation strength so the strongest origins appear
 	// first. Hidden roots use the same ordering when expanded.
-	const sortedRoots = $derived(sortNodesByPropagation(forest.roots));
+	/* Root ordering:
+	     1. Established origins (have descendants) keep their
+	        `sortNodesByPropagation` order — kind rank, then
+	        branchSize descending. Untouched by this pass.
+	     2. Childless origins (the "unheard" group) are
+	        deterministically reordered: non-user origins
+	        alphabetically by name, current-user origin always last.
+	   Without this tiebreaker, childless origins sort to the bottom
+	   correctly but their relative order falls back to the input
+	   array (stable sort on equal branchSize) which reads as
+	   arbitrary. */
+	const sortedRoots = $derived.by(() => {
+		const sorted = sortNodesByPropagation(forest.roots);
+		const populated: PropagationUser[] = [];
+		const childless: PropagationUser[] = [];
+		for (const r of sorted) {
+			if (r.children.length > 0 || r.hiddenChildren) populated.push(r);
+			else childless.push(r);
+		}
+		childless.sort((a, b) => {
+			const aIsUser = currentUserId !== null && a.id === currentUserId;
+			const bIsUser = currentUserId !== null && b.id === currentUserId;
+			if (aIsUser !== bIsUser) return aIsUser ? 1 : -1;
+			return a.name.localeCompare(b.name);
+		});
+		return [...populated, ...childless];
+	});
 	const sortedHiddenRoots = $derived(sortNodesByPropagation(forest.hiddenRootUsers));
 </script>
 

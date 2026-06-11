@@ -499,6 +499,98 @@
   box-shadow: 0 0 4px 0 oklch(from var(--color-accent) l c h / 0.55);
 }
 
+/* ─── Unheard-origin overlay ─────────────────────────────────
+   Applied when an origin has zero descendants — see `isUnheardOrigin`
+   in PropagationNode.svelte. Three layers communicating "signal
+   unresolved" (not "weak / unsuccessful"):
+
+     1. .unheard-origin-ring     — a dashed outer ring hugging the
+                                   avatar at +1 px outside the inner
+                                   border. Reads as an additional
+                                   outermost layer; the inner border
+                                   is left untouched.
+     2. .unheard-origin-beacon   — a tiny dot in a 14 s linear orbit
+                                   2 px outside the avatar edge.
+                                   Subtle alpha + soft halo; reads
+                                   as "still broadcasting".
+     3. (text — in template)     — "Searching for first scout"
+                                   atmospheric microcopy below the
+                                   character line.
+
+   The decorations sit ABOVE existing kind halos / origin glyph in
+   DOM order so they paint on top without colour-conflicting with
+   the avatar palette. Both decorations leave via Svelte's
+   `out:fade` (300 ms) the instant the first child appears — the
+   {#if} unmounts them and the transition carries them out. */
+/* Suppress the established-origin kind halo (.nk-amp::after /
+   .nk-success::after — the cyan outer ring + glow) while the origin
+   is still unheard. The dashed `.unheard-origin-ring` below becomes
+   the sole outermost ring, so the node reads as "unresolved" rather
+   than "established + an extra decoration". The instant the origin
+   gains its first child, `isUnheardOrigin` flips false, the
+   .unheard-origin class is dropped, and the kind halo returns
+   without animation. */
+.node-avatar.unheard-origin::after,
+.node-avatar.unheard-origin::before {
+  display: none;
+}
+
+.unheard-origin-ring {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  /* 36 × 36 — ~4 px outside the 28 × 28 avatar on each side, so
+     the ring reads as an outer orbit rather than a border
+     attached to the node. Stroke / dash / opacity are set
+     inline on the <circle> element (see the template) so dash
+     length is not coupled to a CSS border-width. */
+  width: 36px;
+  height: 36px;
+  margin-top: -18px;
+  margin-left: -18px;
+  pointer-events: none;
+  overflow: visible;
+}
+.unheard-origin-beacon {
+  position: absolute;
+  z-index: 2;
+  top: 50%;
+  left: 50%;
+  /* Container slightly larger than the avatar so the dot,
+     anchored at the container's top edge, orbits 2 px beyond
+     the avatar's edge — close enough to read as belonging to
+     the node, far enough not to overlap the dashed ring. */
+  width: 32px;
+  height: 32px;
+  margin-top: -16px;
+  margin-left: -16px;
+  pointer-events: none;
+  /* Very slow. The viewer should only register the motion after
+     a second or two of looking. Linear so the orbit reads as a
+     steady broadcast rather than an attention beat. */
+  animation: unheard-origin-beacon-orbit 14s linear infinite;
+}
+.unheard-origin-beacon-dot {
+  position: absolute;
+  top: -1.5px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  margin-left: -1.5px;
+  border-radius: 50%;
+  /* Same restrained palette as the ring; soft outer halo so the
+     dot reads as a small lit point at low intensity. NOT pulsing
+     — opacity is constant; only orbital position changes. */
+  background: oklch(0.85 0.04 240 / 0.65);
+  box-shadow:
+    0 0 3px oklch(0.85 0.05 240 / 0.50),
+    0 0 8px oklch(0.80 0.06 240 / 0.25);
+}
+@keyframes unheard-origin-beacon-orbit {
+  to { transform: rotate(360deg); }
+}
+
 /* Current-user overlay has NO outward motion — identity is conveyed by
    the primary border + ring on the inner avatar, the cu-row left rail,
    and the YOU label. Outward ripple is reserved for the base kind so
@@ -511,7 +603,8 @@
   .node-avatar.nk-success::before,
   .node-avatar.nk-amp::after,
   .node-avatar.nk-amp::before,
-  .sa-ripple {
+  .sa-ripple,
+  .unheard-origin-beacon {
     animation: none !important;
   }
   /* Keep faint static states visible so the kind still reads even

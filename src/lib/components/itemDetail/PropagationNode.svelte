@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { getContext, setContext } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import { ChevronDown, ChevronRight } from 'lucide-svelte';
 	import type { PropagationUser, PreviewTarget, BranchActivityState } from '$lib/mock/propagation';
 	import { sortNodesByPropagation, computeBranchActivity } from '$lib/mock/propagation';
@@ -126,6 +127,23 @@
 	   each subsequent ancestor's conduit + avatar at index 1, 2, … */
 	const lineageIndex = $derived(
 		lineageOrderedIds === null ? -1 : lineageOrderedIds.indexOf(user.id),
+	);
+
+	/* "Unheard origin" — an origin that has not yet recruited any
+	   scout: no rendered children, no hidden tail. Drives a quiet
+	   atmospheric overlay (dashed outer ring + slow orbiting beacon
+	   + "Searching for first scout" microcopy) communicating
+	   "signal unresolved", NOT "weak / unsuccessful". The state
+	   evaporates the instant a first child appears (Svelte unmounts
+	   the {#if} blocks; the `out:fade` transitions then carry the
+	   visual decorations out over 300 ms). Preview placeholders
+	   keep their own dashed-border treatment and never enter this
+	   state. */
+	const isUnheardOrigin = $derived(
+		!!user.isOrigin
+			&& user.children.length === 0
+			&& !user.hiddenChildren
+			&& !user.isPreviewNode,
 	);
 
 	/* ── Tree-scoped conduit-path config ────────────────────────
@@ -1544,6 +1562,12 @@
 			class={[
 				'shrink-0 mt-0.5 relative overflow-visible node-avatar',
 				!user.isPreviewNode && nodeKindClass(user),
+				/* Suppress the kind-halo (.nk-amp::after /
+				   .nk-success::after) when this origin hasn't
+				   recruited a scout — the dashed ring becomes the
+				   outermost ring instead. Removed automatically the
+				   instant the origin gains a first child. */
+				isUnheardOrigin && 'unheard-origin',
 			]}
 		>
 			{#if user.nodeKind === 'successful-amplifier' && !user.isPreviewNode}
@@ -1615,6 +1639,51 @@
 				     doesn't compete with transmission rings. -->
 				<span class="origin-glyph" aria-hidden="true"></span>
 			{/if}
+			{#if isUnheardOrigin}
+				<!-- UNHEARD-ORIGIN visual layer. Two decorations layered
+				     ABOVE the existing avatar styling — neither touches the
+				     avatar border, size, or color palette. `out:fade` fires
+				     when the origin recruits its first child and the
+				     {#if} unmounts the decorations; no entry animation so
+				     a freshly-mounted unheard origin looks "already that
+				     way". -->
+				<svg
+					class="unheard-origin-ring"
+					width="36"
+					height="36"
+					viewBox="0 0 36 36"
+					aria-hidden="true"
+					out:fade={{ duration: 300 }}
+				>
+					<!-- Dashed outer ring drawn as an SVG circle so dash
+					     length / gap / stroke weight are explicitly
+					     controlled (browser-default `border-style: dashed`
+					     ties dash length to border-width and reads as
+					     noisy at 1 px). 36 × 36 container → radius 17.5
+					     keeps the stroke just inside the viewBox; the
+					     ring sits ~4 px outside the 28 × 28 avatar so it
+					     reads as an outer orbit rather than an attached
+					     border. Stroke alpha 0.22 + dash 3.5/4.5 makes
+					     the ring patient + quiet; the beacon already
+					     carries any motion. -->
+					<circle
+						cx="18"
+						cy="18"
+						r="17.25"
+						fill="none"
+						stroke="oklch(0.82 0.02 245 / 0.22)"
+						stroke-width="1"
+						stroke-dasharray="3.5 4.5"
+					/>
+				</svg>
+				<span
+					class="unheard-origin-beacon"
+					aria-hidden="true"
+					out:fade={{ duration: 300 }}
+				>
+					<span class="unheard-origin-beacon-dot"></span>
+				</span>
+			{/if}
 		</div>
 
 		<!-- Name + character. Preview nodes italicize the character.
@@ -1673,6 +1742,24 @@
 			]}>
 				{user.character}
 			</p>
+			{#if isUnheardOrigin && !user.isCurrentUser}
+				<!-- Atmospheric status — observational tone, not
+				     instructional. Suppressed for the current
+				     user's own unheard origin because the row already
+				     renders a dedicated ghost-child placeholder
+				     ("Searching for scouts") below the avatar, which
+				     carries the same meaning more meaningfully for
+				     the user (it marks where future descendants will
+				     appear). For non-user unheard origins, the
+				     inline microcopy is the only "still searching"
+				     hint. -->
+				<p
+					class="text-[10.5px] leading-snug text-base-content/40 italic truncate"
+					out:fade={{ duration: 300 }}
+				>
+					Searching for first scout
+				</p>
+			{/if}
 		</div>
 
 		</div><!-- /.row-selection-zone -->
