@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { UserCheck, UserPlus, ExternalLink } from 'lucide-svelte';
 	import type { LiveStatus } from '$lib/mock/users';
+	import { getUserSignalTree } from '$lib/mock/userSignalTree';
+	import UserSignalTree from '$lib/components/userDetail/UserSignalTree.svelte';
 
 	/*
 		User Detail page.
@@ -28,6 +30,7 @@
 
 	let { data } = $props();
 	const user = $derived(data.user);
+	const signalTree = $derived(getUserSignalTree(user.id));
 
 	/* Follow toggle — local $state only; the spec is explicit that
 	   this should NOT persist anywhere yet. Re-seeded any time the
@@ -517,12 +520,12 @@
 	</section>
 
 	<!-- ═══════════════════════════════════════════════════════════
-	     7. SIGNAL TREE PLACEHOLDER
-	     Reserves space + visual language for the mixed user → signal
-	     → user tree landing in the next prompt. Deliberately does NOT
-	     mount the Item Detail tree — that component is coupled to
-	     item-specific propagation state and would carry the wrong
-	     behaviour here.
+	     7. SIGNAL TREE
+	     Mixed user → signal → user tree owned by `UserSignalTree`.
+	     This page only orchestrates: section eyebrow + subtitle + the
+	     component (or an empty state when the user has no tree data).
+	     Visual hierarchy and connector geometry live in the component
+	     itself so the page file stays readable.
 	     ═══════════════════════════════════════════════════════════ -->
 	<section
 		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-3"
@@ -537,16 +540,20 @@
 		<p class="text-[12.5px] text-base-content/55 italic">
 			Signals sparked by this scout, and the listeners they reached.
 		</p>
-		<div
-			class="mt-2 rounded-lg border border-dashed border-white/12 bg-white/2 p-8 text-center space-y-2"
-		>
-			<p class="text-[13px] text-base-content/72 leading-relaxed max-w-2xl mx-auto">
-				Mixed signal tree coming next: this scout at the root, sparked signals as the next layer, and downstream listeners beneath each signal.
-			</p>
-			<p class="text-[11px] uppercase tracking-widest text-base-content/35">
-				Placeholder
-			</p>
-		</div>
+		{#if signalTree}
+			<div class="mt-3">
+				<UserSignalTree tree={signalTree} />
+			</div>
+		{:else}
+			<div class="mt-2 rounded-lg border border-dashed border-white/12 bg-white/2 p-8 text-center space-y-2">
+				<p class="text-[13px] text-base-content/72 leading-relaxed max-w-2xl mx-auto">
+					No sparked signals yet.
+				</p>
+				<p class="text-[12px] text-base-content/55 leading-relaxed max-w-2xl mx-auto italic">
+					When this scout brings a signal into Outer Signal, its downstream path will appear here.
+				</p>
+			</div>
+		{/if}
 	</section>
 
 </div>
