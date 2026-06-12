@@ -1735,14 +1735,11 @@
 						aria-label={`branch size ${user.branchSize}`}
 					>+{user.branchSize}</span>
 				{/if}
-				<!-- EXPERIMENT: in-row ORIGIN chip removed. The left-edge
-				     `.origin-glyph` is now the sole in-tree marker for
-				     origins; the term itself remains discoverable via
-				     the side panel's "Origin scout" header when an
-				     origin row is selected. `user.isOrigin` is still
-				     used everywhere else (sorting, glyph rendering,
-				     dashed unresolved ring eligibility, inspector
-				     copy) — only this textual label was removed. -->
+				<!-- Origin is marked only by the left-edge `.origin-glyph`
+				     and surfaced as "Origin scout" in the inspector. No
+				     in-row chip — `user.isOrigin` still drives sorting,
+				     glyph rendering, the unheard-origin treatment, and
+				     inspector copy. -->
 			</div>
 			<p class={[
 				'text-[11px] leading-snug truncate',
