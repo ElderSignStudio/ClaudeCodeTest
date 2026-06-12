@@ -38,14 +38,16 @@
 		style="background: radial-gradient(ellipse 120% 80% at 0% 100%, oklch(0.45 0.15 265 / 0.07) 0%, transparent 65%);"
 	></div>
 
-	<!-- User identity block -->
+	<!-- User identity block — links through to the current user's
+	     scout profile so the entry point is discoverable from the
+	     primary nav without inventing a new nav item. -->
 	<div class="shrink-0 px-4 pt-5 pb-3.5">
-		<div class="flex items-center gap-2.5">
-			<!--
-				DiceBear avatar: same seed as header, consistent identity across components.
-				w-8 h-8 with rounded-full + overflow-hidden clips the SVG correctly.
-			-->
-			<div class="w-9 h-9 rounded-full border border-primary/28 overflow-hidden shrink-0">
+		<a
+			href="/users/dan"
+			class="group flex items-center gap-2.5 -mx-1 px-1 py-0.5 rounded-md hover:bg-white/4 transition-colors"
+			title="Open your scout profile"
+		>
+			<div class="w-9 h-9 rounded-full border border-primary/28 group-hover:border-primary/48 overflow-hidden shrink-0 transition-colors">
 				<img
 					src={currentUser.avatarUrl}
 					alt={currentUser.name}
@@ -53,10 +55,10 @@
 				/>
 			</div>
 			<div class="min-w-0">
-				<p class="text-[13px] font-semibold text-base-content/88 truncate leading-snug">{currentUser.name}</p>
+				<p class="text-[13px] font-semibold text-base-content/88 group-hover:text-base-content/95 truncate leading-snug transition-colors">{currentUser.name}</p>
 				<p class="text-[11px] text-base-content/55 leading-snug">Scout Score: 4</p>
 			</div>
-		</div>
+		</a>
 	</div>
 
 	<div class="shrink-0 h-px bg-white/7 mx-3 mb-1" aria-hidden="true"></div>
