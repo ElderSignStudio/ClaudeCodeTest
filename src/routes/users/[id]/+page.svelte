@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { UserCheck, UserPlus, ExternalLink } from 'lucide-svelte';
+	import type { LiveStatus } from '$lib/mock/users';
 
 	/*
 		User Detail page.
@@ -59,6 +60,27 @@
 				return 'text-[oklch(0.72_0.07_230)]/72';
 			default:
 				return 'text-base-content/62';
+		}
+	}
+
+	/* Tonal palette for the small live-status chip beside each
+	   signature-signal title:
+	     Accelerating / Branch forming → warmer/brighter accent
+	     Still moving                  → cyan default
+	     Quiet                         → muted
+	     Dormant                       → very muted */
+	function liveStatusChipClass(status: LiveStatus): string {
+		switch (status) {
+			case 'Accelerating':
+				return 'border-[oklch(0.86_0.12_60)]/40 text-[oklch(0.86_0.12_60)]/88 bg-[oklch(0.86_0.12_60)]/10';
+			case 'Branch forming':
+				return 'border-accent/48 text-accent/92 bg-accent/10';
+			case 'Still moving':
+				return 'border-accent/30 text-accent/78 bg-accent/6';
+			case 'Quiet':
+				return 'border-white/14 text-base-content/55 bg-white/3';
+			case 'Dormant':
+				return 'border-white/8 text-base-content/40 bg-transparent';
 		}
 	}
 </script>
@@ -201,21 +223,29 @@
 			</div>
 		</div>
 
-		<!-- ── Strongest Signal: dedicated highlighted bottom row ── -->
+		<!-- ── Strongest Signal: dedicated highlighted bottom row ──
+		     The compact cover (36 px square) anchors the link to a
+		     real album, reinforcing "this is music" without
+		     escalating the row into a hero card. -->
 		{#if user.strongestSignal}
 			<div class="pt-4 border-t border-white/6">
-				<div class="flex items-baseline gap-3 flex-wrap">
-					<p class="text-[10px] uppercase tracking-widest text-base-content/45">Strongest signal</p>
-					<a
-						href="/items/{user.strongestSignal.id}"
-						class="group inline-flex items-baseline gap-2 text-[14.5px] font-semibold leading-snug text-accent/92 hover:text-accent transition-colors"
-					>
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Strongest signal</p>
+				<a
+					href="/items/{user.strongestSignal.id}"
+					class="group inline-flex items-center gap-2.5"
+				>
+					<span class="shrink-0 w-9 h-9 rounded-md border border-white/10 overflow-hidden bg-white/5">
+						{#if user.strongestSignal.coverArt}
+							<img src={user.strongestSignal.coverArt} alt="" class="w-full h-full object-cover" />
+						{/if}
+					</span>
+					<span class="flex items-baseline gap-2 text-[14.5px] font-semibold leading-snug text-accent/92 group-hover:text-accent transition-colors">
 						<span>{user.strongestSignal.title}</span>
 						<span class="text-base-content/35 font-normal">—</span>
 						<span class="text-base-content/68 font-normal">{user.strongestSignal.artist}</span>
 						<ExternalLink size={11} class="opacity-50 group-hover:opacity-90 transition-opacity -translate-y-px" />
-					</a>
-				</div>
+					</span>
+				</a>
 			</div>
 		{/if}
 	</section>
@@ -293,41 +323,63 @@
 		{#if user.signatureSignals.length > 0}
 			<ul class="flex flex-col gap-1.5 mt-2">
 				{#each user.signatureSignals as signal (signal.id)}
-					<li class="rounded-lg border border-white/5 bg-white/2 hover:bg-white/6 hover:border-white/10 transition-colors px-4 py-3 group/sig">
-						<a href="/items/{signal.id}" class="block">
-							<!-- Title row — slightly bigger title (15px) so it
-							     pulls eye from the artist; em-dash separator
-							     matches the inspector pattern. -->
-							<div class="flex items-baseline gap-2 flex-wrap">
-								<span class="text-[15px] font-semibold text-accent/92 group-hover/sig:text-accent transition-colors leading-snug">
-									{signal.title}
-								</span>
-								<span class="text-base-content/30">—</span>
-								<span class="text-[13px] text-base-content/65 leading-snug">{signal.artist}</span>
-							</div>
-							<!-- Metrics line — quieter alpha than the title so
-							     it reads as supporting evidence. -->
-							<div class="mt-1 flex items-baseline gap-2 text-[11.5px] text-base-content/55 tabular-nums">
-								<span>{signal.listeners} listeners</span>
-								<span class="text-base-content/28">·</span>
-								<span>{signal.generations} {signal.generations === 1 ? 'generation' : 'generations'}</span>
-								<span class="text-base-content/28">·</span>
-								<span>Impact {signal.impact}</span>
-							</div>
-							{#if signal.badges.length > 0 || signal.tags.length > 0}
-								<div class="mt-2 flex flex-wrap items-center gap-1.5">
-									{#each signal.badges as badge (badge)}
-										<span class="text-[10px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full border border-[oklch(0.86_0.12_60)]/35 text-[oklch(0.86_0.12_60)]/85 bg-[oklch(0.86_0.12_60)]/8">
-											{badge}
-										</span>
-									{/each}
-									{#each signal.tags as tag (tag)}
-										<span class="text-[11px] px-2 py-0.5 rounded-full border border-accent/22 text-accent/72 bg-accent/5">
-											{tag}
-										</span>
-									{/each}
+					<li class="rounded-lg border border-white/5 bg-white/2 hover:bg-white/6 hover:border-white/10 transition-colors px-3.5 py-3 group/sig">
+						<a href="/items/{signal.id}" class="flex items-start gap-3.5">
+							<!-- Cover artwork — 52 px square. First visual
+							     anchor when scanning the section. Subtle
+							     border + rounded-md match the card language
+							     used elsewhere on the page. No hover scale
+							     or animation; the artwork itself carries the
+							     visual richness. -->
+							<span class="shrink-0 w-13 h-13 rounded-md border border-white/10 overflow-hidden bg-white/5">
+								{#if signal.coverArt}
+									<img src={signal.coverArt} alt="" class="w-full h-full object-cover" />
+								{/if}
+							</span>
+							<div class="min-w-0 flex-1">
+								<!-- Title row — slightly bigger title (15px)
+								     so it pulls eye from the artist; live-
+								     status chip sits right-aligned. -->
+								<div class="flex items-baseline gap-2 flex-wrap">
+									<span class="text-[15px] font-semibold text-accent/92 group-hover/sig:text-accent transition-colors leading-snug">
+										{signal.title}
+									</span>
+									<span class="text-base-content/30">—</span>
+									<span class="text-[13px] text-base-content/65 leading-snug">{signal.artist}</span>
+									<span class={[
+										'ml-auto text-[10px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full border',
+										liveStatusChipClass(signal.liveStatus),
+									]}>
+										{signal.liveStatus}
+									</span>
 								</div>
-							{/if}
+								<!-- Metrics line — recent activity sits at the
+								     end at a slightly brighter alpha than the
+								     rest, reading as a live note. -->
+								<div class="mt-1 flex items-baseline gap-2 text-[11.5px] text-base-content/55 tabular-nums">
+									<span>{signal.listeners} listeners</span>
+									<span class="text-base-content/28">·</span>
+									<span>{signal.generations} {signal.generations === 1 ? 'generation' : 'generations'}</span>
+									<span class="text-base-content/28">·</span>
+									<span>Impact {signal.impact}</span>
+									<span class="text-base-content/28">·</span>
+									<span class="text-base-content/72 italic">{signal.recentActivity}</span>
+								</div>
+								{#if signal.badges.length > 0 || signal.tags.length > 0}
+									<div class="mt-2 flex flex-wrap items-center gap-1.5">
+										{#each signal.badges as badge (badge)}
+											<span class="text-[10px] uppercase tracking-widest font-semibold px-2 py-0.5 rounded-full border border-[oklch(0.86_0.12_60)]/35 text-[oklch(0.86_0.12_60)]/85 bg-[oklch(0.86_0.12_60)]/8">
+												{badge}
+											</span>
+										{/each}
+										{#each signal.tags as tag (tag)}
+											<span class="text-[11px] px-2 py-0.5 rounded-full border border-accent/22 text-accent/72 bg-accent/5">
+												{tag}
+											</span>
+										{/each}
+									</div>
+								{/if}
+							</div>
 						</a>
 					</li>
 				{/each}
@@ -363,31 +415,41 @@
 		{#if user.emergingSignals.length > 0}
 			<!-- divide-y carries a hairline between rows so each entry
 			     reads as its own observation without box-framing the
-			     whole section. last:border-b-0 lets the divider stop
-			     at the bottom of the list. Hover lifts the row gently
-			     with a quiet background tint — observational, not
+			     whole section. Hover lifts the row gently with a
+			     quiet background tint — observational, not
 			     interactive-feeling. -->
 			<ul class="flex flex-col -mx-2 mt-2 divide-y divide-white/4">
 				{#each user.emergingSignals as signal (signal.id)}
-					<li class="px-2 py-2.5 hover:bg-white/3 transition-colors rounded-sm">
-						<div class="flex items-baseline gap-2 flex-wrap">
-							<span class="text-[13px] font-medium text-base-content/82 leading-snug">{signal.title}</span>
-							<span class="text-base-content/28">—</span>
-							<span class="text-[12px] text-base-content/55 leading-snug">{signal.artist}</span>
-							<span class={['ml-auto text-[10.5px] uppercase tracking-widest font-semibold', statusColorClass(signal.status)]}>
-								{signal.status}
-							</span>
-						</div>
-						<div class="mt-1 flex items-baseline gap-2 text-[11.5px] text-base-content/48 tabular-nums">
-							<span>{signal.listeners} {signal.listeners === 1 ? 'listener' : 'listeners'}</span>
-							<span class="text-base-content/25">·</span>
-							{#if signal.generations !== undefined}
-								<span>{signal.generations} {signal.generations === 1 ? 'generation' : 'generations'}</span>
-							{:else}
-								<span class="italic">awaiting first branch</span>
+					<li class="px-2 py-2.5 hover:bg-white/3 transition-colors rounded-sm flex items-center gap-3">
+						<!-- Cover thumbnail — 44 px. Real Spotify cover via
+						     `coverOf(id)` on the mock item registry, so the
+						     row reads as actual undiscovered music rather
+						     than a database entry. -->
+						<span class="shrink-0 w-11 h-11 rounded-md border border-white/8 overflow-hidden bg-white/5">
+							{#if signal.coverArt}
+								<img src={signal.coverArt} alt="" class="w-full h-full object-cover" />
 							{/if}
-							<span class="text-base-content/25">·</span>
-							<span class="italic">planted {signal.plantedAgo}</span>
+						</span>
+						<div class="min-w-0 flex-1">
+							<div class="flex items-baseline gap-2 flex-wrap">
+								<span class="text-[13px] font-medium text-base-content/82 leading-snug">{signal.title}</span>
+								<span class="text-base-content/28">—</span>
+								<span class="text-[12px] text-base-content/55 leading-snug">{signal.artist}</span>
+								<span class={['ml-auto text-[10.5px] uppercase tracking-widest font-semibold', statusColorClass(signal.status)]}>
+									{signal.status}
+								</span>
+							</div>
+							<div class="mt-1 flex items-baseline gap-2 text-[11.5px] text-base-content/48 tabular-nums">
+								<span>{signal.listeners} {signal.listeners === 1 ? 'listener' : 'listeners'}</span>
+								<span class="text-base-content/25">·</span>
+								{#if signal.generations !== undefined}
+									<span>{signal.generations} {signal.generations === 1 ? 'generation' : 'generations'}</span>
+								{:else}
+									<span class="italic">awaiting first branch</span>
+								{/if}
+								<span class="text-base-content/25">·</span>
+								<span class="italic">planted {signal.plantedAgo}</span>
+							</div>
 						</div>
 					</li>
 				{/each}
@@ -488,3 +550,4 @@
 	</section>
 
 </div>
+

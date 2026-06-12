@@ -13,6 +13,8 @@
 	module by id.
 */
 
+import { coverOf } from './data';
+
 const dicebear = (seed: string) =>
 	`https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=1e1b4b`;
 
@@ -41,24 +43,48 @@ export type SceneShare = {
 	percent: number;
 };
 
+/** Short recency note appended to the metadata line — e.g. "+3 this
+ *  week", "amplified 2h ago", "quiet for 12 days". Free-form to keep
+ *  editorial control over the wording. */
+export type RecentActivity = string;
+
+/** Live propagation status for the small chip beside the title +
+ *  the ambient signal rail. Tone guidance:
+ *    Still moving / Branch forming → cyan
+ *    Accelerating                  → warm amber (slightly brighter)
+ *    Quiet                          → muted
+ *    Dormant                        → very muted, static rail */
+export type LiveStatus = 'Still moving' | 'Accelerating' | 'Quiet' | 'Branch forming' | 'Dormant';
+
 export type SignatureSignal = {
 	/** Item id — wired to the Item Detail route so the title links
 	 *  through. Unknown ids degrade to a plain text title. */
 	id: string;
 	title: string;
 	artist: string;
+	/** Cover artwork URL. Real items resolve via `coverOf(id)`;
+	 *  fabricated ids fall back to a Dicebear "shapes" placeholder
+	 *  in the project's deep-violet palette. */
+	coverArt: string;
 	listeners: number;
 	generations: number;
 	/** Editorial 0–100 "impact" score — kept opaque to the reader. */
 	impact: number;
 	badges: ScoutBadge[];
 	tags: string[];
+	recentActivity: RecentActivity;
+	liveStatus: LiveStatus;
 };
 
 export type EmergingSignal = {
 	id: string;
 	title: string;
 	artist: string;
+	/** Cover artwork URL. Emerging-signal ids reference real items
+	 *  in `src/lib/mock/data.ts` so `coverOf(id)` returns a real
+	 *  Spotify cover — emerging entries read as actual undiscovered
+	 *  music rather than synthetic placeholders. */
+	coverArt: string;
 	listeners: number;
 	/** Undefined when the seed hasn't produced its first downstream
 	 *  branch yet (rendered as "awaiting first branch"). */
@@ -95,7 +121,7 @@ export type UserDetail = {
 	hitRate: number;
 	/** Reference to the scout's most-influential signal. Optional —
 	 *  brand-new scouts may not have one yet. */
-	strongestSignal: { id: string; title: string; artist: string } | null;
+	strongestSignal: { id: string; title: string; artist: string; coverArt: string } | null;
 	averageReachPerSeed: number;
 	sceneFootprint: SceneShare[];
 	sceneInterpretation: {
@@ -116,9 +142,35 @@ export type UserDetail = {
    Dan is the current user; Alice and Gisli demonstrate the OTHER
    variant. Strongest-signal ids reference real item ids in
    `src/lib/mock/data.ts` so title links route cleanly through the
-   existing Item Detail page. */
+   existing Item Detail page. Cover artwork is attached by
+   `withCovers()` at the end of the file so the inline entries
+   stay focused on editorial content — every signal id
+   (signature, emerging, and strongest) resolves to a real
+   Spotify cover via `coverOf(id)`. Emerging-signal ids reference
+   real items in the registry rather than fabricated ones so
+   they read as actual undiscovered music. */
 
-const dan: UserDetail = {
+/* Cover-less draft shape for the inline mocks. The real
+   UserDetail type (which requires `coverArt`) is reached by
+   passing each draft through `withCovers()` at module load. */
+type DraftUserDetail = Omit<UserDetail, 'signatureSignals' | 'emergingSignals' | 'strongestSignal'> & {
+	signatureSignals: Omit<SignatureSignal, 'coverArt'>[];
+	emergingSignals: Omit<EmergingSignal, 'coverArt'>[];
+	strongestSignal: { id: string; title: string; artist: string } | null;
+};
+
+function withCovers(raw: DraftUserDetail): UserDetail {
+	return {
+		...raw,
+		signatureSignals: raw.signatureSignals.map(s => ({ ...s, coverArt: coverOf(s.id) })),
+		emergingSignals: raw.emergingSignals.map(s => ({ ...s, coverArt: coverOf(s.id) })),
+		strongestSignal: raw.strongestSignal
+			? { ...raw.strongestSignal, coverArt: coverOf(raw.strongestSignal.id) }
+			: null,
+	};
+}
+
+const dan: DraftUserDetail = {
 	id: 'dan',
 	username: 'Dan',
 	avatar: dicebear('DanOuter'),
@@ -152,42 +204,52 @@ const dan: UserDetail = {
 			listeners: 67, generations: 5, impact: 92,
 			badges: ['Cascade Starter', 'Cross-Scene Bridge'],
 			tags: ['post-rock crossover', 'tape ambient'],
+			recentActivity: '+3 this week',
+			liveStatus: 'Still moving',
 		},
 		{
 			id: 'iron-weather', title: 'Iron Weather', artist: 'Pale Motion',
 			listeners: 53, generations: 4, impact: 88,
 			badges: ['Early Seed', 'Deep Branch'],
 			tags: ['drone', 'cassette ambient'],
+			recentActivity: 'amplified 2h ago',
+			liveStatus: 'Accelerating',
 		},
 		{
 			id: 'frozen-sun', title: 'Frozen Sun', artist: 'Obscure Slovenian Band',
 			listeners: 40, generations: 6, impact: 84,
 			badges: ['Trailblazer', 'Underground Seed'],
 			tags: ['ritual ambient', 'liminal listening cluster'],
+			recentActivity: 'new listener today',
+			liveStatus: 'Still moving',
 		},
 		{
 			id: 'neon-veda', title: 'Neon Veda', artist: 'Contour',
 			listeners: 16, generations: 3, impact: 50,
 			badges: ['Niche Spark'],
 			tags: ['dawn-walk ambient', 'cassette orbit'],
+			recentActivity: 'quiet for 12 days',
+			liveStatus: 'Quiet',
 		},
 		{
 			id: 'low-orbit', title: 'Low Orbit', artist: 'Contour',
 			listeners: 95, generations: 10, impact: 92,
 			badges: ['Long Tail', 'Cascade Starter'],
 			tags: ['folk-leaning ambient', 'late-night headphone scene'],
+			recentActivity: '+1 branch forming',
+			liveStatus: 'Branch forming',
 		},
 	],
 	emergingSignals: [
-		{ id: 'glass-provinces',  title: 'Glass Provinces',  artist: 'Northern Static',
+		{ id: 'silver-coast',     title: 'Silver Coast',     artist: 'Unnamed Project',
 		  listeners: 3, generations: 1, plantedAgo: '2 days ago',  status: 'Watching' },
-		{ id: 'hidden-shore',     title: 'Hidden Shore',     artist: 'Vale Archive',
+		{ id: 'still-margin',     title: 'Still Margin',     artist: 'Null Point',
 		  listeners: 2, generations: 1, plantedAgo: 'this week', status: 'Early movement' },
-		{ id: 'pale-orchard',     title: 'Pale Orchard',     artist: 'Soft Maps',
+		{ id: 'radio-silt',       title: 'Radio Silt',       artist: 'Current Source',
 		  listeners: 1,                  plantedAgo: '5 days ago', status: 'Dormant seed' },
-		{ id: 'field-lantern',    title: 'Field Lantern',    artist: 'Moss Circuit',
+		{ id: 'weight-of-cloud',  title: 'Weight of Cloud',  artist: 'Six Months',
 		  listeners: 4, generations: 2, plantedAgo: 'last week', status: 'Starting to move' },
-		{ id: 'quiet-geometry',   title: 'Quiet Geometry',   artist: 'The Lanes',
+		{ id: 'dust-choir',       title: 'Dust Choir',       artist: 'Mare Internum',
 		  listeners: 2, generations: 1, plantedAgo: '4 days ago', status: 'Fragile signal' },
 	],
 	following: [
@@ -210,7 +272,7 @@ const dan: UserDetail = {
 	followersCount: 112,
 };
 
-const alice: UserDetail = {
+const alice: DraftUserDetail = {
 	id: 'alice',
 	username: 'Alice',
 	avatar: dicebear('AliceSignal'),
@@ -242,34 +304,39 @@ const alice: UserDetail = {
 		{ id: 'iron-weather',  title: 'Iron Weather',  artist: 'Pale Motion',
 		  listeners: 79, generations: 6, impact: 96,
 		  badges: ['Cascade Starter', 'Deep Branch'],
-		  tags: ['drone', 'cassette ambient'] },
+		  tags: ['drone', 'cassette ambient'],
+		  recentActivity: '+5 this week', liveStatus: 'Accelerating' },
 		{ id: 'night-forest',  title: 'Night Forest',  artist: 'Pale Atelier',
 		  listeners: 53, generations: 12, impact: 90,
 		  badges: ['Long Tail', 'Underground Seed'],
-		  tags: ['long-form drone', 'late-night listening'] },
+		  tags: ['long-form drone', 'late-night listening'],
+		  recentActivity: '+2 branches forming', liveStatus: 'Branch forming' },
 		{ id: 'tape-weather',  title: 'Tape Weather',  artist: 'Archive Unit',
 		  listeners: 38, generations: 11, impact: 86,
 		  badges: ['Trailblazer'],
-		  tags: ['cassette ambient', 'electronic crossover'] },
+		  tags: ['cassette ambient', 'electronic crossover'],
+		  recentActivity: 'amplified yesterday', liveStatus: 'Still moving' },
 		{ id: 'hollow-coast',  title: 'Hollow Coast',  artist: 'Shore Signal',
 		  listeners: 22, generations: 4, impact: 71,
 		  badges: ['Early Seed'],
-		  tags: ['drone', 'liminal listening cluster'] },
+		  tags: ['drone', 'liminal listening cluster'],
+		  recentActivity: 'new listener today', liveStatus: 'Still moving' },
 		{ id: 'ember-field',   title: 'Ember Field',   artist: 'Pale Iris',
 		  listeners: 18, generations: 3, impact: 64,
 		  badges: ['Niche Spark', 'Cross-Scene Bridge'],
-		  tags: ['electronic', 'ambient orbit'] },
+		  tags: ['electronic', 'ambient orbit'],
+		  recentActivity: 'quiet for 9 days', liveStatus: 'Quiet' },
 	],
 	emergingSignals: [
-		{ id: 'silver-arc',     title: 'Silver Arc',     artist: 'Field Recordings',
+		{ id: 'pale-static',      title: 'Pale Static',      artist: 'Meridian Line',
 		  listeners: 5, generations: 2, plantedAgo: '3 days ago',  status: 'Early movement' },
-		{ id: 'tide-mirror',    title: 'Tide Mirror',    artist: 'North Atelier',
+		{ id: 'cinder-plain',     title: 'Cinder Plain',     artist: 'Hoarfrost',
 		  listeners: 2, generations: 1, plantedAgo: 'this week',   status: 'Watching' },
-		{ id: 'paper-station',  title: 'Paper Station',  artist: 'Quiet Atlas',
+		{ id: 'zero-archive',     title: 'Zero Archive',     artist: 'Unknown',
 		  listeners: 1,                  plantedAgo: 'last week',  status: 'Dormant seed' },
-		{ id: 'dim-corridor',   title: 'Dim Corridor',   artist: 'Slow Magnet',
+		{ id: 'orbital-form',     title: 'Orbital Form',     artist: 'Ultra Obscure',
 		  listeners: 6, generations: 2, plantedAgo: '6 days ago',  status: 'Starting to move' },
-		{ id: 'small-comet',    title: 'Small Comet',    artist: 'Pale Iris',
+		{ id: 'static-bloom',     title: 'Static Bloom',     artist: 'Margin Signal',
 		  listeners: 3, generations: 1, plantedAgo: '2 days ago',  status: 'Fragile signal' },
 	],
 	following: [
@@ -292,7 +359,7 @@ const alice: UserDetail = {
 	followersCount: 261,
 };
 
-const gisli: UserDetail = {
+const gisli: DraftUserDetail = {
 	id: 'gisli',
 	username: 'Gisli',
 	avatar: dicebear('GisliReverb'),
@@ -324,34 +391,39 @@ const gisli: UserDetail = {
 		{ id: 'soft-border',     title: 'Soft Border',     artist: 'Liminal State',
 		  listeners: 32, generations: 4, impact: 78,
 		  badges: ['Cascade Starter'],
-		  tags: ['folk-leaning ambient', 'reverb drift'] },
+		  tags: ['folk-leaning ambient', 'reverb drift'],
+		  recentActivity: '+2 this week', liveStatus: 'Still moving' },
 		{ id: 'pale-verge',      title: 'Pale Verge',      artist: 'The Outline',
 		  listeners: 24, generations: 3, impact: 70,
 		  badges: ['Niche Spark', 'Cross-Scene Bridge'],
-		  tags: ['ambient', 'liminal listening cluster'] },
+		  tags: ['ambient', 'liminal listening cluster'],
+		  recentActivity: 'new listener today', liveStatus: 'Branch forming' },
 		{ id: 'mirror-static',   title: 'Mirror Static',   artist: 'Pale Signal',
 		  listeners: 14, generations: 3, impact: 58,
 		  badges: ['Early Seed'],
-		  tags: ['drone', 'cassette orbit'] },
+		  tags: ['drone', 'cassette orbit'],
+		  recentActivity: 'amplified 4h ago', liveStatus: 'Accelerating' },
 		{ id: 'glass-signal',    title: 'Glass Signal',    artist: 'Pale Archive',
 		  listeners: 11, generations: 2, impact: 48,
 		  badges: ['Trailblazer'],
-		  tags: ['reverb drift', 'late-night headphone scene'] },
+		  tags: ['reverb drift', 'late-night headphone scene'],
+		  recentActivity: 'quiet for 6 days', liveStatus: 'Quiet' },
 		{ id: 'minor-current',   title: 'Minor Current',   artist: 'Field Notes',
 		  listeners: 9,  generations: 2, impact: 42,
 		  badges: ['Underground Seed'],
-		  tags: ['ambient folk', 'cassette orbit'] },
+		  tags: ['ambient folk', 'cassette orbit'],
+		  recentActivity: 'no movement in 3 weeks', liveStatus: 'Dormant' },
 	],
 	emergingSignals: [
-		{ id: 'cedar-trace',  title: 'Cedar Trace',  artist: 'North Library',
+		{ id: 'forest-mouth',  title: 'Forest Mouth',  artist: 'Haul',
 		  listeners: 2, generations: 1, plantedAgo: '4 days ago', status: 'Watching' },
-		{ id: 'still-quarry', title: 'Still Quarry', artist: 'Halflight Atlas',
+		{ id: 'loud-harbour',  title: 'Loud Harbour',  artist: 'Dock Street',
 		  listeners: 3, generations: 1, plantedAgo: '5 days ago', status: 'Early movement' },
-		{ id: 'paper-radio',  title: 'Paper Radio',  artist: 'Soft Index',
+		{ id: 'open-window',   title: 'Open Window',   artist: 'Still Life',
 		  listeners: 1,                  plantedAgo: 'last week',  status: 'Dormant seed' },
-		{ id: 'low-river',    title: 'Low River',    artist: 'Quiet Sound Bureau',
+		{ id: 'ground-hum',    title: 'Ground Hum',    artist: 'Vessel',
 		  listeners: 4, generations: 2, plantedAgo: 'this week',   status: 'Starting to move' },
-		{ id: 'ash-marker',   title: 'Ash Marker',   artist: 'Iron Library',
+		{ id: 'ashes-in-snow', title: 'Ashes in Snow', artist: 'Meridian Depth',
 		  listeners: 2, generations: 1, plantedAgo: '3 days ago',  status: 'Fragile signal' },
 	],
 	following: [
@@ -372,9 +444,9 @@ const gisli: UserDetail = {
 };
 
 const mockUsers: Record<string, UserDetail> = {
-	dan,
-	alice,
-	gisli,
+	dan:   withCovers(dan),
+	alice: withCovers(alice),
+	gisli: withCovers(gisli),
 };
 
 /* ─── Lookup + fallback ─────────────────────────────────────────

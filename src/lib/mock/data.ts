@@ -110,7 +110,7 @@ const _spotifyCovers = new Map<string, string>(
 		.map(item => [item.id, item.cover])
 );
 
-function coverOf(id: string): string {
+export function coverOf(id: string): string {
 	return _spotifyCovers.get(id) ?? '';
 }
 
