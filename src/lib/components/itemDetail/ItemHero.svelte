@@ -23,13 +23,20 @@
 		item,
 		forest,
 		isAmplified,
+		hasPlayed = false,
 		onReset,
+		onPlay,
 		onToggleAmplify,
 	}: {
 		item: DetailItem;
 		forest: PropagationForest;
 		isAmplified: boolean;
+		/** Has the current viewer entered the tree yet? Drives the
+		 *  enabled state of Amplify (gated until Play) and the
+		 *  Play button's "completed / re-playable" affordance. */
+		hasPlayed?: boolean;
 		onReset: () => void;
+		onPlay: () => void;
 		onToggleAmplify: () => void;
 	} = $props();
 
@@ -158,11 +165,27 @@
 				</div>
 			</div>
 
-			<!-- ── Actions row ── -->
-			<div class="flex items-center gap-2.5 mt-5">
+			<!-- ── Actions row ──
+				 Lifecycle gate:
+				   • Before Play (State A): Amplify is disabled, the
+				     label reads "Play to Amplify". The button itself
+				     teaches the order — no separate helper text
+				     below the controls. Tooltip on hover ("Play
+				     this signal before amplifying") stays as a
+				     secondary affordance.
+				   • After Play (State B): label flips to "Amplify",
+				     enabled.
+				   • After Amplify (State C): label flips to
+				     "Amplified" in the pressed-in accent treatment.
+				 Clicking Play inserts the user as a listener (A→B);
+				 the page handler runs the same scroll-and-highlight
+				 reveal currently used by Amplify. -->
+			<div class="mt-5">
+			<div class="flex items-center gap-2.5">
 				<button
 					class="flex items-center justify-center gap-2 h-9 px-5 rounded-full text-[13px] font-semibold bg-white/10 hover:bg-white/16 border border-white/22 hover:border-white/34 text-white transition-all"
-					onclick={(e) => e.stopPropagation()}
+					onclick={(e) => { e.stopPropagation(); onPlay(); }}
+					title={hasPlayed ? 'You have already played this signal' : 'Play this signal'}
 				>
 					<svg class="w-3 h-3 translate-x-px" viewBox="0 0 12 12" fill="currentColor" aria-hidden="true">
 						<path d="M3 2l8 4-8 4V2z" />
@@ -170,26 +193,35 @@
 					Play
 				</button>
 				<!--
-					Amplify toggle. When the current viewer is already in the
-					lineage (or has just amplified) the button reads "Amplified"
-					with a brighter pressed-in styling; clicking removes their
-					node. Click handler stopPropagation so it doesn't bubble
+					Amplify toggle. State C ("Amplified") uses the pressed-
+					in brighter treatment; State B uses the base outline
+					treatment; State A is `disabled` with reduced opacity
+					and no hover affordance, plus a tooltip that teaches
+					the order ("Play this signal first to amplify it").
+					Click handler stopPropagation so it doesn't bubble
 					into the hero's reset-to-global handler.
 				-->
 				<button
 					class={[
 						'flex items-center gap-1.5 h-9 px-4 rounded-full text-[13px] font-semibold transition-all',
-						isAmplified
-							? 'text-accent-content bg-accent/30 border border-accent/65 hover:bg-accent/40 hover:border-accent/82'
-							: 'text-accent border border-accent/46 bg-black/30 hover:bg-accent/16 hover:border-accent/65',
+						!hasPlayed
+							? 'text-accent/45 border border-accent/22 bg-black/20 cursor-not-allowed'
+							: isAmplified
+								? 'text-accent-content bg-accent/30 border border-accent/65 hover:bg-accent/40 hover:border-accent/82'
+								: 'text-accent border border-accent/46 bg-black/30 hover:bg-accent/16 hover:border-accent/65',
 					]}
 					onclick={(e) => { e.stopPropagation(); onToggleAmplify(); }}
 					aria-pressed={isAmplified}
-					title={isAmplified ? 'Remove your amplification' : 'Amplify this signal'}
+					aria-disabled={!hasPlayed}
+					disabled={!hasPlayed}
+					title={!hasPlayed
+						? 'Play this signal before amplifying'
+						: isAmplified ? 'Remove your amplification' : 'Amplify this signal'}
 				>
 					<Radio size={12} />
-					{isAmplified ? 'Amplified' : 'Amplify'}
+					{!hasPlayed ? 'Play to Amplify' : isAmplified ? 'Amplified' : 'Amplify'}
 				</button>
+			</div>
 			</div>
 		</div>
 

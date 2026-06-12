@@ -1,10 +1,12 @@
 <script lang="ts">
 	import ItemHero from '$lib/components/itemDetail/ItemHero.svelte';
+	import ItemMiniHeader from '$lib/components/itemDetail/ItemMiniHeader.svelte';
 	import PropagationTree from '$lib/components/itemDetail/PropagationTree.svelte';
 	import BranchInspector from '$lib/components/itemDetail/BranchInspector.svelte';
 	import type { PropagationUser, PreviewTarget } from '$lib/mock/propagation';
 	import {
 		findUserInForest,
+		findParentInForest,
 		removeUserFromForest,
 		markUserInForest,
 		addChildToUserInForest,
@@ -64,16 +66,34 @@
 			: null,
 	);
 
-	// Initial amplified state.
-	//   - With a route in context: ALWAYS start unamplified. The route wins
-	//     over any existing Dan node in the mock forest — the user has not
-	//     yet amplified *through this specific route*. (Future: check a
-	//     per-route discovery record.)
-	//   - Without a route: mirror Dan's presence in the forest, so origin-
-	//     route pages where Dan is genuinely the origin start "Amplified".
+	/* Three-state user lifecycle:
+	     A — Not yet in tree:    !hasPlayed && !isAmplified  → preview node
+	     B — In tree, listener:   hasPlayed && !isAmplified  → real user node, deep-listener kind
+	     C — Amplified:                       isAmplified    → real user node, amplifier kind
+	   Once amplified, hasPlayed is implicitly true (you can't amplify
+	   without having played). The transitions Play (A→B) and Amplify
+	   (B→C) both fire `revealNonce++` so the tree smooth-scrolls and
+	   highlights the user's row, reusing the same reveal sequence in
+	   both cases (per spec — no new animation language). */
+	let hasPlayed                = $state(false);
 	let isAmplifiedByCurrentUser = $state(false);
+
+	/* Initialisation — only re-runs when route changes (the data
+	   prop is replaced). User-driven Play / Amplify mutations to the
+	   two state booleans don't trip these dependencies. */
 	$effect(() => {
-		isAmplifiedByCurrentUser = routeSourceScoutId ? false : userAlreadyInForest;
+		if (routeSourceScoutId) {
+			// Route in context — user hasn't traversed this route yet.
+			hasPlayed = false;
+			isAmplifiedByCurrentUser = false;
+		} else {
+			// Origin-stories items, or items whose source scout IS Dan.
+			// Mirror his existing position in the forest; if he's already
+			// an origin there, treat that as State C (he brought the signal
+			// in himself).
+			hasPlayed = userAlreadyInForest;
+			isAmplifiedByCurrentUser = userAlreadyInForest;
+		}
 	});
 
 	function makeCurrentUserNode(): PropagationUser {
@@ -94,12 +114,38 @@
 		};
 	}
 
+	/* State B — the user joined the lineage as a listener (played the
+	   signal) but hasn't amplified it forward yet. Same identity as
+	   makeCurrentUserNode but `nodeKind: 'deep-listener'` and zero
+	   amplifications so the inspector reads "you discovered this
+	   signal but haven't passed it forward" rather than "you
+	   amplified". Ghost-child placeholder under the row is
+	   suppressed for this kind (see PropagationNode) — there's no
+	   downstream branch to wait on until they amplify. */
+	function makeListenerNode(): PropagationUser {
+		return {
+			id: CURRENT_USER_ID,
+			name: danScout?.name ?? 'Dan',
+			avatar: danScout?.avatar ?? '',
+			character: 'Your signal',
+			amplifications: 0,
+			branchSize: 0,
+			discoveredAgo: 'Just now',
+			behaviorNote: 'You discovered this signal through this branch.',
+			scenes: [],
+			children: [],
+			depthLevels: 0,
+			isCurrentUser: true,
+			nodeKind: 'deep-listener',
+		};
+	}
+
 	function makePreviewNode(): PropagationUser {
 		return {
 			id: `${CURRENT_USER_ID}-preview`,
 			name: danScout?.name ?? 'Dan',
 			avatar: danScout?.avatar ?? '',
-			character: 'Amplify to be included here',
+			character: 'Play to be included here',
 			amplifications: 0,
 			branchSize: 0,
 			discoveredAgo: '',
@@ -116,9 +162,13 @@
 		// mock forest. Strip Dan first, then insert under the route.
 		if (routeSourceScoutId) {
 			const baseWithoutUser = removeUserFromForest(forest, CURRENT_USER_ID);
-			return isAmplifiedByCurrentUser
-				? addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makeCurrentUserNode())
-				: addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makePreviewNode());
+			if (isAmplifiedByCurrentUser) {
+				return addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makeCurrentUserNode());
+			}
+			if (hasPlayed) {
+				return addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makeListenerNode());
+			}
+			return addChildToUserInForest(baseWithoutUser, routeSourceScoutId, makePreviewNode());
 		}
 
 		// No route context (Origin Stories item, or item whose source scout IS
@@ -135,30 +185,141 @@
 			: forest;
 	});
 
+	/* Personal-lineage reveal: when the user EXPLICITLY clicks their own
+	   real node (not the preview placeholder, not a hovered third-party
+	   node), the tree highlights every ancestor on the ORIGIN → … → USER
+	   path. Hover doesn't trigger this — only selection does. The set of
+	   ids is computed once here and passed to the tree so each node /
+	   conduit can opt itself in/out of the dim treatment.
+
+	   Walking via `findParentInForest` follows the actual rendered tree
+	   structure, so the chain reflects how the signal really reached the
+	   user (the route insertion lives there). When no current-user node
+	   is selected the set is null and the tree renders normally. */
+	const lineageOrderedIds = $derived.by((): string[] | null => {
+		if (!selectedTarget || selectedTarget.kind !== 'user') return null;
+		const u = selectedTarget.user;
+		if (u.isPreviewNode || !u.isCurrentUser) return null;
+		/* Walk USER → ORIGIN, then reverse. The ordering matters for the
+		   cascade: each lineage node sets --lineage-index to its index in
+		   this array, and the CSS staggers the illumination so the eye
+		   follows ORIGIN → … → USER as a wave. */
+		const reverse: string[] = [];
+		let cur: PropagationUser | null = u;
+		while (cur) {
+			reverse.push(cur.id);
+			cur = findParentInForest(displayedForest, cur.id);
+		}
+		return reverse.reverse();
+	});
+	const lineageIds = $derived(lineageOrderedIds ? new Set(lineageOrderedIds) : null);
+
 	function handleSelect(user: PropagationUser) {
-		// Preview nodes are never selectable as real scouts.
-		if (user.isPreviewNode) return;
+		// Toggle: clicking the already-selected node deselects.
+		// Applies uniformly to origins, leaves, the user node, the
+		// preview placeholder — every selectable row in the tree. On
+		// deselect the inspector returns to its default global state
+		// and any selection-driven tree highlighting (e.g. the lineage
+		// reveal triggered by selecting your own node) tears down with
+		// it.
+		if (selectedTarget?.kind === 'user' && selectedTarget.user.id === user.id) {
+			selectedTarget = null;
+			return;
+		}
+		// Preview nodes ARE selectable — the inspector renders a special
+		// "Your entry point" card explaining where the user would join
+		// the lineage. The preview row itself stays cursor-default +
+		// aria-disabled in PropagationNode, but click still surfaces
+		// the card.
 		selectedTarget = { kind: 'user', user };
 	}
 	function handlePreview(target: PreviewTarget | null) {
-		// Preview nodes also don't surface in the inspector preview pane.
-		if (target?.kind === 'user' && target.user.isPreviewNode) return;
+		// Preview nodes flow through to the inspector so the entry-point
+		// card opens on hover. The inspector branches on isPreviewNode and
+		// renders dedicated content instead of the normal user card.
 		hoveredTarget = target;
 	}
+
+	/* ── Mini-header visibility ──────────────────────────────────
+	   A small sticky context bar appears only when the user has
+	   scrolled past the hero. We watch a 1 px sentinel placed
+	   immediately after ItemHero with IntersectionObserver; the
+	   `rootMargin: -56px` accounts for the fixed global top bar
+	   (h-14) so the bar appears EXACTLY when the sentinel crosses
+	   the bottom edge of the global header — i.e. when the hero
+	   has scrolled fully out of the visible content area. */
+	let miniHeaderVisible = $state(false);
+	let heroSentinel: HTMLDivElement | null = $state(null);
+	$effect(() => {
+		if (!heroSentinel) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					miniHeaderVisible = !entry.isIntersecting;
+				}
+			},
+			/* Shrink the effective viewport's top by 56 px (the
+			   fixed global header's height) so the sentinel reads
+			   as "scrolled past" the moment it slides under the
+			   header, not when it leaves the literal viewport edge. */
+			{ rootMargin: '-56px 0px 0px 0px', threshold: 0 },
+		);
+		observer.observe(heroSentinel);
+		return () => observer.disconnect();
+	});
 	function resetToGlobal() {
 		selectedTarget = null;
 		hoveredTarget = null;
 	}
+	/* Post-amplify / post-play reveal trigger. PropagationTree
+	   watches this counter; every true increment kicks off the
+	   locator-fade → smooth-scroll → highlight sequence inside the
+	   tree. Fired on Play (A→B insertion) AND Amplify (B→C
+	   transition) — both moments are the user "moving into" the
+	   tree and deserve the same reveal language. Toggling amplify
+	   OFF does NOT bump it (there's no destination to glide to). */
+	let revealNonce = $state(0);
+
+	function handlePlay() {
+		// State A → State B. Idempotent: a second Play after we're
+		// already in the tree is a no-op (the button might be wired
+		// to play the song's audio in the future; for now there's no
+		// re-play visual). Origin-stories items keep this in lockstep
+		// with `isAmplifiedByCurrentUser` since they don't have a
+		// listener-only middle state — the user IS the origin.
+		if (hasPlayed) return;
+		hasPlayed = true;
+		if (!routeSourceScoutId) {
+			// No-route items have no "play then amplify" sequence —
+			// the user joining IS the amplification.
+			isAmplifiedByCurrentUser = true;
+		}
+		revealNonce++;
+	}
+
 	function handleToggleAmplify() {
+		// Disabled in State A — the spec teaches "Play before Amplify"
+		// by removing the action entirely from the un-played state.
+		// The button itself is also `disabled` in the ItemHero, but
+		// this guard is defensive in case the handler is reached via
+		// another path.
+		if (!hasPlayed) return;
 		const wasAmplified = isAmplifiedByCurrentUser;
 		isAmplifiedByCurrentUser = !wasAmplified;
-		// If the user un-amplifies and their own node was selected, clear
-		// the selection so the inspector doesn't reference a vanished node.
+		// If the user un-amplifies and their own node was selected,
+		// clear the selection so the inspector doesn't reference a
+		// vanished node. (After un-amplify they remain in State B —
+		// the listener node still exists, so we keep the selection
+		// only when it points at that surviving node.)
 		if (wasAmplified
 			&& selectedTarget?.kind === 'user'
 			&& selectedTarget.user.id === CURRENT_USER_ID
 		) {
 			selectedTarget = null;
+		}
+		// Just turned amplify ON → trigger the reveal sequence.
+		if (!wasAmplified) {
+			revealNonce++;
 		}
 	}
 </script>
@@ -167,6 +328,16 @@
 	<title>{item.title} — {item.artist} · Outer Signal</title>
 </svelte:head>
 
+<!-- ── Mini-header (floating context pill) ──
+	 A quiet centered breadcrumb that fades in when the user has
+	 scrolled past the main hero. Title + artist only — the hero's
+	 Play / Amplify controls are a scroll away. Visibility flips via
+	 the IntersectionObserver on the sentinel below. -->
+<ItemMiniHeader
+	{item}
+	visible={miniHeaderVisible}
+/>
+
 <div class="max-w-360 mx-auto w-full px-6 xl:px-8 py-8 space-y-8">
 
 	<!-- ── Hero / item header ── -->
@@ -174,9 +345,19 @@
 		{item}
 		{forest}
 		isAmplified={isAmplifiedByCurrentUser}
+		{hasPlayed}
 		onReset={resetToGlobal}
+		onPlay={handlePlay}
 		onToggleAmplify={handleToggleAmplify}
 	/>
+	<!-- Sentinel for the mini-header IntersectionObserver. 1 px
+	     tall so it doesn't add visible spacing; placed immediately
+	     after the hero so it scrolls past the global header at the
+	     same moment the hero's bottom edge does. Negative `mt` then
+	     `pt` would also have worked; this is the simpler approach
+	     and the 1-px height is invisible inside the page's
+	     `space-y-8` rhythm. -->
+	<div bind:this={heroSentinel} class="h-px -mt-px" aria-hidden="true"></div>
 
 	<!--
 		Split workspace. CSS Grid with a single fr-template that collapses to a
@@ -201,6 +382,12 @@
 					selectedUserId={selectedTarget?.kind === 'user' ? selectedTarget.user.id : null}
 					onSelect={handleSelect}
 					onPreview={handlePreview}
+					{lineageIds}
+					{lineageOrderedIds}
+					currentUserId={CURRENT_USER_ID}
+					{hasPlayed}
+					{revealNonce}
+					onAmplify={handleToggleAmplify}
 				/>
 			</section>
 
@@ -214,7 +401,7 @@
 					class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
 					style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 				>
-					<BranchInspector forest={displayedForest} target={activeTarget} />
+					<BranchInspector forest={displayedForest} target={activeTarget} {lineageOrderedIds} />
 				</div>
 			</aside>
 		</div>

@@ -38,6 +38,19 @@ export type PropagationNodeKind =
 	| 'amplifier'             // intentionally transmitted onward
 	| 'successful-amplifier'; // their transmission carried the signal far
 
+/** Editorial role used by the hover card's "Role in signal" section.
+ *  Derived from PropagationNodeKind plus deterministic per-node jitter:
+ *  passive-listener splits into "Passive Listener" vs "Listener" based on
+ *  whether the user returned to the signal; the other three map 1:1 to
+ *  their node-kind equivalent. Decoupled from PropagationNodeKind so the
+ *  underlying visual / classification model stays unchanged. */
+export type SignalRole =
+	| 'Passive Listener'      // discovered once, didn't return or engage
+	| 'Listener'              // returned to the signal more than once
+	| 'Deep Listener'         // sustained engagement, no forward share
+	| 'Amplifier'             // passed the signal forward
+	| 'Successful Amplifier'; // forward share produced downstream propagation
+
 /* Branch-level activity — a five-tier spectrum from dormant to runaway
    ignition. Each node computes its own tier from ITS OWN subtree (not
    inherited from the root), so a single tree can contain multiple
@@ -152,6 +165,30 @@ export type PropagationUser = {
 	/** Behavioral category — passive / deep / amplifier / successful-amplifier.
 	 *  Only visual-language field on PropagationUser. */
 	nodeKind?: PropagationNodeKind;
+
+	/** Editorial role used by the inspector's "Role in signal" section.
+	 *  Derived deterministically from nodeKind + per-node hash so the same
+	 *  user always reads the same role. Decoupled from `nodeKind` so the
+	 *  underlying classification logic and visual language stay unchanged. */
+	signalRole?: SignalRole;
+	/** Days after origin when this scout first encountered the signal. */
+	firstSignalEventAt?: number;
+	/** Days after origin when this scout passed the signal forward.
+	 *  Only set for Amplifier / Successful Amplifier. ≥ firstSignalEventAt. */
+	amplifiedAt?: number;
+	/** Percentile (1-99) within this scout's role cohort — "earlier than N%
+	 *  of {role}s". Tracks how early this person showed up relative to
+	 *  others playing the same role. */
+	earlierThanPercent?: number;
+	/** Times this scout passed the signal forward as a discrete event.
+	 *  Distinct from `amplifications` (a numerical reach proxy) — this
+	 *  counts share events. Only meaningful for Amplifier/SA. */
+	forwardAmplifications?: number;
+	/** Ordered role progression. When present and length > 1, the inspector
+	 *  renders a compact arrow journey ("Listener → Deep Listener →
+	 *  Amplifier → Successful Amplifier"). Single-stage journeys are
+	 *  omitted from the UI. */
+	signalJourney?: SignalRole[];
 
 	/** Explicit branch-state override (acceleration-model classification).
 	 *  When set, `computeBranchActivity` returns this directly without
@@ -402,6 +439,83 @@ function behaviorFor(kind: PropagationNodeKind): readonly string[] {
 	}
 }
 
+/* Deterministic per-node role + timing fields used by the inspector's
+   "Role in signal" section. Pulled out of makeNode so the logic is in
+   one place and origins / current-user nodes get the same treatment.
+
+   Determinism: every output is computed from the node's id hash so the
+   same scout always reads the same role/timing on every refresh.
+   `nodeKind` chooses the base role; for passive-listener we split the
+   cohort ~50/50 between "Passive Listener" and "Listener" (returned
+   more than once) so the UI demonstrates both. */
+function deriveSignalRole(kind: PropagationNodeKind, hashSeed: number): SignalRole {
+	switch (kind) {
+		case 'passive-listener':
+			return (hashSeed % 100) < 55 ? 'Passive Listener' : 'Listener';
+		case 'deep-listener':       return 'Deep Listener';
+		case 'amplifier':           return 'Amplifier';
+		case 'successful-amplifier': return 'Successful Amplifier';
+	}
+}
+
+/* All shifts below use `>>>` (unsigned right shift) so the result is
+   non-negative even when hashSeed has the high bit set — JS `>>` would
+   sign-extend and `%` would propagate the sign, producing negative
+   percentile / day values. */
+function deriveSignalJourney(role: SignalRole, hashSeed: number): SignalRole[] {
+	switch (role) {
+		case 'Passive Listener': return ['Passive Listener'];
+		case 'Listener':         return ['Passive Listener', 'Listener'];
+		case 'Deep Listener': {
+			const showProgression = ((hashSeed >>> 4) % 100) < 70;
+			return showProgression ? ['Listener', 'Deep Listener'] : ['Deep Listener'];
+		}
+		case 'Amplifier': {
+			const len = ((hashSeed >>> 6) % 100) < 60
+				? 3
+				: ((hashSeed >>> 8) % 100) < 50
+					? 2
+					: 1;
+			if (len === 3) return ['Listener', 'Deep Listener', 'Amplifier'];
+			if (len === 2) return ['Deep Listener', 'Amplifier'];
+			return ['Amplifier'];
+		}
+		case 'Successful Amplifier': {
+			const len = ((hashSeed >>> 6) % 100) < 65
+				? 4
+				: ((hashSeed >>> 8) % 100) < 55
+					? 3
+					: 2;
+			if (len === 4) return ['Listener', 'Deep Listener', 'Amplifier', 'Successful Amplifier'];
+			if (len === 3) return ['Deep Listener', 'Amplifier', 'Successful Amplifier'];
+			return ['Amplifier', 'Successful Amplifier'];
+		}
+	}
+}
+
+function deriveSignalTiming(
+	role: SignalRole,
+	hashSeed: number,
+): { firstSignalEventAt: number; amplifiedAt?: number; earlierThanPercent: number } {
+	const dayBase = ((hashSeed >>> 2) % 80) + 1;
+	const earlyBias =
+		role === 'Successful Amplifier' ? 0.55 :
+		role === 'Amplifier'             ? 0.70 :
+		role === 'Deep Listener'         ? 0.85 :
+		1.00;
+	const firstSignalEventAt = Math.max(1, Math.round(dayBase * earlyBias));
+
+	let amplifiedAt: number | undefined;
+	if (role === 'Amplifier' || role === 'Successful Amplifier') {
+		const lag = (hashSeed >>> 10) % 13;
+		amplifiedAt = firstSignalEventAt + lag;
+	}
+
+	const earlierThanPercent = ((hashSeed >>> 14) % 99) + 1;
+
+	return { firstSignalEventAt, amplifiedAt, earlierThanPercent };
+}
+
 function makeNode(
 	ctx: BuilderCtx,
 	kind: PropagationNodeKind,
@@ -410,6 +524,14 @@ function makeNode(
 	const name = opts.name ?? uniqueName(ctx);
 	const id = opts.id ?? uniqueId(ctx, name);
 	const avatar = opts.avatar ?? dicebear(id + Math.floor(ctx.rand() * 1000));
+	const hashSeed = hashString(id);
+	const signalRole = opts.signalRole ?? deriveSignalRole(kind, hashSeed);
+	const timing = deriveSignalTiming(signalRole, hashSeed);
+	const forwardAmplifications = opts.forwardAmplifications ?? (
+		signalRole === 'Successful Amplifier' ? ((hashSeed >>> 18) % 5) + 3 :
+		signalRole === 'Amplifier'             ? ((hashSeed >>> 18) % 3) + 1 :
+		undefined
+	);
 	return {
 		id,
 		name,
@@ -439,6 +561,12 @@ function makeNode(
 		biggestSubcascadeReach: opts.biggestSubcascadeReach,
 		branchState: opts.branchState,
 		nodeKind: kind,
+		signalRole,
+		firstSignalEventAt: opts.firstSignalEventAt ?? timing.firstSignalEventAt,
+		amplifiedAt: opts.amplifiedAt ?? timing.amplifiedAt,
+		earlierThanPercent: opts.earlierThanPercent ?? timing.earlierThanPercent,
+		forwardAmplifications,
+		signalJourney: opts.signalJourney ?? deriveSignalJourney(signalRole, hashSeed),
 	};
 }
 
@@ -1810,6 +1938,281 @@ function buildConduitCompare(ctx: BuilderCtx): ArchetypeResult {
 	};
 }
 
+/* 22. Dan-deep-lineage — DEBUG SURFACE.
+
+   Places MARCO at depth 5 in the forest. When the user amplifies on
+   an item with `sourceScoutId: 'marco'` (e.g. /items/edge-of-field),
+   the route insertion logic adds Dan as Marco's child — putting Dan
+   at depth 6 and producing a 7-node ancestor chain:
+
+     ORIGIN → ancestor1 → ancestor2 → ancestor3 → ancestor4 → MARCO → DAN
+
+   Useful for testing the personal-lineage-reveal overlay on a chain
+   longer than the typical 2-node case (sourceScout → Dan).
+
+   Marco is created with id='marco' + name/avatar/character matching
+   KNOWN_SCOUTS['marco'] so `rebrandRootAs` finds him via `findInNode`
+   and skips the root rebrand. */
+function buildDanDeepLineage(ctx: BuilderCtx): ArchetypeResult {
+	const node = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	/* Marco at depth 5 with explicit identity matching KNOWN_SCOUTS. */
+	const marcoDeep = makeNode(ctx, 'amplifier', {
+		id: 'marco',
+		name: 'Marco',
+		avatar: dicebear('MarcoAmb'),
+		character: 'Underground connector',
+		branchState: 'accelerating',
+		children: [
+			node('deep-listener', 'alive', [node('passive-listener', 'alive')]),
+			node('passive-listener', 'alive'),
+		],
+	});
+
+	/* Five ancestor layers above Marco, alternating kind so the chain
+	   has visible variation. Each layer also gets a sibling so the
+	   conduit accumulation rule has something to render. */
+	const ancestor4 = node('amplifier', 'accelerating', [
+		marcoDeep,
+		node('deep-listener', 'alive', [node('passive-listener', 'alive')]),
+	]);
+	const ancestor3 = node('deep-listener', 'alive', [
+		ancestor4,
+		node('passive-listener', 'alive'),
+	]);
+	const ancestor2 = node('amplifier', 'accelerating', [
+		ancestor3,
+		node('deep-listener', 'alive'),
+	]);
+	const ancestor1 = node('deep-listener', 'alive', [
+		ancestor2,
+		node('passive-listener', 'alive'),
+	]);
+
+	const origin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [
+			ancestor1,
+			node('deep-listener', 'alive', [node('passive-listener', 'alive')]),
+			node('amplifier', 'alive'),
+		],
+	});
+
+	return {
+		roots: [origin],
+		hiddenRootUsers: [],
+	};
+}
+
+/* 23. Dan-long-lineage — DEBUG SURFACE.
+
+   Same lineage depth as `dan-deep-lineage` (Marco placed at depth 5
+   so amplifying inserts Dan at depth 6) but the forest is much
+   taller: a single root with several large amplifier subtrees as
+   siblings to the lineage chain. The lineage path renders in the
+   MIDDLE of the tree vertically — a large amplifier subtree above
+   pushes Dan further down, and additional subtrees below extend
+   the tail. Total ~90 nodes → many viewport-heights of vertical
+   scroll, useful for exercising the "Your signal" locator pill in
+   both directions (scroll past Dan downward → up-pointing pill;
+   scroll above him → down-pointing pill).
+
+   Pinned to /items/low-orbit (sourceScoutId = 'marco'). */
+function buildDanLongLineage(ctx: BuilderCtx): ArchetypeResult {
+	const branch = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	/* Recursive subtree generator. `depth` controls the approximate
+	   node count: sub(2)≈8, sub(3)≈14, sub(4)≈25, sub(5)≈42. The
+	   shape alternates amplifier / deep-listener / passive-listener
+	   so each branch adds variation rather than visual repetition. */
+	const sub = (depth: number, state: BranchActivityState = 'alive'): PropagationUser => {
+		if (depth <= 0) return branch('passive-listener', state);
+		if (depth === 1) {
+			return branch('deep-listener', state, [
+				branch('passive-listener', state),
+				branch('passive-listener', state),
+			]);
+		}
+		return branch('amplifier', state, [
+			sub(depth - 1, state),
+			sub(depth - 2, state),
+			branch('deep-listener', state, [branch('passive-listener', state)]),
+		]);
+	};
+
+	/* Marco at depth 5 — identity matches KNOWN_SCOUTS so
+	   `rebrandRootAs` finds him via `findInNode` and skips the
+	   root rebrand. */
+	const marcoDeep = makeNode(ctx, 'amplifier', {
+		id: 'marco',
+		name: 'Marco',
+		avatar: dicebear('MarcoAmb'),
+		character: 'Underground connector',
+		branchState: 'accelerating',
+		children: [
+			branch('deep-listener', 'alive', [
+				branch('passive-listener', 'alive'),
+				branch('passive-listener', 'alive'),
+			]),
+			branch('passive-listener', 'alive'),
+		],
+	});
+
+	/* Lean lineage chain — each ancestor adds only one small sibling
+	   so the chain itself stays a thin vertical thread (~18 nodes).
+	   Keeping it lean is what lets the larger non-lineage siblings
+	   under the origin render ABOVE it in branchSize-descending sort,
+	   positioning Dan in the middle of the visible tree. */
+	const ancestor4 = branch('amplifier', 'accelerating', [
+		marcoDeep,
+		branch('deep-listener', 'alive', [branch('passive-listener', 'alive')]),
+	]);
+	const ancestor3 = branch('amplifier', 'accelerating', [
+		ancestor4,
+		branch('deep-listener', 'alive', [branch('passive-listener', 'alive')]),
+	]);
+	const ancestor2 = branch('amplifier', 'accelerating', [
+		ancestor3,
+		branch('deep-listener', 'alive'),
+	]);
+	const ancestor1 = branch('amplifier', 'accelerating', [
+		ancestor2,
+		branch('deep-listener', 'alive', [branch('passive-listener', 'alive')]),
+	]);
+
+	/* Big amplifier sibling renders BEFORE the lineage path
+	   (larger branchSize). This is what pushes Dan down vertically. */
+	const bigSibAbove = sub(5, 'alive');
+
+	/* Tail siblings render after the lineage. tailA is also
+	   bigger than ancestor1, so the actual render order under
+	   the origin is:
+	     bigSibAbove (~42) → tailA (~25) → ancestor1 (~18) → tailB (~8)
+	   placing Dan roughly two-thirds down the tree. */
+	const tailA = sub(4, 'alive');
+	const tailB = sub(3, 'alive');
+	const tailC = branch('deep-listener', 'alive', [
+		branch('passive-listener', 'alive'),
+		branch('passive-listener', 'alive'),
+	]);
+
+	const origin = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [bigSibAbove, ancestor1, tailA, tailB, tailC],
+	});
+
+	return {
+		roots: [origin],
+		hiddenRootUsers: [],
+	};
+}
+
+/* 24. Dan-origin-peers — DEBUG SURFACE.
+
+   Five sibling origins where Dan is one of the origins (id='dan',
+   `isOrigin: true`, no children). Two other origins also have no
+   children; two have multi-level subtrees (children + grand-
+   children). Useful for visually validating how empty-origin nodes
+   render NEXT TO origins with descendants — the rail / elbow /
+   children-container geometry on the populated origins, and the
+   single-row terminal treatment on the childless ones.
+
+   Roots are sorted at render time by branchSize (descending) within
+   the same node-kind rank, so the rendered vertical order is:
+     1. amplifier with grand-children (~5 nodes)
+     2. amplifier with grand-children (~4 nodes)
+     3. childless amplifier
+     4. childless amplifier
+     5. Dan (childless amplifier, isCurrentUser)
+   placing the childless cluster directly below the populated ones
+   for side-by-side comparison.
+
+   Pinned to /items/soft-border (sourceScoutId='dan'). Because the
+   route's source scout IS Dan, +page.svelte resolves
+   routeSourceScoutId to null (Dan can't be inserted into his own
+   route) and falls back to "use forest as-is with Dan marked
+   isCurrentUser when amplified". Toggling Amplify OFF removes Dan
+   from view via removeUserFromForest. */
+function buildDanOriginPeers(ctx: BuilderCtx): ArchetypeResult {
+	const node = (
+		kind: PropagationNodeKind,
+		state: BranchActivityState,
+		children: PropagationUser[] = [],
+	): PropagationUser => makeNode(ctx, kind, { branchState: state, children });
+
+	const populatedOriginA = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [
+			node('amplifier', 'alive', [
+				node('passive-listener', 'alive'),
+				node('passive-listener', 'alive'),
+			]),
+			node('deep-listener', 'alive', [
+				node('passive-listener', 'alive'),
+			]),
+			node('passive-listener', 'alive'),
+		],
+	});
+
+	const populatedOriginB = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'accelerating',
+		children: [
+			node('deep-listener', 'alive', [
+				node('passive-listener', 'alive'),
+				node('passive-listener', 'alive'),
+			]),
+			node('passive-listener', 'alive'),
+		],
+	});
+
+	const childlessOriginC = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [],
+	});
+	const childlessOriginD = makeNode(ctx, 'amplifier', {
+		isOrigin: true,
+		branchState: 'alive',
+		children: [],
+	});
+
+	/* Dan — childless origin. id/name/avatar/character match
+	   KNOWN_SCOUTS['dan'] so `rebrandRootAs` finds him via
+	   `findInNode` and skips any rebrand. */
+	const danOrigin = makeNode(ctx, 'amplifier', {
+		id: 'dan',
+		name: 'Dan',
+		avatar: dicebear('DanOuter'),
+		character: 'Early signal hunter',
+		isOrigin: true,
+		branchState: 'alive',
+		children: [],
+	});
+
+	return {
+		roots: [
+			populatedOriginA,
+			populatedOriginB,
+			childlessOriginC,
+			childlessOriginD,
+			danOrigin,
+		],
+		hiddenRootUsers: [],
+	};
+}
+
 const ARCHETYPES = [
 	{ name: 'hub-dominant',         build: buildHubDominant         },
 	{ name: 'fragmented',           build: buildFragmented          },
@@ -1832,6 +2235,9 @@ const ARCHETYPES = [
 	{ name: 'phoenix',              build: buildPhoenix             },
 	{ name: 'reignition',           build: buildReignition          },
 	{ name: 'conduit-compare',      build: buildConduitCompare      },
+	{ name: 'dan-deep-lineage',     build: buildDanDeepLineage      },
+	{ name: 'dan-long-lineage',     build: buildDanLongLineage      },
+	{ name: 'dan-origin-peers',     build: buildDanOriginPeers      },
 ] as const;
 
 /* Items whose forest is pinned to a specific archetype for design-system
@@ -1864,6 +2270,28 @@ const PINNED_ARCHETYPES: Record<string, string> = {
 	   conduits, one each for Peak / Strong / Accel, stacked top-to-
 	   bottom. Visit /items/soft-collapse to compare densities. */
 	'soft-collapse':      'conduit-compare',
+	/* Long-lineage calibration — Marco placed at depth 5, so
+	   amplifying inserts Dan at depth 6. Visit /items/edge-of-field
+	   (sourceScoutId = 'marco') to test the personal-lineage overlay
+	   on a 7-node ORIGIN → … → MARCO → DAN chain. */
+	'edge-of-field':      'dan-deep-lineage',
+	/* Long + deep calibration — same depth-5 Marco / depth-6 Dan
+	   placement as dan-deep-lineage, but the surrounding forest is
+	   much taller (~90 nodes) with a large amplifier sibling above
+	   the lineage that pushes Dan into the middle vertically. Visit
+	   /items/low-orbit (sourceScoutId = 'marco') to exercise the
+	   "Your signal" offscreen locator pill in BOTH directions:
+	   scroll the page down past Dan to test the up-pointing
+	   variant, scroll back up to test the down-pointing variant. */
+	'low-orbit':          'dan-long-lineage',
+	/* Multi-origin layout calibration — Dan rendered as one of
+	   five sibling origins, three of which (including Dan) are
+	   childless and two of which have children + grandchildren.
+	   Visit /items/soft-border (sourceScoutId='dan') to validate
+	   the rail / elbow / children-container geometry of populated
+	   origins next to the terminal single-row treatment of
+	   childless ones. */
+	'soft-border':        'dan-origin-peers',
 };
 
 /* Archetype names that should NEVER appear via random rotation —
@@ -2043,6 +2471,21 @@ const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; o
 		summary: 'Debug surface — three long vertical conduits stacked top-to-bottom (Peak, Strong, Accelerating) for side-by-side particle-traffic calibration.',
 		crossingNote: 'Calibration tree — three target sub-branches, each preceded by a tall alive dummy sibling to stretch the rail.',
 		originNote: 'A calibration surface for visually comparing particle density across Peak, Strong, and Accelerating long conduits.',
+	},
+	'dan-deep-lineage': {
+		summary: 'Debug surface — Marco is placed at depth 5, so amplifying inserts Dan at depth 6 and produces a 7-node ORIGIN → … → MARCO → DAN ancestor chain for testing the lineage-reveal overlay on a long path.',
+		crossingNote: 'Calibration tree — a deliberately deep ancestor chain ending in Marco, with route insertion placing Dan a further level below.',
+		originNote: 'A calibration surface for visually verifying the personal-lineage overlay on a chain longer than the typical 2-node sourceScout → Dan case.',
+	},
+	'dan-long-lineage': {
+		summary: 'Debug surface — same depth-6 placement as dan-deep-lineage, but the surrounding forest is much taller (~90 nodes) with a large amplifier sibling above the lineage that drops Dan into the middle of the tree vertically.',
+		crossingNote: 'Calibration tree — a long Marco-anchored lineage threaded through a tall multi-branch forest, used to exercise the offscreen "Your signal" locator pill in both directions.',
+		originNote: 'A calibration surface for visually verifying the locator pill on a tree taller than the viewport, where Dan can be either above or below the visible area depending on scroll position.',
+	},
+	'dan-origin-peers': {
+		summary: 'Debug surface — Dan rendered as one of five sibling origins, three of which (including Dan) are childless and two of which have children + grandchildren.',
+		crossingNote: 'Calibration tree — multi-origin layout, used to validate the rail / elbow / children-container geometry of populated origins beside the terminal single-row treatment of childless ones.',
+		originNote: 'A calibration surface for visually comparing populated origins next to childless origins (including Dan as a childless origin).',
 	},
 };
 
