@@ -1,5 +1,6 @@
 <script lang="ts">
 	import ItemHero from '$lib/components/itemDetail/ItemHero.svelte';
+	import ItemMiniHeader from '$lib/components/itemDetail/ItemMiniHeader.svelte';
 	import PropagationTree from '$lib/components/itemDetail/PropagationTree.svelte';
 	import BranchInspector from '$lib/components/itemDetail/BranchInspector.svelte';
 	import type { PropagationUser, PreviewTarget } from '$lib/mock/propagation';
@@ -238,6 +239,34 @@
 		// renders dedicated content instead of the normal user card.
 		hoveredTarget = target;
 	}
+
+	/* ── Mini-header visibility ──────────────────────────────────
+	   A small sticky context bar appears only when the user has
+	   scrolled past the hero. We watch a 1 px sentinel placed
+	   immediately after ItemHero with IntersectionObserver; the
+	   `rootMargin: -56px` accounts for the fixed global top bar
+	   (h-14) so the bar appears EXACTLY when the sentinel crosses
+	   the bottom edge of the global header — i.e. when the hero
+	   has scrolled fully out of the visible content area. */
+	let miniHeaderVisible = $state(false);
+	let heroSentinel: HTMLDivElement | null = $state(null);
+	$effect(() => {
+		if (!heroSentinel) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				for (const entry of entries) {
+					miniHeaderVisible = !entry.isIntersecting;
+				}
+			},
+			/* Shrink the effective viewport's top by 56 px (the
+			   fixed global header's height) so the sentinel reads
+			   as "scrolled past" the moment it slides under the
+			   header, not when it leaves the literal viewport edge. */
+			{ rootMargin: '-56px 0px 0px 0px', threshold: 0 },
+		);
+		observer.observe(heroSentinel);
+		return () => observer.disconnect();
+	});
 	function resetToGlobal() {
 		selectedTarget = null;
 		hoveredTarget = null;
@@ -299,6 +328,16 @@
 	<title>{item.title} — {item.artist} · Outer Signal</title>
 </svelte:head>
 
+<!-- ── Mini-header (floating context pill) ──
+	 A quiet centered breadcrumb that fades in when the user has
+	 scrolled past the main hero. Title + artist only — the hero's
+	 Play / Amplify controls are a scroll away. Visibility flips via
+	 the IntersectionObserver on the sentinel below. -->
+<ItemMiniHeader
+	{item}
+	visible={miniHeaderVisible}
+/>
+
 <div class="max-w-360 mx-auto w-full px-6 xl:px-8 py-8 space-y-8">
 
 	<!-- ── Hero / item header ── -->
@@ -311,6 +350,14 @@
 		onPlay={handlePlay}
 		onToggleAmplify={handleToggleAmplify}
 	/>
+	<!-- Sentinel for the mini-header IntersectionObserver. 1 px
+	     tall so it doesn't add visible spacing; placed immediately
+	     after the hero so it scrolls past the global header at the
+	     same moment the hero's bottom edge does. Negative `mt` then
+	     `pt` would also have worked; this is the simpler approach
+	     and the 1-px height is invisible inside the page's
+	     `space-y-8` rhythm. -->
+	<div bind:this={heroSentinel} class="h-px -mt-px" aria-hidden="true"></div>
 
 	<!--
 		Split workspace. CSS Grid with a single fr-template that collapses to a
