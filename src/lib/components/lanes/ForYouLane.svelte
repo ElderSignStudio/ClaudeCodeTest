@@ -3,6 +3,7 @@
 	import { forYouItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	const featuredItem = forYouItems.find(i => i.featured)!;
 	const regularItems = forYouItems.filter(i => !i.featured);
@@ -36,7 +37,14 @@
 			feathered gradient show through it, so the artwork bleeds seamlessly into the
 			content area. No hard edge; no panel.
 		-->
-		<div class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/36 os-hero-card flex flex-col min-h-72">
+		<div
+			class="group relative rounded-xl overflow-hidden cursor-pointer border border-primary/36 os-hero-card flex flex-col min-h-72"
+			onclick={(e) => navigateToItem(featuredItem.id, e)}
+			onkeydown={(e) => navigateToItemKey(featuredItem.id, e)}
+			role="button"
+			tabindex="0"
+			aria-label={`View ${featuredItem.title}`}
+		>
 
 			<!--
 				Image covers the ENTIRE card (spacer + text zone) via absolute inset-0
@@ -131,12 +139,10 @@
 					class="text-[13px] font-normal text-white/90 truncate mt-2.5"
 					style="text-shadow: 0 1px 8px rgba(0,0,0,0.75);"
 				>{featuredItem.artist}</p>
-				{#if featuredItem.resonanceContext}
-					<p
-						class="text-[12px] text-white/78 leading-loose mt-3.5 line-clamp-2 max-w-[88%]"
-						style="text-shadow: 0 1px 8px rgba(0,0,0,0.70);"
-					>{featuredItem.resonanceContext}</p>
-				{/if}
+				<p
+					class="text-[12px] text-white/78 leading-loose mt-3.5 line-clamp-2 max-w-[88%]"
+					style="text-shadow: 0 1px 8px rgba(0,0,0,0.70);"
+				>{featuredItem.routeNarrative}</p>
 				<div class="flex justify-end mt-4">
 					<button
 						class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent/72 border border-accent/32 bg-black/22 hover:bg-accent/12 hover:border-accent/50 hover:text-accent/92 transition-all backdrop-blur-sm"
@@ -151,7 +157,14 @@
 
 		<!-- Standard cards -->
 		{#each regularItems as item, i (item.id)}
-			<div class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/20 transition-all duration-250 os-card-refined">
+			<div
+				class="group rounded-lg overflow-hidden cursor-pointer border border-white/8 hover:border-white/20 transition-all duration-250 os-card-refined"
+				onclick={(e) => navigateToItem(item.id, e)}
+				onkeydown={(e) => navigateToItemKey(item.id, e)}
+				role="button"
+				tabindex="0"
+				aria-label={`View ${item.title}`}
+			>
 				<div class="relative aspect-square w-full">
 					<img
 						src={item.image}
@@ -176,13 +189,11 @@
 					-->
 					<p class="text-[13px] font-normal text-base-content/68 truncate mt-1">{item.artist}{item.type ? ` · ${item.genre} ${item.type.toLowerCase()}` : ` · ${item.genre}`}</p>
 					<!--
-						Resonance context — a whisper, not a reason.
-						Reduced to /44 opacity and wider leading so it drifts rather than explains.
-						line-clamp-2 preserves equal card heights.
+						Discovery route — kept quieter than the featured hero so
+						the title leads visually. /42 opacity reads as editorial
+						metadata, not a competing headline.
 					-->
-					{#if item.resonanceContext}
-						<p class="text-[12px] text-base-content/58 leading-relaxed mt-2.5 line-clamp-2">{item.resonanceContext}</p>
-					{/if}
+					<p class="text-[12px] text-base-content/42 leading-relaxed mt-2.5 line-clamp-2">{item.routeNarrative}</p>
 					<!--
 						Amplify — present but not calling for attention.
 						Dimmer than Breaking Out / One Step Away equivalents.

@@ -3,7 +3,7 @@
 	import { oneStepAwayItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
-	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	// Badge opacity varies by life state — more momentum = more visible
 	const badgeOpacity: Record<string, number> = {
@@ -32,7 +32,14 @@
 
 	<div class="mt-5 grid gap-4 pb-2 w-full" style="grid-template-columns: repeat(6, minmax(150px, 1fr));">
 		{#each oneStepAwayItems as item (item.id)}
-			<div class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-accent/40 cursor-pointer transition-all duration-200 os-card-glow">
+			<div
+				class="group relative rounded-lg overflow-hidden border border-white/10 hover:border-accent/40 cursor-pointer transition-all duration-200 os-card-glow"
+				onclick={(e) => navigateToItem(item.id, e)}
+				onkeydown={(e) => navigateToItemKey(item.id, e)}
+				role="button"
+				tabindex="0"
+				aria-label={`View ${item.title}`}
+			>
 				<div
 					class="absolute left-0 top-0 bottom-0 w-0.75 bg-accent/30 group-hover:bg-accent/55 transition-colors duration-200 z-10"
 					aria-hidden="true"
@@ -67,15 +74,18 @@
 					<p class="text-[13px] font-bold text-base-content/95 truncate leading-snug">{item.title}</p>
 					<!-- 2. Artist · Genre -->
 					<p class="text-[12px] text-base-content/68 truncate mt-1">{item.artist} · {item.genre}</p>
-					<!-- 3+4. Origin + Network — grouped, origin primary, network secondary -->
+					<!--
+						Line 1: singular discovery route — scout-anchored.
+						Line 2: propagation velocity (the lane's quantitative signal).
+						The arrow glyph leads the route line as a tiny directional
+						hint that this signal is coming from a specific scout.
+					-->
 					<div class="mt-2 space-y-1">
-						{#if item.adjacencyReason}
-							<p class="text-[11px] font-medium leading-snug truncate text-cyan-300/92">
-								<span style="font-size: 8px; opacity: 0.40; margin-right: 2px;">↗</span>{item.adjacencyReason}
-							</p>
-						{/if}
+						<p class="text-[11px] font-medium leading-snug truncate text-cyan-300/92">
+							<span style="font-size: 8px; opacity: 0.40; margin-right: 2px;">↗</span>{item.routeNarrative}
+						</p>
 						<p class="text-[11px] font-normal truncate text-cyan-300/78">
-							{#if item.multiOrigin}<MultiOriginMarker seed={item.id} colorClass="text-accent/25" /> {/if}{networkLabel(item.scouts)}
+							{networkLabel(item.scouts)}
 						</p>
 					</div>
 					<!-- 5. Amplify -->

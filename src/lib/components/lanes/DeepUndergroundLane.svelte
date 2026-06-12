@@ -3,6 +3,7 @@
 	import { deepUndergroundItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	// Capped scout count: minimum 1 (never show 0), maximum 3
 	function capped(scouts: number): number {
@@ -50,7 +51,14 @@
 				compression skipped, title +6pp opacity. Still well within the
 				lane's "barely surfaced" mood — every other lane stays brighter.
 			-->
-			<div class="group relative rounded-lg overflow-hidden border border-white/3 hover:border-white/5 cursor-pointer transition-colors duration-300 os-card-deep">
+			<div
+				class="group relative rounded-lg overflow-hidden border border-white/3 hover:border-white/5 cursor-pointer transition-colors duration-300 os-card-deep"
+				onclick={(e) => navigateToItem(item.id, e)}
+				onkeydown={(e) => navigateToItemKey(item.id, e)}
+				role="button"
+				tabindex="0"
+				aria-label={`View ${item.title}`}
+			>
 
 				<div class="relative w-full aspect-square">
 					<img
@@ -87,9 +95,15 @@
 					<p class={['text-[12px] font-semibold truncate leading-snug', coverDim ? 'text-base-content/88' : 'text-base-content/82']}>{item.title}</p>
 					<p class="text-[11px] text-base-content/64 truncate mt-0.5">{item.artist}</p>
 					<!-- Presence first (factual anchor), origin second (flavor) -->
+					<!--
+						Two-line metadata: scout count (factual anchor) + source-scout
+						route. The lane header already communicates obscurity, so we
+						no longer need a third "Barely surfaced / Found in isolation"
+						editorial line per card.
+					-->
 					<div class="mt-2 space-y-0.5">
 						<p class="text-sm font-medium text-zinc-400/88 truncate">{presenceLabel(item.scouts)}</p>
-						<p class="text-[13px] text-zinc-400/75 truncate">{item.whisperHint ?? 'Barely surfaced'}</p>
+						<p class="text-[13px] text-zinc-400/75 truncate">{item.routeNarrative}</p>
 					</div>
 					<!-- Amplify — quiet but clearly available: opacity-75 at rest, 90 on hover -->
 					<div class="flex justify-end mt-2">

@@ -3,7 +3,7 @@
 	import { outsideBubbleItems } from '$lib/mock/data';
 	import LaneHeader from '$lib/components/LaneHeader.svelte';
 	import PlayOverlay from '$lib/components/PlayOverlay.svelte';
-	import MultiOriginMarker from '$lib/components/MultiOriginMarker.svelte';
+	import { navigateToItem, navigateToItemKey } from '$lib/navigation';
 
 	const bubbleFeatured = outsideBubbleItems.find(i => i.featured)!;
 	const bubbleSupporting = outsideBubbleItems.filter(i => !i.featured);
@@ -33,6 +33,11 @@
 		<div
 			class="group relative rounded-xl overflow-hidden cursor-pointer border border-cyan-300/15 min-h-44 h-full transition-transform duration-400 hover:-translate-y-0.5"
 			style="box-shadow: 0 0 0 1px oklch(0.72 0.16 220 / 0.10), 0 8px 28px rgba(0,0,0,0.28), 0 2px 6px rgba(0,0,0,0.20), inset 0 1px 0 rgba(255,255,255,0.04);"
+			onclick={(e) => navigateToItem(bubbleFeatured.id, e)}
+			onkeydown={(e) => navigateToItemKey(bubbleFeatured.id, e)}
+			role="button"
+			tabindex="0"
+			aria-label={`View ${bubbleFeatured.title}`}
 		>
 			<img
 				src={bubbleFeatured.image}
@@ -90,20 +95,16 @@
 				-->
 				{#if bubbleFeatured.crossingPath}
 					<p class="font-mono text-[11px] text-cyan-300/58 mb-3.5 tracking-wide">
-						{#if bubbleFeatured.multiOrigin}<MultiOriginMarker seed={bubbleFeatured.id} colorClass="text-cyan-300/28" /> {/if}{bubbleFeatured.crossingPath}
+						{bubbleFeatured.crossingPath}
 					</p>
 				{/if}
 
 				<!--
-					CROSSING PATHS: replaces "WHY THIS IS HERE".
-					Label is tiny, uppercase, muted. Explanatory line is calm prose, not promotional.
+					Discovery route — bridge scout. No section label; the
+					crossingPath line above already communicates the "crossing
+					scenes" idea visually.
 				-->
-				{#if bubbleFeatured.whyHere}
-					<div class="mb-4">
-						<p class="text-[10px] font-semibold uppercase tracking-widest mb-1.5 text-cyan-300/52">Crossing paths</p>
-						<p class="text-xs leading-relaxed text-white/78">{bubbleFeatured.whyHere}</p>
-					</div>
-				{/if}
+				<p class="text-xs leading-relaxed text-white/78 mb-4">{bubbleFeatured.routeNarrative}</p>
 
 				<button
 					class="flex items-center gap-1.5 h-7 px-3 rounded-full text-[11px] font-semibold text-accent border border-accent/46 bg-black/40 hover:bg-accent/22 hover:border-accent/65 transition-all backdrop-blur-sm"
@@ -131,7 +132,14 @@
 					Hover adds a faint cyan border ring — "nearby anomaly" feel.
 					-mx-1.5 + px-1.5 so the ring extends slightly beyond the text column.
 				-->
-				<div class="group flex gap-3 cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 border border-transparent hover:bg-cyan-400/4 hover:border-cyan-300/8 transition-all duration-250">
+				<div
+					class="group flex gap-3 cursor-pointer rounded-lg px-1.5 py-1.5 -mx-1.5 border border-transparent hover:bg-cyan-400/4 hover:border-cyan-300/8 transition-all duration-250"
+					onclick={(e) => navigateToItem(item.id, e)}
+					onkeydown={(e) => navigateToItemKey(item.id, e)}
+					role="button"
+					tabindex="0"
+					aria-label={`View ${item.title}`}
+				>
 
 					<!-- Thumbnail — slightly taller than before (h-16 vs h-14) -->
 					<div class="relative w-20 h-16 rounded-md overflow-hidden shrink-0">
@@ -154,13 +162,12 @@
 						-->
 						{#if item.crossingPath}
 							<p class="font-mono text-[11px] text-cyan-300/55 mt-0.5 tracking-wide">
-								{#if item.multiOrigin}<MultiOriginMarker seed={item.id} colorClass="text-cyan-300/28" /> {/if}{item.crossingPath}
+								{item.crossingPath}
 							</p>
 						{/if}
 
-						{#if item.whyHere}
-							<p class="text-[12px] leading-normal text-base-content/68 mt-1.5 mb-2 line-clamp-2">{item.whyHere}</p>
-						{/if}
+						<!-- Discovery route — kept quieter so the title still leads. -->
+						<p class="text-[12px] leading-normal text-base-content/52 mt-1.5 mb-2 line-clamp-2">{item.routeNarrative}</p>
 
 						<button
 							class="self-start flex items-center gap-1 h-5 px-2 rounded-full text-[11px] font-semibold text-accent/82 border border-accent/36 hover:bg-accent/16 hover:border-accent/54 hover:text-accent transition-all"
