@@ -295,10 +295,12 @@
 
 	const lineageOrigin = $derived<PropagationUser | null>(lineageScouts[0] ?? null);
 
-	/* Positional label — supporting fact, not the panel's main
-	   point. Choices stay editorial (no formulas surface): "Origin
-	   scout" / "Your signal" / depth-bucketed amplifier labels. */
-	const lineagePosition = $derived.by((): string | null => {
+	/* Depth-bucketed label shown in the "Position" supporting fact
+	   of the lineage card. Editorial — no formulas or numeric
+	   percentiles surface. "Origin scout" / "Your signal" /
+	   "Early amplifier" / "Mid-chain amplifier" / "Deep lineage
+	   node". */
+	const lineageDepthLabel = $derived.by((): string | null => {
 		if (!isLineageContext || !target || target.kind !== 'user') return null;
 		const u = target.user;
 		if (u.isOrigin) return 'Origin scout';
@@ -729,10 +731,10 @@
 							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineageOrigin.name}'s branch</dd>
 						</div>
 					{/if}
-					{#if lineagePosition}
+					{#if lineageDepthLabel}
 						<div>
 							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Position</dt>
-							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineagePosition}</dd>
+							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineageDepthLabel}</dd>
 						</div>
 					{/if}
 				</dl>
@@ -751,8 +753,8 @@
 		{#if target.user.signalRole}
 			{@const role = target.user.signalRole}
 			{@const isCu = !!target.user.isCurrentUser}
-			{@const ampedDays = target.user.amplifiedAt}
-			{@const joinedDays = target.user.firstSignalEventAt}
+			{@const amplifiedAfterDays = target.user.amplifiedAt}
+			{@const joinedAfterDays = target.user.firstSignalEventAt}
 			{@const pct = target.user.earlierThanPercent}
 			{@const reach = target.user.branchSize}
 			<section class="pt-4 border-t border-white/6">
@@ -766,20 +768,20 @@
 					{#if isCu}
 						<!-- Current-user copy — second person, omits the
 						     descriptive sentence (it's implied by "You"). -->
-						{#if ampedDays !== undefined}
-							<p>You amplified {ampedDays} {ampedDays === 1 ? 'day' : 'days'} after origin.</p>
-						{:else if joinedDays !== undefined}
-							<p>You joined {joinedDays} {joinedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{#if amplifiedAfterDays !== undefined}
+							<p>You amplified {amplifiedAfterDays} {amplifiedAfterDays === 1 ? 'day' : 'days'} after origin.</p>
+						{:else if joinedAfterDays !== undefined}
+							<p>You joined {joinedAfterDays} {joinedAfterDays === 1 ? 'day' : 'days'} after origin.</p>
 						{/if}
 						{#if pct !== undefined}
 							<p>Earlier than {pct}% of {ROLE_PLURAL[role]}.</p>
 						{/if}
 					{:else}
 						<p>{ROLE_DESCRIPTION[role]}</p>
-						{#if ampedDays !== undefined}
-							<p>Amplified {ampedDays} {ampedDays === 1 ? 'day' : 'days'} after origin.</p>
-						{:else if joinedDays !== undefined}
-							<p>{role === 'Passive Listener' ? 'Discovered' : 'Joined'} {joinedDays} {joinedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{#if amplifiedAfterDays !== undefined}
+							<p>Amplified {amplifiedAfterDays} {amplifiedAfterDays === 1 ? 'day' : 'days'} after origin.</p>
+						{:else if joinedAfterDays !== undefined}
+							<p>{role === 'Passive Listener' ? 'Discovered' : 'Joined'} {joinedAfterDays} {joinedAfterDays === 1 ? 'day' : 'days'} after origin.</p>
 						{/if}
 						{#if pct !== undefined}
 							<p>Earlier than {pct}% of {ROLE_PLURAL[role]}.</p>
