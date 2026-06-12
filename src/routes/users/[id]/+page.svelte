@@ -133,13 +133,16 @@
 
 	<!-- ═══════════════════════════════════════════════════════════
 	     2. SCOUT PROFILE
-	     The "how good is this scout?" answer. Compact metric grid;
-	     headline number on the left (Discovery Score) sets the
-	     scale, the supporting metrics balance to its right. Strongest
-	     Signal links to the Item Detail route when present.
+	     The "how good is this scout?" answer. Three clusters with
+	     editorial eyebrows (Quality / Output / Reach) replace the
+	     flat 4-column grid — related metrics group together and
+	     subtle dividers carry the eye between them without
+	     introducing dashboard chrome. Discovery Score stays as the
+	     headline anchor inside Quality. Strongest Signal sits on a
+	     dedicated bottom row, slightly elevated.
 	     ═══════════════════════════════════════════════════════════ -->
 	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-4"
+		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-5"
 		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 	>
 		<div class="flex items-center gap-2">
@@ -149,64 +152,72 @@
 			</p>
 		</div>
 
-		<div class="grid gap-x-6 gap-y-5 grid-cols-2 md:grid-cols-4">
-			<!-- Headline metric: spans two columns at md+ so the eye
-			     lands here first. -->
-			<div class="col-span-2 md:col-span-2 flex items-baseline gap-3">
-				<p class="text-[48px] md:text-[56px] leading-none font-semibold tabular-nums text-[oklch(0.86_0.12_60)]/94">
-					{user.discoveryScore}
-				</p>
-				<div class="flex flex-col">
-					<span class="text-[10px] uppercase tracking-widest text-base-content/45">Discovery score</span>
-					<span class="text-[11.5px] text-base-content/58 italic">editorial 0–100</span>
+		<!-- Cluster grid. `md:divide-x` paints a 1 px subtle vertical
+		     line between clusters at md+; at sm the clusters stack
+		     into rows and the dividers disappear naturally. -->
+		<div class="grid gap-6 md:gap-0 md:grid-cols-3 md:divide-x md:divide-white/6">
+			<!-- ── QUALITY: Discovery Score (headline) + Hit Rate ── -->
+			<div class="md:pr-6 flex flex-col gap-4">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45">Quality</p>
+				<div class="flex items-baseline gap-3 -mt-1">
+					<p class="text-[44px] md:text-[52px] leading-none font-semibold tabular-nums text-[oklch(0.86_0.12_60)]/94">
+						{user.discoveryScore}
+					</p>
+					<div class="flex flex-col leading-tight">
+						<span class="text-[11px] uppercase tracking-widest text-base-content/55">Discovery score</span>
+						<span class="text-[11px] text-base-content/45 italic">editorial 0–100</span>
+					</div>
+				</div>
+				<div class="flex items-baseline gap-2">
+					<p class="text-[18px] font-semibold tabular-nums text-base-content/92">{formatPercent(user.hitRate)}</p>
+					<p class="text-[11.5px] text-base-content/58">hit rate · seeds that propagated</p>
 				</div>
 			</div>
 
-			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Origin seeds</dt>
-				<dd class="mt-1 text-[18px] font-semibold tabular-nums text-base-content/92">{user.originSeeds}</dd>
-				<dd class="text-[11px] text-base-content/52">signals sparked</dd>
-			</div>
-			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Re-share branches</dt>
-				<dd class="mt-1 text-[18px] font-semibold tabular-nums text-base-content/92">{user.reshareBranches}</dd>
-				<dd class="text-[11px] text-base-content/52">forward shares</dd>
-			</div>
-			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Unique listeners</dt>
-				<dd class="mt-1 text-[18px] font-semibold tabular-nums text-base-content/92">{user.uniqueListenersReached}</dd>
-				<dd class="text-[11px] text-base-content/52">reached downstream</dd>
-			</div>
-			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Hit rate</dt>
-				<dd class="mt-1 text-[18px] font-semibold tabular-nums text-base-content/92">{formatPercent(user.hitRate)}</dd>
-				<dd class="text-[11px] text-base-content/52">seeds that propagated</dd>
-			</div>
-			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Avg reach / seed</dt>
-				<dd class="mt-1 text-[18px] font-semibold tabular-nums text-base-content/92">{user.averageReachPerSeed}</dd>
-				<dd class="text-[11px] text-base-content/52">listeners per seed</dd>
-			</div>
-			{#if user.strongestSignal}
-				<div class="col-span-2">
-					<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Strongest signal</dt>
-					<dd class="mt-1">
-						<!-- Link through to the Item Detail route — reuses
-						     existing item ids so the route resolves
-						     directly. -->
-						<a
-							href="/items/{user.strongestSignal.id}"
-							class="group inline-flex items-baseline gap-2 text-[14px] font-semibold leading-snug text-accent/92 hover:text-accent transition-colors"
-						>
-							<span>{user.strongestSignal.title}</span>
-							<span class="text-base-content/35 font-normal">—</span>
-							<span class="text-base-content/68 font-normal">{user.strongestSignal.artist}</span>
-							<ExternalLink size={11} class="opacity-50 group-hover:opacity-90 transition-opacity" />
-						</a>
-					</dd>
+			<!-- ── OUTPUT: Origin Seeds + Re-share Branches ── -->
+			<div class="md:px-6 flex flex-col gap-3">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45">Output</p>
+				<div class="flex items-baseline gap-2">
+					<p class="text-[22px] font-semibold tabular-nums text-base-content/92 leading-none">{user.originSeeds}</p>
+					<p class="text-[11.5px] text-base-content/58">origin seeds · signals sparked</p>
 				</div>
-			{/if}
+				<div class="flex items-baseline gap-2">
+					<p class="text-[22px] font-semibold tabular-nums text-base-content/92 leading-none">{user.reshareBranches}</p>
+					<p class="text-[11.5px] text-base-content/58">re-share branches · forward shares</p>
+				</div>
+			</div>
+
+			<!-- ── REACH: Unique Listeners + Avg / Seed ── -->
+			<div class="md:pl-6 flex flex-col gap-3">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45">Reach</p>
+				<div class="flex items-baseline gap-2">
+					<p class="text-[22px] font-semibold tabular-nums text-base-content/92 leading-none">{user.uniqueListenersReached}</p>
+					<p class="text-[11.5px] text-base-content/58">unique listeners · reached downstream</p>
+				</div>
+				<div class="flex items-baseline gap-2">
+					<p class="text-[22px] font-semibold tabular-nums text-base-content/92 leading-none">{user.averageReachPerSeed}</p>
+					<p class="text-[11.5px] text-base-content/58">avg reach · listeners per seed</p>
+				</div>
+			</div>
 		</div>
+
+		<!-- ── Strongest Signal: dedicated highlighted bottom row ── -->
+		{#if user.strongestSignal}
+			<div class="pt-4 border-t border-white/6">
+				<div class="flex items-baseline gap-3 flex-wrap">
+					<p class="text-[10px] uppercase tracking-widest text-base-content/45">Strongest signal</p>
+					<a
+						href="/items/{user.strongestSignal.id}"
+						class="group inline-flex items-baseline gap-2 text-[14.5px] font-semibold leading-snug text-accent/92 hover:text-accent transition-colors"
+					>
+						<span>{user.strongestSignal.title}</span>
+						<span class="text-base-content/35 font-normal">—</span>
+						<span class="text-base-content/68 font-normal">{user.strongestSignal.artist}</span>
+						<ExternalLink size={11} class="opacity-50 group-hover:opacity-90 transition-opacity -translate-y-px" />
+					</a>
+				</div>
+			</div>
+		{/if}
 	</section>
 
 	<!-- ═══════════════════════════════════════════════════════════
@@ -280,22 +291,27 @@
 		</p>
 
 		{#if user.signatureSignals.length > 0}
-			<ul class="flex flex-col gap-2 mt-2">
+			<ul class="flex flex-col gap-1.5 mt-2">
 				{#each user.signatureSignals as signal (signal.id)}
-					<li class="rounded-lg border border-white/5 bg-white/2 hover:bg-white/4 transition-colors p-3.5">
+					<li class="rounded-lg border border-white/5 bg-white/2 hover:bg-white/6 hover:border-white/10 transition-colors px-4 py-3 group/sig">
 						<a href="/items/{signal.id}" class="block">
+							<!-- Title row — slightly bigger title (15px) so it
+							     pulls eye from the artist; em-dash separator
+							     matches the inspector pattern. -->
 							<div class="flex items-baseline gap-2 flex-wrap">
-								<span class="text-[14.5px] font-semibold text-accent/92 hover:text-accent transition-colors">
+								<span class="text-[15px] font-semibold text-accent/92 group-hover/sig:text-accent transition-colors leading-snug">
 									{signal.title}
 								</span>
-								<span class="text-base-content/35">—</span>
-								<span class="text-[13px] text-base-content/68">{signal.artist}</span>
+								<span class="text-base-content/30">—</span>
+								<span class="text-[13px] text-base-content/65 leading-snug">{signal.artist}</span>
 							</div>
-							<div class="mt-1 flex items-baseline gap-2 text-[12px] text-base-content/58 tabular-nums">
+							<!-- Metrics line — quieter alpha than the title so
+							     it reads as supporting evidence. -->
+							<div class="mt-1 flex items-baseline gap-2 text-[11.5px] text-base-content/55 tabular-nums">
 								<span>{signal.listeners} listeners</span>
-								<span class="text-base-content/30">·</span>
+								<span class="text-base-content/28">·</span>
 								<span>{signal.generations} {signal.generations === 1 ? 'generation' : 'generations'}</span>
-								<span class="text-base-content/30">·</span>
+								<span class="text-base-content/28">·</span>
 								<span>Impact {signal.impact}</span>
 							</div>
 							{#if signal.badges.length > 0 || signal.tags.length > 0}
@@ -345,26 +361,32 @@
 		</p>
 
 		{#if user.emergingSignals.length > 0}
-			<ul class="flex flex-col gap-1.5 mt-2">
+			<!-- divide-y carries a hairline between rows so each entry
+			     reads as its own observation without box-framing the
+			     whole section. last:border-b-0 lets the divider stop
+			     at the bottom of the list. Hover lifts the row gently
+			     with a quiet background tint — observational, not
+			     interactive-feeling. -->
+			<ul class="flex flex-col -mx-2 mt-2 divide-y divide-white/4">
 				{#each user.emergingSignals as signal (signal.id)}
-					<li class="rounded-md px-3 py-2 hover:bg-white/3 transition-colors">
+					<li class="px-2 py-2.5 hover:bg-white/3 transition-colors rounded-sm">
 						<div class="flex items-baseline gap-2 flex-wrap">
-							<span class="text-[13px] font-medium text-base-content/82">{signal.title}</span>
-							<span class="text-base-content/30">—</span>
-							<span class="text-[12px] text-base-content/55">{signal.artist}</span>
+							<span class="text-[13px] font-medium text-base-content/82 leading-snug">{signal.title}</span>
+							<span class="text-base-content/28">—</span>
+							<span class="text-[12px] text-base-content/55 leading-snug">{signal.artist}</span>
 							<span class={['ml-auto text-[10.5px] uppercase tracking-widest font-semibold', statusColorClass(signal.status)]}>
 								{signal.status}
 							</span>
 						</div>
-						<div class="mt-0.5 flex items-baseline gap-2 text-[11.5px] text-base-content/48 tabular-nums">
+						<div class="mt-1 flex items-baseline gap-2 text-[11.5px] text-base-content/48 tabular-nums">
 							<span>{signal.listeners} {signal.listeners === 1 ? 'listener' : 'listeners'}</span>
-							<span class="text-base-content/28">·</span>
+							<span class="text-base-content/25">·</span>
 							{#if signal.generations !== undefined}
 								<span>{signal.generations} {signal.generations === 1 ? 'generation' : 'generations'}</span>
 							{:else}
 								<span class="italic">awaiting first branch</span>
 							{/if}
-							<span class="text-base-content/28">·</span>
+							<span class="text-base-content/25">·</span>
 							<span class="italic">planted {signal.plantedAgo}</span>
 						</div>
 					</li>
