@@ -1,6 +1,15 @@
 <script lang="ts">
 	import type { UserSignalTree } from '$lib/mock/userSignalTree';
 	import SignalTreeSignalNode from './SignalTreeSignalNode.svelte';
+	import SignalTreeFullPropagation from './SignalTreeFullPropagation.svelte';
+
+	/* PROTOTYPE GATE — see `SignalTreeFullPropagation.svelte`.
+	   Only Dan's Cold Dispatch branch routes through the full
+	   Item-Tree integration; every other signal stays on the
+	   lightweight static renderer. Keying off `itemId` is
+	   sufficient because no other user mock has Cold Dispatch in
+	   their tree. */
+	const FULL_PROPAGATION_ITEM_IDS = new Set(['cold-dispatch']);
 
 	/*
 		User Detail page — mixed Signal Tree.
@@ -56,7 +65,11 @@
 	{#if tree.root.children.length > 0}
 		<div class="tree-children">
 			{#each tree.root.children as signal (signal.id)}
-				<SignalTreeSignalNode {signal} />
+				{#if tree.root.id === 'dan' && FULL_PROPAGATION_ITEM_IDS.has(signal.itemId)}
+					<SignalTreeFullPropagation {signal} />
+				{:else}
+					<SignalTreeSignalNode {signal} />
+				{/if}
 			{/each}
 		</div>
 	{/if}
