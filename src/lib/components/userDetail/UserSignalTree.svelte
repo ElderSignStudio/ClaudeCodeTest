@@ -1,155 +1,176 @@
 <script lang="ts">
-	import type { UserSignalTree } from '$lib/mock/userSignalTree';
-	import SignalTreeSignalNode from './SignalTreeSignalNode.svelte';
-	import SignalTreeFullPropagation from './SignalTreeFullPropagation.svelte';
-
-	/* PROTOTYPE GATE — see `SignalTreeFullPropagation.svelte`.
-	   Only Dan's Cold Dispatch branch routes through the full
-	   Item-Tree integration; every other signal stays on the
-	   lightweight static renderer. Keying off `itemId` is
-	   sufficient because no other user mock has Cold Dispatch in
-	   their tree. */
-	const FULL_PROPAGATION_ITEM_IDS = new Set(['cold-dispatch']);
+	import PropagationTree from '$lib/components/itemDetail/PropagationTree.svelte';
+	import {
+		propagationForestFor,
+		findUserInForest,
+		type PropagationForest,
+		type PropagationUser,
+		type PreviewTarget,
+	} from '$lib/mock/propagation';
+	import type { UserSignalTree as UserSignalTreeData } from '$lib/mock/userSignalTree';
 
 	/*
-		User Detail page — mixed Signal Tree.
+		User Detail Signal Tree — unified architecture.
 
-		Layout (deliberately NOT the Item Detail tree):
-		  User (root) ──┬── Signal ── User ── User
-		                ├── Signal ── User
-		                └── Signal ── User ── User
+		ONE propagation graph drives the whole tree:
 
-		Visual hierarchy: signal cards are the main anchors (cover
-		artwork + warm-amber impact chip + accent title), user
-		descendants are quieter. Connectors are pure CSS — a dashed
-		vertical line on each `.tree-children` container plus a
-		short horizontal stub per `.tree-child` via `::before`. No
-		SVG, no particles, no offset-path animation — this overview
-		tree intentionally avoids the Item Detail tree's full
-		propagation simulation.
+		  Dan (root scout)
+		  └── Cold Dispatch (item node)
+		      ├── Daria
+		      │   └── Renan
+		      │       └── …
+		      ├── Liv
+		      │   └── …
+		      └── Gisli
+		          └── …
 
-		See `SignalTreeSignalNode.svelte` and
-		`SignalTreeUserNode.svelte` for per-node markup; both
-		descend through `.tree-children` so the connector geometry
-		composes seamlessly across the whole tree.
+		Particles flow naturally from the leaves upward through every
+		node — including the item nodes and Dan — because every
+		participant is a real node in the graph. No decorative
+		bridge particles, no synthetic relay dots, no fake trunk
+		animations.
+
+		The graph is constructed here and handed to the existing
+		`PropagationTree` from the Item Detail page. PropagationTree
+		and PropagationNode are completely unchanged.
+
+		Construction:
+		  1. For each signal, call `propagationForestFor(itemId,
+		     listeners, rootUserId)` — the same generator the Item
+		     Detail page uses.
+		  2. Splice the rebranded root (Dan, Alice, …) out of each
+		     per-signal forest; that scout's children become the
+		     item node's children.
+		  3. Wrap each signal as a `PropagationUser` with the item's
+		     cover as the avatar and the artist as the character
+		     line — same node-kind language as a successful
+		     amplifier so the visual halo + ripple read clearly.
+		  4. Wrap the page owner as a `PropagationUser` whose
+		     children are the signal item nodes; tag him as origin
+		     + current user so he renders with the origin glyph and
+		     the cu-row treatment.
+
+		The Inspector, locator pill, and lineage reveal are
+		disabled here by not passing inspector hooks and by
+		leaving `lineageOrderedIds`/`lineageIds` at their defaults.
+		Selection styling DOES flow because `onSelect` is wired —
+		clicking a node lights it up; no inspector pops up.
 	*/
 
 	let {
 		tree,
 	}: {
-		tree: UserSignalTree;
+		tree: UserSignalTreeData;
 	} = $props();
+
+	const forest: PropagationForest = $derived.by(() => {
+		const rootUserId = tree.root.id;
+
+		/* Per-signal child trees. The propagation generator
+		   rebrands the largest root as the named scout
+		   (rootUserId), so after the call the scout owns a real
+		   subtree — we take that subtree's CHILDREN as the
+		   children of the item node and discard the scout itself
+		   (it's about to be re-attached one level up, beneath the
+		   item node, beneath Dan). */
+		const itemChildren: PropagationUser[] = [...tree.root.children]
+			.sort((a, b) => b.impact - a.impact)
+			.map((signal): PropagationUser => {
+				const signalForest = propagationForestFor(signal.itemId, signal.listeners, rootUserId);
+				const rebranded = findUserInForest(signalForest, rootUserId);
+				const downstream = rebranded ? rebranded.children : signalForest.roots;
+				return {
+					id: signal.itemId,
+					name: signal.title,
+					avatar: signal.coverArt,
+					character: signal.artist,
+					amplifications: signal.generations,
+					branchSize: 0, // recomputed below
+					discoveredAgo: '',
+					behaviorNote: '',
+					scenes: signal.tags,
+					children: downstream,
+					nodeKind: 'successful-amplifier',
+				};
+			});
+
+		const danNode: PropagationUser = {
+			id: rootUserId,
+			name: tree.root.name,
+			avatar: tree.root.avatar,
+			character: tree.root.role,
+			amplifications: itemChildren.length,
+			branchSize: 0, // recomputed below
+			discoveredAgo: '',
+			behaviorNote: '',
+			scenes: [],
+			children: itemChildren,
+			isOrigin: true,
+			isCurrentUser: true,
+			nodeKind: 'successful-amplifier',
+		};
+
+		/* Recompute branchSize bottom-up. The propagation engine's
+		   internal layout (children-by-branchSize sort) reads this
+		   value, so synthetic nodes need correct counts to
+		   render in a reasonable order. */
+		function annotate(u: PropagationUser): number {
+			let n = 0;
+			for (const c of u.children) n += 1 + annotate(c);
+			u.branchSize = n;
+			return n;
+		}
+		annotate(danNode);
+
+		return {
+			itemId: `user-tree-${rootUserId}`,
+			roots: [danNode],
+			hiddenRootUsers: [],
+			hiddenRoots: 0,
+			totalReach: danNode.branchSize,
+			independentOrigins: 1,
+			weightedImpact: 0,
+			totalAmplifications: itemChildren.length,
+			summary: '',
+			branchSummaries: [],
+			scenes: [],
+			crossingNote: '',
+			originNote: '',
+		};
+	});
+
+	let selectedUserId = $state<string | null>(null);
+
+	function handleSelect(user: PropagationUser) {
+		/* Toggle on repeat click — mirrors the Item Detail tree's
+		   behaviour. No inspector is mounted; selection is purely
+		   for visual feedback at this stage. */
+		selectedUserId = selectedUserId === user.id ? null : user.id;
+	}
+	function handlePreview(_target: PreviewTarget | null) {
+		/* No inspector. */
+	}
 </script>
 
-<div class="signal-tree">
-	<!-- Root scout: wrapped in a subtle inset card with a faint
-	     primary-accent bar on the left so the row reads as the
-	     SOURCE of the tree rather than the first item in a list.
-	     Translucent dark surface mirrors the rest of the page's
-	     card recipe; intentionally NOT clickable since the viewer
-	     is already on this scout's profile. -->
-	<div class="root-node relative flex items-center gap-3 rounded-xl border border-white/8 bg-base-200/40 pl-4 pr-4 py-3">
-		<span class="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-primary/55" aria-hidden="true"></span>
-		<span class="shrink-0 w-12 h-12 rounded-full border border-primary/40 overflow-hidden bg-white/5">
-			<img src={tree.root.avatar} alt="" class="w-full h-full object-cover" />
-		</span>
-		<div class="min-w-0 flex-1">
-			<p class="text-[16px] font-bold text-base-content/94 leading-snug truncate">{tree.root.name}</p>
-			<p class="text-[12px] text-base-content/58 italic leading-snug truncate">{tree.root.role}</p>
-		</div>
-	</div>
-
-	<!-- Signals — top-level children of the root. Renders inside
-	     `.tree-children` so the connector treatment is consistent
-	     with deeper levels. -->
-	{#if tree.root.children.length > 0}
-		<div class="tree-children">
-			{#each tree.root.children as signal (signal.id)}
-				{#if tree.root.id === 'dan' && FULL_PROPAGATION_ITEM_IDS.has(signal.itemId)}
-					<SignalTreeFullPropagation {signal} />
-				{:else}
-					<SignalTreeSignalNode {signal} />
-				{/if}
-			{/each}
-		</div>
-	{/if}
+<div class="user-signal-tree">
+	<PropagationTree
+		forest={forest}
+		selectedUserId={selectedUserId}
+		onSelect={handleSelect}
+		onPreview={handlePreview}
+		currentUserId={tree.root.id}
+	/>
 </div>
 
 <style>
-	/* ── Connectors ────────────────────────────────────────────
-	   Polished pass: cooler hue (subtle cyan-violet, not neutral
-	   white), lower alpha, and a tight dash-array carried via
-	   `background-image` instead of `border-style: dashed` so the
-	   strokes feel like faint signal paths rather than a folder-
-	   tree skeleton. Two pieces:
-	     • Vertical line on `.tree-children` — runs the full height
-	       of the children block; rendered via a left-aligned
-	       background gradient so the dash spacing is independent
-	       of border-width's browser-default ratio.
-	     • Horizontal stub on each `.tree-child` — pseudo-element
-	       with the same dash-array, meeting the vertical line and
-	       reaching to just before the child's content.
-	   Selectors use :global() so the rules reach the markup
-	   defined inside `SignalTreeSignalNode` and
-	   `SignalTreeUserNode`, scoped to `.signal-tree` to prevent
-	   any leak. */
-
-	:global(.signal-tree .tree-children) {
-		position: relative;
-		margin-left: 1.5rem;
-		padding-left: 1.5rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.875rem;
-		margin-top: 0.875rem;
-		/* Vertical signal-path: a 1 px-wide image of a 4 px-on /
-		   3 px-off pattern, left-aligned. Hue is cool cyan-violet,
-		   alpha 0.12 — quiet enough to recede behind the cards. */
-		background-image: linear-gradient(
-			to bottom,
-			oklch(0.74 0.04 245 / 0.18) 0 4px,
-			transparent 4px 7px
-		);
-		background-repeat: repeat-y;
-		background-size: 1px 7px;
-		background-position: left 0 top 0;
-	}
-	:global(.signal-tree .tree-children > .tree-child) {
-		position: relative;
-	}
-	:global(.signal-tree .tree-children > .tree-child)::before {
-		content: '';
-		position: absolute;
-		left: -1.5rem;
-		top: 1.5rem;
-		width: 1.25rem;
-		height: 1px;
-		pointer-events: none;
-		background-image: linear-gradient(
-			to right,
-			oklch(0.74 0.04 245 / 0.18) 0 4px,
-			transparent 4px 7px
-		);
-		background-repeat: repeat-x;
-		background-size: 7px 1px;
-	}
-
-	/* Slightly stronger connector tone at the FIRST level
-	   (signals branching off the root) so the viewer clearly sees
-	   "these come from me". Subsequent levels (user→user) keep
-	   the softer default. */
-	:global(.signal-tree > .tree-children) {
-		background-image: linear-gradient(
-			to bottom,
-			oklch(0.74 0.05 245 / 0.26) 0 4px,
-			transparent 4px 7px
-		);
-	}
-	:global(.signal-tree > .tree-children > .tree-child)::before {
-		background-image: linear-gradient(
-			to right,
-			oklch(0.74 0.05 245 / 0.26) 0 4px,
-			transparent 4px 7px
-		);
+	/* Hide PropagationTree's section eyebrow ("Propagation lineage ·
+	   N origins · M reached") when mounted inside the User Tree —
+	   the surrounding page already carries the section context.
+	   Targets the eyebrow without touching PropagationTree.svelte
+	   itself (the eyebrow is the first `<div>` child of
+	   PropagationTree's outermost `<div class="flex flex-col gap-1">`,
+	   a stable structure inherited from the Item Detail page mount). */
+	:global(.user-signal-tree > div > div:first-child) {
+		display: none;
 	}
 </style>
