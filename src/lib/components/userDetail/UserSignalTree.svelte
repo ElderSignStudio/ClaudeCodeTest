@@ -1,13 +1,12 @@
 <script lang="ts">
 	import PropagationTree from '$lib/components/itemDetail/PropagationTree.svelte';
 	import {
-		propagationForestFor,
-		findUserInForest,
 		type PropagationForest,
 		type PropagationUser,
 		type PreviewTarget,
 	} from '$lib/mock/propagation';
 	import type { UserSignalTree as UserSignalTreeData } from '$lib/mock/userSignalTree';
+	import { buildUnifiedForest } from './inspectorData';
 
 	/*
 		User Detail Signal Tree — unified architecture.
@@ -41,8 +40,20 @@
 
 	let {
 		tree,
+		selectedNodeId = $bindable(null),
+		onPreview: onPreviewCallback,
 	}: {
 		tree: UserSignalTreeData;
+		/** Two-way bound — the parent page reads this to drive the
+		 *  right-side inspector, and writes to it to programmatically
+		 *  clear/select. Null means "no node selected" (default). */
+		selectedNodeId?: string | null;
+		/** Forwarded from PropagationTree. Fires on node hover / focus
+		 *  with a `PreviewTarget`, and on tree-level mouseleave with
+		 *  `null`. The page combines this with `selectedNodeId` to
+		 *  drive a "hover wins, click locks" inspector — same model as
+		 *  the Item Detail page. */
+		onPreview?: (target: PreviewTarget | null) => void;
 	} = $props();
 
 	/* Set of item ids surfaced in this user's tree. Used by the
@@ -61,106 +72,26 @@
 	   and tag its children-container without re-deriving the id. */
 	const rootUserId = $derived(tree.root.id);
 
-	const forest: PropagationForest = $derived.by(() => {
-		const itemChildren: PropagationUser[] = [...tree.root.children]
-			.sort((a, b) => b.impact - a.impact)
-			.map((signal): PropagationUser => {
-				const signalForest = propagationForestFor(signal.itemId, signal.listeners, rootUserId);
-				const rebranded = findUserInForest(signalForest, rootUserId);
-				const downstream = rebranded ? rebranded.children : signalForest.roots;
-				return {
-					id: signal.itemId,
-					name: signal.title,
-					avatar: signal.coverArt,
-					character: signal.artist,
-					/* `branchSize` becomes the inline `+N` shown next to
-					   the name in PropagationNode. For item nodes we
-					   surface the editorial impact score there so the
-					   reader sees `Cold Dispatch +92` (i.e. "impact 92")
-					   without us touching PropagationNode itself. The
-					   sort at the top of the chain already orders items
-					   by impact, so using impact here also yields a
-					   sensible internal sort. */
-					branchSize: signal.impact,
-					amplifications: signal.generations,
-					discoveredAgo: '',
-					behaviorNote: '',
-					scenes: signal.tags,
-					children: downstream,
-					/* nodeKind intentionally LEFT OFF. PropagationNode's
-					   `nodeKindClass()` returns '' for undefined kind, so
-					   item nodes get no kind-halo / sa-ripple / double-
-					   ring — visual differentiation handled by the
-					   `.item-node` class wired below. */
-				};
-			});
+	/* Forest is built by the shared helper in `inspectorData.ts` so the
+	   page-level inspector can resolve selection against the SAME
+	   forest (same scout ids, same structure). `propagationForestFor`
+	   is hash-seeded on item id, so this is deterministic and stable. */
+	const forest: PropagationForest = $derived(buildUnifiedForest(tree));
 
-		const danNode: PropagationUser = {
-			id: rootUserId,
-			name: tree.root.name,
-			avatar: tree.root.avatar,
-			character: tree.root.role,
-			amplifications: itemChildren.length,
-			branchSize: 0,
-			discoveredAgo: '',
-			behaviorNote: '',
-			scenes: [],
-			children: itemChildren,
-			isOrigin: true,
-			isCurrentUser: true,
-			nodeKind: 'successful-amplifier',
-		};
-
-		/* Recompute branchSize bottom-up for everything EXCEPT the
-		   item nodes themselves (whose branchSize we've already set
-		   to the impact score). Walking from the item-node
-		   children downward and from Dan upward keeps both
-		   conventions consistent. */
-		function annotateUnderItem(u: PropagationUser): number {
-			let n = 0;
-			for (const c of u.children) n += 1 + annotateUnderItem(c);
-			u.branchSize = n;
-			return n;
-		}
-		for (const item of itemChildren) {
-			for (const child of item.children) {
-				annotateUnderItem(child);
-			}
-			// Leave item.branchSize as the impact score, but tally
-			// danNode's count against the downstream reach.
-		}
-		let danReach = 0;
-		for (const item of itemChildren) {
-			let itemDownstream = 0;
-			for (const child of item.children) itemDownstream += 1 + child.branchSize;
-			danReach += 1 + itemDownstream; // +1 counts the item itself
-		}
-		danNode.branchSize = danReach;
-
-		return {
-			itemId: `user-tree-${rootUserId}`,
-			roots: [danNode],
-			hiddenRootUsers: [],
-			hiddenRoots: 0,
-			totalReach: danReach,
-			independentOrigins: 1,
-			weightedImpact: 0,
-			totalAmplifications: itemChildren.length,
-			summary: '',
-			branchSummaries: [],
-			scenes: [],
-			crossingNote: '',
-			originNote: '',
-		};
-	});
-
-	let selectedUserId = $state<string | null>(null);
-
+	/* Click-toggle behaviour: re-selecting the active node clears
+	   the selection so the inspector falls back to its default
+	   Scout Summary state. Writing back through the $bindable
+	   propagates to the parent page. */
 	function handleSelect(user: PropagationUser) {
-		selectedUserId = selectedUserId === user.id ? null : user.id;
+		selectedNodeId = selectedNodeId === user.id ? null : user.id;
 	}
-	function handlePreview(_target: PreviewTarget | null) {
-		/* No inspector. */
+	function handlePreview(target: PreviewTarget | null) {
+		/* Forward to the page so it can drive the right-side panel.
+		   PropagationTree fires this for every hover/focus and clears
+		   to `null` on tree-level mouseleave — same contract used by
+		   the Item Detail page's `hoveredTarget ?? selectedTarget`
+		   composition. */
+		onPreviewCallback?.(target);
 	}
 
 	/* ── Item-node DOM marker ─────────────────────────────────
@@ -316,7 +247,7 @@
 <div class="user-signal-tree" bind:this={treeContainer}>
 	<PropagationTree
 		forest={forest}
-		selectedUserId={selectedUserId}
+		selectedUserId={selectedNodeId}
 		onSelect={handleSelect}
 		onPreview={handlePreview}
 		currentUserId={null}

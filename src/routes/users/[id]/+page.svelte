@@ -2,7 +2,9 @@
 	import { UserCheck, UserPlus, ExternalLink } from 'lucide-svelte';
 	import type { LiveStatus } from '$lib/mock/users';
 	import { getUserSignalTree } from '$lib/mock/userSignalTree';
+	import type { PreviewTarget } from '$lib/mock/propagation';
 	import UserSignalTree from '$lib/components/userDetail/UserSignalTree.svelte';
+	import UserTreeInspector from '$lib/components/userDetail/UserTreeInspector.svelte';
 
 	/*
 		User Detail page.
@@ -31,6 +33,46 @@
 	let { data } = $props();
 	const user = $derived(data.user);
 	const signalTree = $derived(getUserSignalTree(user.id));
+
+	/* Right-side inspector selection — two-tier state matching the
+	   Item Detail tree's interaction model:
+
+	     - `selectedNodeId`  — click locks. Re-clicking the same node
+	                            clears it.
+	     - `hoveredNodeId`   — transient preview from PropagationTree's
+	                            `onPreview` callback. Tree-level
+	                            mouseleave clears it to `null`.
+
+	   The inspector reads `effectiveNodeId = hoveredNodeId ??
+	   selectedNodeId`. Same `hoveredTarget ?? selectedTarget`
+	   composition Item Detail uses — hover ALWAYS wins over the
+	   locked selection while pointing at a node, and falls back to
+	   the locked selection (or the default Scout Summary if none)
+	   the moment the pointer leaves. No DOM hover detection —
+	   PropagationNode already wires the hover events and bubbles
+	   them up through PropagationTree's `onPreview` prop. */
+	let selectedNodeId = $state<string | null>(null);
+	let hoveredNodeId = $state<string | null>(null);
+
+	const effectiveNodeId = $derived(hoveredNodeId ?? selectedNodeId);
+
+	function handleTreePreview(target: PreviewTarget | null) {
+		/* Only user-node previews drive the inspector. `cluster`
+		   previews (collapsed "+N more" tails) have no inspector
+		   counterpart on the User Detail panel, so we just clear
+		   hover so the inspector reverts to the selected/default
+		   state — the user clearly isn't focused on a specific
+		   scout in that moment. */
+		hoveredNodeId = target?.kind === 'user' ? target.user.id : null;
+	}
+
+	/* Re-seed selection + hover when navigating between profiles so
+	   nothing carries over to the next user. */
+	$effect(() => {
+		void user.id;
+		selectedNodeId = null;
+		hoveredNodeId = null;
+	});
 
 	/* Follow toggle — local $state only; the spec is explicit that
 	   this should NOT persist anywhere yet. Re-seeded any time the
@@ -92,7 +134,7 @@
 	<title>{user.username} · Outer Signal</title>
 </svelte:head>
 
-<div class="max-w-280 mx-auto w-full px-6 xl:px-8 py-8 space-y-8">
+<div class="user-detail max-w-280 mx-auto w-full px-6 xl:px-8 py-8 space-y-8">
 
 	<!-- ═══════════════════════════════════════════════════════════
 	     1. USER HEADER
@@ -541,8 +583,49 @@
 			Signals sparked by this scout, and the listeners they reached.
 		</p>
 		{#if signalTree}
-			<div class="mt-3">
-				<UserSignalTree tree={signalTree} />
+			<!-- Tree + inspector split.
+
+			     The page wraps tens of vertical pixels of scout
+			     subtree on tall signals, so the inspector needs to
+			     stay visible while the tree scrolls. `lg:sticky` on
+			     the right column tucks it under the global header
+			     (h-14 + 16 px breathing room). Below the lg
+			     breakpoint, the split collapses to a single column
+			     and the inspector simply renders below the tree so
+			     mobile users don't lose the panel entirely.
+
+			     Tree/inspector ratio matches the Item Detail
+			     pattern (`1.55fr / 1fr` ≈ 60/40) so the tree
+			     remains the dominant visual element while the
+			     inspector has enough room to breathe. -->
+			<div
+				class="mt-3 grid gap-6 lg:gap-8"
+				style="grid-template-columns: minmax(0, 1fr);"
+			>
+				<div
+					class="grid gap-6 lg:gap-8"
+					style="grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);"
+				>
+					<div class="min-w-0">
+						<UserSignalTree
+							tree={signalTree}
+							bind:selectedNodeId
+							onPreview={handleTreePreview}
+						/>
+					</div>
+					<aside class="lg:sticky lg:top-6 lg:self-start">
+						<div
+							class="rounded-lg border border-white/6 bg-base-200/45 p-4 lg:p-5"
+							style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
+						>
+							<UserTreeInspector
+								user={user}
+								tree={signalTree}
+								selectedNodeId={effectiveNodeId}
+							/>
+						</div>
+					</aside>
+				</div>
 			</div>
 		{:else}
 			<div class="mt-2 rounded-lg border border-dashed border-white/12 bg-white/2 p-8 text-center space-y-2">
@@ -558,3 +641,17 @@
 
 </div>
 
+<style>
+	/*
+		Below lg, collapse the Signal Tree's 2-column tree+inspector split
+		to a single column. The inspector stacks under the tree so it stays
+		reachable on tablet/mobile widths without competing with the tree
+		for horizontal space. Same pattern as the Item Detail page's
+		tree+inspector responsive collapse.
+	*/
+	@media (max-width: 1023px) {
+		.user-detail .grid[style*="1.55fr"] {
+			grid-template-columns: minmax(0, 1fr) !important;
+		}
+	}
+</style>
