@@ -42,6 +42,9 @@
 		tree,
 		selectedNodeId = $bindable(null),
 		onPreview: onPreviewCallback,
+		visibleSignalCount = null,
+		expandCommand = 0,
+		collapseCommand = 0,
 	}: {
 		tree: UserSignalTreeData;
 		/** Two-way bound — the parent page reads this to drive the
@@ -54,29 +57,56 @@
 		 *  drive a "hover wins, click locks" inspector — same model as
 		 *  the Item Detail page. */
 		onPreview?: (target: PreviewTarget | null) => void;
+		/** Cap on the number of signal roots rendered (top-N by impact).
+		 *  `null` = show all. Driven by the page's "Show more signals"
+		 *  control so the tree never becomes an infinite vertical sink. */
+		visibleSignalCount?: number | null;
+		/** Tick counter the page increments to request "expand every
+		 *  currently visible signal". The effect runs DOM clicks on the
+		 *  visible signal chevrons — PropagationNode keeps owning the
+		 *  per-node `expanded` state. Initial 0 is a no-op. */
+		expandCommand?: number;
+		/** Tick counter for the symmetric "collapse all currently visible
+		 *  signal subtrees" command. */
+		collapseCommand?: number;
 	} = $props();
+
+	/* Sliced tree — the rendered forest only includes the top-N
+	   signals by impact so the page stays under control. The full
+	   `tree` is still passed to the inspector so it can summarise the
+	   WHOLE tree (Strongest branch / totals / etc) regardless of
+	   what's currently visible. */
+	const visibleTree = $derived.by(() => {
+		const total = tree.root.children.length;
+		if (visibleSignalCount == null || visibleSignalCount >= total) return tree;
+		const sorted = [...tree.root.children].sort((a, b) => b.impact - a.impact);
+		return {
+			...tree,
+			root: { ...tree.root, children: sorted.slice(0, Math.max(0, visibleSignalCount)) },
+		};
+	});
 
 	/* Set of item ids surfaced in this user's tree. Used by the
 	   item-node class marker and by the locator's
 	   IntersectionObserver to know which wrappers to watch. */
-	const itemIds = $derived(new Set(tree.root.children.map(s => s.itemId)));
+	const itemIds = $derived(new Set(visibleTree.root.children.map(s => s.itemId)));
 
 	/* Look-up from item id → display title + artist so the locator
 	   can read "Cold Dispatch — Wire Theory" without re-walking
 	   the tree. */
 	const itemMeta = $derived(
-		new Map(tree.root.children.map(s => [s.itemId, { title: s.title, artist: s.artist }])),
+		new Map(visibleTree.root.children.map(s => [s.itemId, { title: s.title, artist: s.artist }])),
 	);
 
 	/* Hoisted so the marker $effect below can locate Dan's wrapper
 	   and tag its children-container without re-deriving the id. */
-	const rootUserId = $derived(tree.root.id);
+	const rootUserId = $derived(visibleTree.root.id);
 
 	/* Forest is built by the shared helper in `inspectorData.ts` so the
 	   page-level inspector can resolve selection against the SAME
 	   forest (same scout ids, same structure). `propagationForestFor`
 	   is hash-seeded on item id, so this is deterministic and stable. */
-	const forest: PropagationForest = $derived(buildUnifiedForest(tree));
+	const forest: PropagationForest = $derived(buildUnifiedForest(visibleTree));
 
 	/* Click-toggle behaviour: re-selecting the active node clears
 	   the selection so the inspector falls back to its default
@@ -172,12 +202,74 @@
 			const danWrapper = treeContainer.querySelector(`[data-user-id="${rootUserId}"]`);
 			const rootKids = danWrapper?.querySelector(':scope > div.pl-12');
 			rootKids?.classList.add('root-children-container');
+
+			/* Auto-collapse each newly mounted signal so the tree
+			   starts compact ("the user chooses where to explore").
+			   PropagationNode's `expanded` is internal $state with
+			   default `true`, and we don't want to modify
+			   PropagationNode — so the override is a one-shot
+			   chevron click per wrapper, marked with
+			   `data-signal-initialized` so we never re-fire it on
+			   re-renders (e.g. selection toggles or new signals
+			   becoming visible via "Show more"). A CSS rule in this
+			   file pre-hides the children container of any
+			   uninitialised wrapper, which prevents a one-frame
+			   flash before the click flips `expanded` to false. */
+			for (const id of itemIds) {
+				const wrapper = treeContainer.querySelector(`[data-user-id="${id}"]`) as HTMLElement | null;
+				if (!wrapper) continue;
+				if (wrapper.dataset.signalInitialized === 'true') continue;
+				const chev = wrapper.querySelector(
+					':scope > div > button[aria-label$="branch"]',
+				) as HTMLButtonElement | null;
+				if (chev?.getAttribute('aria-label') === 'Collapse branch') {
+					chev.click();
+				}
+				wrapper.dataset.signalInitialized = 'true';
+			}
 		});
 
 		return () => {
 			cancelled = true;
 			for (const o of observers) o.disconnect();
 		};
+	});
+
+	/* ── Bulk "Expand visible" / "Collapse visible" ─────────────
+	   The page increments these counters; each effect watches its
+	   own counter and fires DOM clicks on the chevrons of the
+	   CURRENTLY VISIBLE signals only. Skipping the initial 0 value
+	   means mount doesn't trigger a bulk command — `expand-visible`
+	   is opt-in, not the default. */
+	$effect(() => {
+		void expandCommand;
+		void itemIds;
+		if (expandCommand === 0 || !treeContainer) return;
+		requestAnimationFrame(() => {
+			if (!treeContainer) return;
+			for (const id of itemIds) {
+				const wrapper = treeContainer.querySelector(`[data-user-id="${id}"]`);
+				const chev = wrapper?.querySelector(
+					':scope > div > button[aria-label$="branch"]',
+				) as HTMLButtonElement | null;
+				if (chev?.getAttribute('aria-label') === 'Expand branch') chev.click();
+			}
+		});
+	});
+	$effect(() => {
+		void collapseCommand;
+		void itemIds;
+		if (collapseCommand === 0 || !treeContainer) return;
+		requestAnimationFrame(() => {
+			if (!treeContainer) return;
+			for (const id of itemIds) {
+				const wrapper = treeContainer.querySelector(`[data-user-id="${id}"]`);
+				const chev = wrapper?.querySelector(
+					':scope > div > button[aria-label$="branch"]',
+				) as HTMLButtonElement | null;
+				if (chev?.getAttribute('aria-label') === 'Collapse branch') chev.click();
+			}
+		});
 	});
 
 	/* ── "Signal: …" locator ──────────────────────────────────
@@ -444,6 +536,25 @@
 	   is unaffected because they all shift together. */
 	:global(.user-signal-tree .item-node-wrapper > div.pl-12) {
 		margin-top: -2px;
+	}
+
+	/* Auto-collapse flash guard — hide the children container of any
+	   newly mounted signal wrapper until our marker $effect has
+	   flipped `expanded` to false via the chevron click. Without
+	   this, signals briefly render with their full scout subtree
+	   visible for one frame before the click lands. The
+	   `data-signal-initialized` attribute is set by the same effect
+	   *after* the click, so the rule only ever blocks the initial
+	   paint of an as-yet-uninitialised wrapper. PropagationNode's
+	   conditional `{#if expanded}` removes the container entirely
+	   once it lands, so the rule has no effect on user-driven
+	   re-expansion. */
+	:global(
+		.user-signal-tree
+		.item-node-wrapper:not([data-signal-initialized='true'])
+		> div.pl-12
+	) {
+		display: none;
 	}
 
 	/* Text column — promote to a flex COLUMN and use `order` to

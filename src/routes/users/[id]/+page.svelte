@@ -56,6 +56,47 @@
 
 	const effectiveNodeId = $derived(hoveredNodeId ?? selectedNodeId);
 
+	/* ── Preview-first layout state ───────────────────────────
+	   Three sections (Signature / Emerging / Signal Tree) are
+	   capped at a preview slice initially. The user opts in to
+	   more depth via lightweight editorial controls — keeps the
+	   page from becoming an infinite vertical sink. */
+
+	/** Show-more toggle for Signature Signals (default 3 visible). */
+	let signatureExpanded = $state(false);
+	/** Show-more toggle for Emerging Signals (default 3 visible). */
+	let emergingExpanded = $state(false);
+
+	const visibleSignatureSignals = $derived(
+		signatureExpanded ? user.signatureSignals : user.signatureSignals.slice(0, 3),
+	);
+	const visibleEmergingSignals = $derived(
+		emergingExpanded ? user.emergingSignals : user.emergingSignals.slice(0, 3),
+	);
+
+	/** Cap on signal roots rendered in the tree. Default 3, grows by
+	 *  +3 per "Show more signals" click, resets to 3 with "Show fewer
+	 *  signals" once the full set is visible. */
+	let visibleSignalCount = $state(3);
+	const totalSignals = $derived(signalTree?.root.children.length ?? 0);
+
+	/* Tick counters for bulk expand / collapse — UserSignalTree
+	   watches these and fires DOM clicks on the visible signal
+	   chevrons. Counters (not booleans) so the same command can
+	   re-fire without resetting. */
+	let expandCommand = $state(0);
+	let collapseCommand = $state(0);
+
+	function toggleVisibleSignals() {
+		if (visibleSignalCount < totalSignals) {
+			visibleSignalCount = Math.min(visibleSignalCount + 3, totalSignals);
+		} else {
+			visibleSignalCount = 3;
+		}
+	}
+	function expandVisibleSignals() { expandCommand += 1; }
+	function collapseVisibleSignals() { collapseCommand += 1; }
+
 	function handleTreePreview(target: PreviewTarget | null) {
 		/* Only user-node previews drive the inspector. `cluster`
 		   previews (collapsed "+N more" tails) have no inspector
@@ -66,12 +107,15 @@
 		hoveredNodeId = target?.kind === 'user' ? target.user.id : null;
 	}
 
-	/* Re-seed selection + hover when navigating between profiles so
-	   nothing carries over to the next user. */
+	/* Re-seed selection + hover + preview-section state when
+	   navigating between profiles so nothing carries over. */
 	$effect(() => {
 		void user.id;
 		selectedNodeId = null;
 		hoveredNodeId = null;
+		signatureExpanded = false;
+		emergingExpanded = false;
+		visibleSignalCount = 3;
 	});
 
 	/* Follow toggle — local $state only; the spec is explicit that
@@ -367,7 +411,7 @@
 
 		{#if user.signatureSignals.length > 0}
 			<ul class="flex flex-col gap-1.5 mt-2">
-				{#each user.signatureSignals as signal (signal.id)}
+				{#each visibleSignatureSignals as signal (signal.id)}
 					<li class="rounded-lg border border-white/5 bg-white/2 hover:bg-white/6 hover:border-white/10 transition-colors px-3.5 py-3 group/sig">
 						<a href="/items/{signal.id}" class="flex items-start gap-3.5">
 							<!-- Cover artwork — 52 px square. First visual
@@ -429,6 +473,21 @@
 					</li>
 				{/each}
 			</ul>
+			{#if user.signatureSignals.length > 3}
+				<!-- Editorial preview control — small italic text-link in
+				     the section's natural rhythm, no toolbar styling. -->
+				<div class="mt-3 flex justify-center">
+					<button
+						type="button"
+						onclick={() => (signatureExpanded = !signatureExpanded)}
+						class="text-[12.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
+					>
+						{signatureExpanded
+							? 'Show less'
+							: `Show ${user.signatureSignals.length - 3} more`}
+					</button>
+				</div>
+			{/if}
 		{:else}
 			<p class="text-[12.5px] italic text-base-content/45">No signature signals yet.</p>
 		{/if}
@@ -464,7 +523,7 @@
 			     quiet background tint — observational, not
 			     interactive-feeling. -->
 			<ul class="flex flex-col -mx-2 mt-2 divide-y divide-white/4">
-				{#each user.emergingSignals as signal (signal.id)}
+				{#each visibleEmergingSignals as signal (signal.id)}
 					<li class="px-2 py-2.5 hover:bg-white/3 transition-colors rounded-sm flex items-center gap-3">
 						<!-- Cover thumbnail — 44 px. Real Spotify cover via
 						     `coverOf(id)` on the mock item registry, so the
@@ -499,6 +558,19 @@
 					</li>
 				{/each}
 			</ul>
+			{#if user.emergingSignals.length > 3}
+				<div class="mt-3 flex justify-center">
+					<button
+						type="button"
+						onclick={() => (emergingExpanded = !emergingExpanded)}
+						class="text-[12.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
+					>
+						{emergingExpanded
+							? 'Show less'
+							: `Show ${user.emergingSignals.length - 3} more`}
+					</button>
+				</div>
+			{/if}
 		{:else}
 			<p class="text-[12.5px] italic text-base-content/45">No emerging seeds tracked.</p>
 		{/if}
@@ -606,12 +678,70 @@
 					class="grid gap-6 lg:gap-8"
 					style="grid-template-columns: minmax(0, 1.55fr) minmax(260px, 1fr);"
 				>
-					<div class="min-w-0">
+					<div class="min-w-0 flex flex-col gap-3">
+						<!-- ── Tree reader controls ──────────────────────────
+						     Editorial text buttons in the section's natural
+						     rhythm — left side counts the slice ("3 of 5
+						     signals"), right side toggles bulk expand /
+						     collapse of the CURRENTLY VISIBLE signals only.
+						     These act on PropagationNode's existing
+						     `expanded` state via DOM clicks; no parallel
+						     expansion mechanism. -->
+						<div class="flex items-center justify-between gap-3 px-0.5">
+							<p class="text-[11px] text-base-content/55 tabular-nums">
+								Showing
+								<span class="text-base-content/85 font-medium">{Math.min(visibleSignalCount, totalSignals)}</span>
+								of {totalSignals} signal{totalSignals === 1 ? '' : 's'}
+							</p>
+							<div class="flex items-center gap-2.5 text-[11px]">
+								<button
+									type="button"
+									onclick={expandVisibleSignals}
+									class="text-base-content/60 hover:text-base-content/92 transition-colors"
+								>
+									Expand visible
+								</button>
+								<span class="text-base-content/30" aria-hidden="true">·</span>
+								<button
+									type="button"
+									onclick={collapseVisibleSignals}
+									class="text-base-content/60 hover:text-base-content/92 transition-colors"
+								>
+									Collapse visible
+								</button>
+							</div>
+						</div>
+
 						<UserSignalTree
 							tree={signalTree}
 							bind:selectedNodeId
 							onPreview={handleTreePreview}
+							{visibleSignalCount}
+							{expandCommand}
+							{collapseCommand}
 						/>
+
+						<!-- "Show more / Show fewer signals" — only renders
+						     once the tree has more roots than the initial 3.
+						     Same editorial italic styling as Signature /
+						     Emerging show-more controls. -->
+						{#if totalSignals > 3}
+							<div class="mt-1 flex justify-center">
+								<button
+									type="button"
+									onclick={toggleVisibleSignals}
+									class="text-[12.5px] italic text-base-content/65 hover:text-base-content/95 transition-colors"
+								>
+									{#if visibleSignalCount < totalSignals}
+										{@const remaining = totalSignals - visibleSignalCount}
+										{@const step = Math.min(3, remaining)}
+										Show {step} more signal{step === 1 ? '' : 's'}
+									{:else}
+										Show fewer signals
+									{/if}
+								</button>
+							</div>
+						{/if}
 					</div>
 					<aside class="lg:sticky lg:top-6 lg:self-start">
 						<div
