@@ -8,11 +8,12 @@
 		totalDownstreamFromForest,
 		averageBranchSize,
 		strongestSignalInTree,
+		strongestBranch,
 		topAmplifier,
 		deepestBranchDepth,
 		countDescendants,
 		directChildrenCount,
-		trustBullets,
+		treeNarrativeBullets,
 		signalContextBullets,
 		scoutContextBullets,
 		liveStatusChipClass,
@@ -53,8 +54,9 @@
 		signalsSparked: tree.root.children.length,
 		totalDownstream: totalDownstreamFromForest(forest),
 		avgBranch: averageBranchSize(forest),
-		strongest: strongestSignalInTree(tree),
-		bullets: trustBullets(user, tree),
+		mostSuccessful: strongestSignalInTree(tree),
+		strongestBranch: strongestBranch(tree, forest),
+		bullets: treeNarrativeBullets(user, tree, forest),
 	});
 
 	function formatPercent(n: number): string {
@@ -83,7 +85,14 @@
 	</div>
 
 	{#if selection.kind === 'none'}
-		<!-- ─────────────────── SCOUT SUMMARY (default) ─────────────────── -->
+		<!-- ─────────────────── SCOUT SUMMARY (default) ───────────────────
+		     Tree-centric framing — answers "what does this whole tree
+		     say about this scout?" rather than echoing the profile
+		     card above. The bio is kept as a one-line voice anchor
+		     but the metrics, "Strongest branch" line, "Most
+		     successful signal" card, and "Why this tree matters"
+		     bullets are all derived directly from the rendered
+		     forest. -->
 
 		<div class="flex items-start gap-3">
 			<span class="shrink-0 w-12 h-12 rounded-full border border-primary/30 overflow-hidden">
@@ -91,58 +100,75 @@
 			</span>
 			<div class="min-w-0 flex-1">
 				<p class="text-[16px] font-semibold text-base-content/95 leading-snug truncate">{tree.root.name}</p>
-				<p class="text-[11.5px] text-base-content/60 leading-snug">{tree.root.role}</p>
-				<p class="mt-0.5 text-[10.5px] uppercase tracking-widest text-base-content/45">
+				<p class="text-[11.5px] text-base-content/65 leading-snug">{tree.root.role}</p>
+				<p class="mt-0.5 text-[10.5px] uppercase tracking-widest text-base-content/52">
 					Scout score
-					<span class="ml-1 tabular-nums font-semibold text-[oklch(0.86_0.12_60)]/90">{user.discoveryScore}</span>
+					<span class="ml-1 tabular-nums font-semibold text-[oklch(0.86_0.12_60)]/92">{user.discoveryScore}</span>
 				</p>
 			</div>
 		</div>
 
-		<p class="text-[13px] leading-relaxed text-base-content/78 italic">
+		<p class="text-[12.5px] leading-relaxed text-base-content/72 italic">
 			“{user.bio}”
 		</p>
 
-		<dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-2 border-t border-white/6">
+		<dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 border-t border-white/10">
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Signals sparked</dt>
-				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{summary.signalsSparked}</dd>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Signals sparked</dt>
+				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/95">{summary.signalsSparked}</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Total downstream</dt>
-				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{summary.totalDownstream}</dd>
-				<dd class="text-[11px] text-base-content/52">listeners reached</dd>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Total downstream</dt>
+				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/95">{summary.totalDownstream}</dd>
+				<dd class="text-[11px] text-base-content/55">listeners reached</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Avg branch</dt>
-				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{summary.avgBranch}</dd>
-				<dd class="text-[11px] text-base-content/52">scouts per signal</dd>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Avg branch</dt>
+				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/95">{summary.avgBranch}</dd>
+				<dd class="text-[11px] text-base-content/55">scouts per signal</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Hit rate</dt>
-				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{formatPercent(user.hitRate)}</dd>
-				<dd class="text-[11px] text-base-content/52">seeds that propagated</dd>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Hit rate</dt>
+				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/95">{formatPercent(user.hitRate)}</dd>
+				<dd class="text-[11px] text-base-content/55">seeds that propagated</dd>
 			</div>
 		</dl>
 
-		{#if summary.strongest}
-			{@const s = summary.strongest}
-			<section class="pt-2 border-t border-white/6">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Strongest signal</p>
+		<!-- Strongest branch — one inline line, no card. Reads as a
+		     standalone fact about the tree's deepest single chain. -->
+		{#if summary.strongestBranch}
+			{@const b = summary.strongestBranch}
+			<section class="pt-3 border-t border-white/10">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 mb-1.5">Strongest branch</p>
+				<p class="text-[12.5px] leading-snug text-base-content/82">
+					<span class="font-semibold">{b.scout.name}</span>
+					<span class="text-base-content/55"> under </span>
+					<span class="text-base-content/82">{b.parentSignal.title}</span>
+					<span class="ml-1.5 tabular-nums text-[oklch(0.86_0.12_60)]/88 font-semibold">+{b.reach}</span>
+					<span class="text-base-content/55"> listeners</span>
+				</p>
+			</section>
+		{/if}
+
+		<!-- Most successful signal (by editorial impact) — link card. -->
+		{#if summary.mostSuccessful}
+			{@const s = summary.mostSuccessful}
+			<section class="pt-3 border-t border-white/10">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 mb-2">Most successful signal</p>
 				<a href="/items/{s.itemId}" class="group inline-flex items-center gap-2.5">
-					<span class="shrink-0 w-10 h-10 rounded-md border border-white/10 overflow-hidden bg-white/5">
+					<span class="shrink-0 w-10 h-10 rounded-md border border-white/12 overflow-hidden bg-white/5">
 						{#if s.coverArt}
 							<img src={s.coverArt} alt="" class="w-full h-full object-cover" />
 						{/if}
 					</span>
 					<span class="flex flex-col leading-snug">
-						<span class="flex items-baseline gap-1.5 text-[13.5px] font-semibold text-accent/92 group-hover:text-accent transition-colors">
+						<span class="flex items-baseline gap-1.5 text-[13.5px] font-semibold text-accent/95 group-hover:text-accent transition-colors">
 							{s.title}
-							<ExternalLink size={10} class="opacity-50 group-hover:opacity-90 transition-opacity -translate-y-px" />
+							<ExternalLink size={10} class="opacity-55 group-hover:opacity-95 transition-opacity -translate-y-px" />
 						</span>
-						<span class="text-[11.5px] text-base-content/60">
+						<span class="text-[11.5px] text-base-content/65">
 							{s.artist}
-							<span class="ml-1.5 text-[oklch(0.86_0.12_60)]/85 font-semibold tabular-nums">+{s.impact}</span>
+							<span class="ml-1.5 text-[oklch(0.86_0.12_60)]/88 font-semibold tabular-nums">+{s.impact}</span>
 						</span>
 					</span>
 				</a>
@@ -150,13 +176,13 @@
 		{/if}
 
 		{#if user.sceneFootprint.length > 0}
-			<section class="pt-2 border-t border-white/6">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Primary scenes</p>
+			<section class="pt-3 border-t border-white/10">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 mb-2">Primary scenes</p>
 				<ul class="flex flex-col gap-1">
 					{#each user.sceneFootprint.slice(0, 3) as scene (scene.name)}
-						<li class="flex items-baseline gap-2 text-[12.5px] text-base-content/75">
+						<li class="flex items-baseline gap-2 text-[12.5px] text-base-content/78">
 							<span class="flex-1 truncate">{scene.name}</span>
-							<span class="tabular-nums text-base-content/52">{formatPercent(scene.percent)}</span>
+							<span class="tabular-nums text-base-content/55">{formatPercent(scene.percent)}</span>
 						</li>
 					{/each}
 				</ul>
@@ -164,12 +190,12 @@
 		{/if}
 
 		{#if summary.bullets.length > 0}
-			<section class="pt-2 border-t border-white/6">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Why follow</p>
+			<section class="pt-3 border-t border-white/10">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 mb-2">Why this tree matters</p>
 				<ul class="flex flex-col gap-1.5">
 					{#each summary.bullets as line (line)}
-						<li class="flex items-start gap-2 text-[12.5px] leading-snug text-base-content/72">
-							<span class="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-base-content/35"></span>
+						<li class="flex items-start gap-2 text-[12.5px] leading-snug text-base-content/78">
+							<span class="shrink-0 mt-1.5 w-1 h-1 rounded-full bg-base-content/45"></span>
 							<span>{line}</span>
 						</li>
 					{/each}
@@ -194,29 +220,29 @@
 			This is the origin scout for this tree — every signal and listener below traces back to {tree.root.name}.
 		</p>
 
-		<dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-2 border-t border-white/6">
+		<dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 border-t border-white/10">
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Signals sparked</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Signals sparked</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{summary.signalsSparked}</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Total reach</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Total reach</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{summary.totalDownstream}</dd>
 				<dd class="text-[11px] text-base-content/52">scouts downstream</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Discovery score</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Discovery score</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-[oklch(0.86_0.12_60)]/92">{user.discoveryScore}<span class="text-base-content/40 text-[11px] font-normal">/100</span></dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Hit rate</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Hit rate</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{formatPercent(user.hitRate)}</dd>
 			</div>
 		</dl>
 
 		{#if tree.root.children.length > 0}
-			<section class="pt-2 border-t border-white/6">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Sparked signals</p>
+			<section class="pt-3 border-t border-white/10">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 mb-2">Sparked signals</p>
 				<ul class="flex flex-col gap-1.5">
 					{#each [...tree.root.children].sort((a, b) => b.impact - a.impact) as s (s.itemId)}
 						<li>
@@ -264,35 +290,35 @@
 			</div>
 		</div>
 
-		<dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-2 border-t border-white/6">
+		<dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 border-t border-white/10">
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Listeners</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Listeners</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{s.listeners}</dd>
 				<dd class="text-[11px] text-base-content/52">total reach</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Generations</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Generations</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{s.generations}</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Deepest branch</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Deepest branch</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{depth}</dd>
 				<dd class="text-[11px] text-base-content/52">edges from signal</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Direct branches</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Direct branches</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{node.children.length}</dd>
 			</div>
 		</dl>
 
-		<section class="pt-2 border-t border-white/6 space-y-2">
+		<section class="pt-3 border-t border-white/10 space-y-2">
 			<div class="flex items-baseline gap-2">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 shrink-0">Sparked by</p>
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 shrink-0">Sparked by</p>
 				<p class="text-[12.5px] text-base-content/82 truncate">{tree.root.name}</p>
 			</div>
 			{#if top}
 				<div class="flex items-baseline gap-2">
-					<p class="text-[10px] uppercase tracking-widest text-base-content/45 shrink-0">Top amplifier</p>
+					<p class="text-[10px] uppercase tracking-widest text-base-content/52 shrink-0">Top amplifier</p>
 					<p class="text-[12.5px] text-base-content/82 truncate">
 						{top.name}
 						<span class="ml-1 tabular-nums text-[oklch(0.86_0.12_60)]/85 font-semibold">+{countDescendants(top)}</span>
@@ -302,8 +328,8 @@
 		</section>
 
 		{#if s.tags.length > 0}
-			<section class="pt-2 border-t border-white/6">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Scenes</p>
+			<section class="pt-3 border-t border-white/10">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 mb-2">Scenes</p>
 				<div class="flex flex-wrap gap-1.5">
 					{#each s.tags as tag (tag)}
 						<span class="text-[11px] px-2 py-0.5 rounded-full border border-accent/22 text-accent/72 bg-accent/5">
@@ -315,8 +341,8 @@
 		{/if}
 
 		{#if ctx.length > 0}
-			<section class="pt-2 border-t border-white/6">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Why this matters</p>
+			<section class="pt-3 border-t border-white/10">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 mb-2">Why this matters</p>
 				<ul class="flex flex-col gap-1.5">
 					{#each ctx as line (line)}
 						<li class="flex items-start gap-2 text-[12.5px] leading-snug text-base-content/72">
@@ -328,7 +354,7 @@
 			</section>
 		{/if}
 
-		<section class="pt-3 border-t border-white/6">
+		<section class="pt-3 border-t border-white/10">
 			<a
 				href="/items/{s.itemId}"
 				class="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-accent/88 hover:text-accent transition-colors"
@@ -357,7 +383,7 @@
 					<p class="text-[11.5px] text-base-content/60 leading-snug">{sc.character}</p>
 				{/if}
 				{#if total > 0}
-					<p class="mt-0.5 text-[10.5px] uppercase tracking-widest text-base-content/45">
+					<p class="mt-0.5 text-[10.5px] uppercase tracking-widest text-base-content/52">
 						Downstream reach
 						<span class="ml-1 tabular-nums font-semibold text-[oklch(0.86_0.12_60)]/90">+{total}</span>
 					</p>
@@ -365,9 +391,9 @@
 			</div>
 		</div>
 
-		<section class="pt-2 border-t border-white/6 space-y-2">
+		<section class="pt-3 border-t border-white/10 space-y-2">
 			<div class="flex items-baseline gap-2">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 shrink-0">Discovered through</p>
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 shrink-0">Discovered through</p>
 				<a
 					href="/items/{parent.itemId}"
 					class="text-[12.5px] text-accent/85 hover:text-accent transition-colors truncate"
@@ -376,37 +402,37 @@
 				</a>
 			</div>
 			<div class="flex items-baseline gap-2">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 shrink-0">Amplified from</p>
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 shrink-0">Amplified from</p>
 				<p class="text-[12.5px] text-base-content/82 truncate">
 					{tree.root.name}'s signal
 				</p>
 			</div>
 		</section>
 
-		<dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-2 border-t border-white/6">
+		<dl class="grid grid-cols-2 gap-x-4 gap-y-3 pt-3 border-t border-white/10">
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Direct listeners</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Direct listeners</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{direct}</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Downstream reach</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Downstream reach</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{total}</dd>
 				<dd class="text-[11px] text-base-content/52">total below</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Depth from {tree.root.name}</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Depth from {tree.root.name}</dt>
 				<dd class="mt-1 text-[16px] font-semibold tabular-nums text-base-content/92">{selection.depth}</dd>
 				<dd class="text-[11px] text-base-content/52">edges from origin</dd>
 			</div>
 			<div>
-				<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Branch role</dt>
+				<dt class="text-[10px] uppercase tracking-widest text-base-content/52">Branch role</dt>
 				<dd class="mt-1 text-[12.5px] text-base-content/82 leading-snug">{sc.character ?? 'Listener'}</dd>
 			</div>
 		</dl>
 
 		{#if bullets.length > 0}
-			<section class="pt-2 border-t border-white/6">
-				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2">Why this matters</p>
+			<section class="pt-3 border-t border-white/10">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/52 mb-2">Why this matters</p>
 				<ul class="flex flex-col gap-1.5">
 					{#each bullets as line (line)}
 						<li class="flex items-start gap-2 text-[12.5px] leading-snug text-base-content/72">
@@ -418,7 +444,7 @@
 			</section>
 		{/if}
 
-		<section class="pt-3 border-t border-white/6">
+		<section class="pt-3 border-t border-white/10">
 			<a
 				href="/users/{sc.id}"
 				class="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-accent/88 hover:text-accent transition-colors"

@@ -318,32 +318,31 @@
 	   selection-state `background-color` layer on top cleanly. */
 	:global(.user-signal-tree .item-node-row) {
 		width: 280px;
-		padding: 7px 12px;
+		/* Tightened padding + lighter container so the row reads as
+		   "graph node with attached metadata" rather than a filled
+		   list card. Cover stays 46 px (the visual anchor of the
+		   row), so reducing the surrounding chrome pulls focus to
+		   the artwork without changing the node's identity. */
+		padding: 6px 10px;
 		gap: 10px;
 		align-items: center;
-		/* Brighter border + slightly stronger gradient + faint
-		   drop-shadow — the card now reads as a deliberate root
-		   node rather than a list row floating beside the scouts.
-		   Total contrast bump is modest (not "heavier"); the goal
-		   is *authority*, not weight.
 
-		   PERMANENT BASE OUTLINE: `!important` keeps this 1 px
-		   glass border visible across every selection-state
-		   transition so the card never appears borderless after a
-		   click-to-deselect cycle. PropagationNode's selected
-		   state adds `ring-1 ring-accent/45` (a box-shadow ring
-		   *outside* this border) — selection stacks ON TOP of the
-		   base outline rather than replacing it. */
-		border: 1px solid oklch(1 0 0 / 0.20) !important;
-		border-radius: 9px;
+		/* PERMANENT BASE OUTLINE — same `!important` discipline as
+		   before so the border survives every selection-state
+		   re-render. Opacity dropped from 0.20 → 0.12 so the
+		   rectangle is felt without dominating. PropagationNode's
+		   selected state adds `ring-1 ring-accent/45` outside this
+		   border — selection still stacks on top. */
+		border: 1px solid oklch(1 0 0 / 0.12) !important;
+		border-radius: 8px;
 		background-image: linear-gradient(
 			to bottom,
-			oklch(0.20 0.04 260 / 0.30) 0%,
-			oklch(0.16 0.03 260 / 0.20) 100%
+			oklch(0.20 0.04 260 / 0.18) 0%,
+			oklch(0.16 0.03 260 / 0.10) 100%
 		);
 		backdrop-filter: blur(6px);
 		-webkit-backdrop-filter: blur(6px);
-		box-shadow: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 2px 12px oklch(0 0 0 / 0.18);
+		box-shadow: 0 1px 0 oklch(1 0 0 / 0.03) inset, 0 1px 6px oklch(0 0 0 / 0.10);
 		position: relative;
 	}
 
@@ -410,7 +409,14 @@
 		padding-bottom: 28px;
 	}
 	:global(.user-signal-tree .root-children-container) {
-		padding-top: 28px;
+		/* Dan → first signal: tightened from 28 → 16 px so the signal
+		   feels like Dan's direct child rather than a separate object
+		   waiting in transmission space. With only ~16 px between
+		   Dan's row and the first signal's stub, the rail's 14 px
+		   conduit-top-stub fills most of the gap and the parent-
+		   child read is immediate. No additional rail visuals or
+		   special-case treatments — just spacing. */
+		padding-top: 16px;
 	}
 
 	/* ── Trunk → signal handoff ───────────────────────────────
@@ -471,7 +477,7 @@
 	) {
 		order: 3;
 		align-self: flex-start;
-		margin-top: 6px;
+		margin-top: 4px;
 		padding: 2px 8px;
 		border-radius: 9999px;
 		/* Bumped contrast across all three layers (bg / text /

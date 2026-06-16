@@ -240,6 +240,30 @@ export function strongestSignalInTree(tree: UserSignalTree): SignalTreeSignalNod
 	return [...tree.root.children].sort((a, b) => b.impact - a.impact)[0];
 }
 
+/** The single largest scout-rooted branch across ALL signals in the
+ *  tree — answers "which one downstream chain reached the most
+ *  listeners?". The reach counts the scout itself + every descendant.
+ *  Returns the parent-signal mock so the inspector can attribute it
+ *  ("Daria's branch under Cold Dispatch"). Null when the tree has no
+ *  scouts (e.g. an empty signal). */
+export function strongestBranch(
+	tree: UserSignalTree,
+	forest: PropagationForest,
+): { scout: PropagationUser; parentSignal: SignalTreeSignalNode; reach: number } | null {
+	const dan = forest.roots[0];
+	if (!dan) return null;
+	let best: { scout: PropagationUser; parentSignal: SignalTreeSignalNode; reach: number } | null = null;
+	for (const signalNode of dan.children) {
+		const parentSignal = tree.root.children.find((s) => s.itemId === signalNode.id);
+		if (!parentSignal) continue;
+		for (const scout of signalNode.children) {
+			const reach = 1 + countDescendants(scout);
+			if (!best || reach > best.reach) best = { scout, parentSignal, reach };
+		}
+	}
+	return best;
+}
+
 /** Top-level amplifier of a signal — the direct child with the
  *  largest subtree (forest-derived, so it matches what the user
  *  sees in the tree). */
@@ -281,25 +305,36 @@ export function distinctCharacterCount(signalNode: PropagationUser): number {
    purely derived from the available data. Keep them short,
    observational, and avoid marketing language. */
 
-export function trustBullets(user: UserDetail, tree: UserSignalTree): string[] {
+/*
+	Tree-centric framing for the default Scout Summary's "Why this
+	tree matters" section. Each bullet is observable directly from the
+	rendered forest — no profile-card boilerplate. Up to three, in
+	order of descending interest, capped so the panel stays compact.
+*/
+export function treeNarrativeBullets(
+	user: UserDetail,
+	tree: UserSignalTree,
+	forest: PropagationForest,
+): string[] {
 	const bullets: string[] = [];
-	if (user.hitRate >= 35) {
-		bullets.push('Finds signals before they become obvious.');
-	}
-	const scenes = user.sceneFootprint.length;
-	if (scenes >= 3) {
-		bullets.push(
-			`Bridges ${scenes} scenes — ${user.sceneFootprint
-				.slice(0, 2)
-				.map((s) => s.name.toLowerCase())
-				.join(' and ')} the strongest.`,
-		);
-	}
 	const multiGen = tree.root.children.filter((s) => s.generations >= 3).length;
 	if (multiGen > 0) {
 		bullets.push(
-			`${multiGen} ${multiGen === 1 ? 'seed' : 'seeds'} grew into multi-generation branches.`,
+			`${multiGen} of ${tree.root.children.length} signals propagated past 3 generations.`,
 		);
+	}
+	const best = strongestBranch(tree, forest);
+	if (best && best.reach >= 3) {
+		bullets.push(
+			`${best.scout.name}'s branch carried ${best.parentSignal.title} to ${best.reach} listeners.`,
+		);
+	}
+	const scenes = user.sceneFootprint.length;
+	if (scenes >= 3) {
+		bullets.push(`Tree spans ${scenes} scenes — cross-scene transmission.`);
+	}
+	if (bullets.length < 3 && user.hitRate >= 35) {
+		bullets.push(`Hit rate ${Math.round(user.hitRate)}% — most seeds propagate.`);
 	}
 	return bullets.slice(0, 3);
 }

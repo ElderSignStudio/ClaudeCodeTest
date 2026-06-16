@@ -615,8 +615,8 @@
 					</div>
 					<aside class="lg:sticky lg:top-6 lg:self-start">
 						<div
-							class="rounded-lg border border-white/6 bg-base-200/45 p-4 lg:p-5"
-							style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
+							class="rounded-xl border border-white/10 bg-base-200/55 p-5 lg:p-6"
+							style="box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 6px 22px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.035);"
 						>
 							<UserTreeInspector
 								user={user}
