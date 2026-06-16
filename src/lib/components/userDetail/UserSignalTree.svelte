@@ -18,43 +18,25 @@
 		  └── Cold Dispatch (item node)
 		      ├── Daria
 		      │   └── Renan
-		      │       └── …
-		      ├── Liv
-		      │   └── …
-		      └── Gisli
+		      └── Liv
 		          └── …
 
-		Particles flow naturally from the leaves upward through every
-		node — including the item nodes and Dan — because every
-		participant is a real node in the graph. No decorative
-		bridge particles, no synthetic relay dots, no fake trunk
-		animations.
+		Particles flow naturally from leaves through item nodes up
+		to Dan because every node is a real graph participant — no
+		decorative bridges, no relay particles.
 
-		The graph is constructed here and handed to the existing
-		`PropagationTree` from the Item Detail page. PropagationTree
-		and PropagationNode are completely unchanged.
+		Visual differentiation between user nodes and item nodes is
+		layered on TOP of the propagation render (it has to be —
+		PropagationTree / PropagationNode are unmodified). After
+		mount, the marker effect adds `.item-node` to each item's
+		wrapper; the style block at the bottom of this file gives
+		those wrappers a rounded-square cover, larger size, and no
+		kind-halo.
 
-		Construction:
-		  1. For each signal, call `propagationForestFor(itemId,
-		     listeners, rootUserId)` — the same generator the Item
-		     Detail page uses.
-		  2. Splice the rebranded root (Dan, Alice, …) out of each
-		     per-signal forest; that scout's children become the
-		     item node's children.
-		  3. Wrap each signal as a `PropagationUser` with the item's
-		     cover as the avatar and the artist as the character
-		     line — same node-kind language as a successful
-		     amplifier so the visual halo + ripple read clearly.
-		  4. Wrap the page owner as a `PropagationUser` whose
-		     children are the signal item nodes; tag him as origin
-		     + current user so he renders with the origin glyph and
-		     the cu-row treatment.
-
-		The Inspector, locator pill, and lineage reveal are
-		disabled here by not passing inspector hooks and by
-		leaving `lineageOrderedIds`/`lineageIds` at their defaults.
-		Selection styling DOES flow because `onSelect` is wired —
-		clicking a node lights it up; no inspector pops up.
+		The "Your signal" locator inside PropagationTree is
+		disabled by passing `currentUserId={null}`. A new tree-
+		level locator above tracks which item subtree is currently
+		visible and reads "Signal · <title>" instead.
 	*/
 
 	let {
@@ -63,16 +45,23 @@
 		tree: UserSignalTreeData;
 	} = $props();
 
-	const forest: PropagationForest = $derived.by(() => {
-		const rootUserId = tree.root.id;
+	/* Set of item ids surfaced in this user's tree. Used by the
+	   item-node class marker and by the locator's
+	   IntersectionObserver to know which wrappers to watch. */
+	const itemIds = $derived(new Set(tree.root.children.map(s => s.itemId)));
 
-		/* Per-signal child trees. The propagation generator
-		   rebrands the largest root as the named scout
-		   (rootUserId), so after the call the scout owns a real
-		   subtree — we take that subtree's CHILDREN as the
-		   children of the item node and discard the scout itself
-		   (it's about to be re-attached one level up, beneath the
-		   item node, beneath Dan). */
+	/* Look-up from item id → display title + artist so the locator
+	   can read "Cold Dispatch — Wire Theory" without re-walking
+	   the tree. */
+	const itemMeta = $derived(
+		new Map(tree.root.children.map(s => [s.itemId, { title: s.title, artist: s.artist }])),
+	);
+
+	/* Hoisted so the marker $effect below can locate Dan's wrapper
+	   and tag its children-container without re-deriving the id. */
+	const rootUserId = $derived(tree.root.id);
+
+	const forest: PropagationForest = $derived.by(() => {
 		const itemChildren: PropagationUser[] = [...tree.root.children]
 			.sort((a, b) => b.impact - a.impact)
 			.map((signal): PropagationUser => {
@@ -84,13 +73,25 @@
 					name: signal.title,
 					avatar: signal.coverArt,
 					character: signal.artist,
+					/* `branchSize` becomes the inline `+N` shown next to
+					   the name in PropagationNode. For item nodes we
+					   surface the editorial impact score there so the
+					   reader sees `Cold Dispatch +92` (i.e. "impact 92")
+					   without us touching PropagationNode itself. The
+					   sort at the top of the chain already orders items
+					   by impact, so using impact here also yields a
+					   sensible internal sort. */
+					branchSize: signal.impact,
 					amplifications: signal.generations,
-					branchSize: 0, // recomputed below
 					discoveredAgo: '',
 					behaviorNote: '',
 					scenes: signal.tags,
 					children: downstream,
-					nodeKind: 'successful-amplifier',
+					/* nodeKind intentionally LEFT OFF. PropagationNode's
+					   `nodeKindClass()` returns '' for undefined kind, so
+					   item nodes get no kind-halo / sa-ripple / double-
+					   ring — visual differentiation handled by the
+					   `.item-node` class wired below. */
 				};
 			});
 
@@ -100,7 +101,7 @@
 			avatar: tree.root.avatar,
 			character: tree.root.role,
 			amplifications: itemChildren.length,
-			branchSize: 0, // recomputed below
+			branchSize: 0,
 			discoveredAgo: '',
 			behaviorNote: '',
 			scenes: [],
@@ -110,24 +111,38 @@
 			nodeKind: 'successful-amplifier',
 		};
 
-		/* Recompute branchSize bottom-up. The propagation engine's
-		   internal layout (children-by-branchSize sort) reads this
-		   value, so synthetic nodes need correct counts to
-		   render in a reasonable order. */
-		function annotate(u: PropagationUser): number {
+		/* Recompute branchSize bottom-up for everything EXCEPT the
+		   item nodes themselves (whose branchSize we've already set
+		   to the impact score). Walking from the item-node
+		   children downward and from Dan upward keeps both
+		   conventions consistent. */
+		function annotateUnderItem(u: PropagationUser): number {
 			let n = 0;
-			for (const c of u.children) n += 1 + annotate(c);
+			for (const c of u.children) n += 1 + annotateUnderItem(c);
 			u.branchSize = n;
 			return n;
 		}
-		annotate(danNode);
+		for (const item of itemChildren) {
+			for (const child of item.children) {
+				annotateUnderItem(child);
+			}
+			// Leave item.branchSize as the impact score, but tally
+			// danNode's count against the downstream reach.
+		}
+		let danReach = 0;
+		for (const item of itemChildren) {
+			let itemDownstream = 0;
+			for (const child of item.children) itemDownstream += 1 + child.branchSize;
+			danReach += 1 + itemDownstream; // +1 counts the item itself
+		}
+		danNode.branchSize = danReach;
 
 		return {
 			itemId: `user-tree-${rootUserId}`,
 			roots: [danNode],
 			hiddenRootUsers: [],
 			hiddenRoots: 0,
-			totalReach: danNode.branchSize,
+			totalReach: danReach,
 			independentOrigins: 1,
 			weightedImpact: 0,
 			totalAmplifications: itemChildren.length,
@@ -142,35 +157,444 @@
 	let selectedUserId = $state<string | null>(null);
 
 	function handleSelect(user: PropagationUser) {
-		/* Toggle on repeat click — mirrors the Item Detail tree's
-		   behaviour. No inspector is mounted; selection is purely
-		   for visual feedback at this stage. */
 		selectedUserId = selectedUserId === user.id ? null : user.id;
 	}
 	function handlePreview(_target: PreviewTarget | null) {
 		/* No inspector. */
 	}
+
+	/* ── Item-node DOM marker ─────────────────────────────────
+	   PropagationNode renders the same wrapper / avatar markup
+	   regardless of nodeKind, so visual differentiation has to be
+	   applied externally. After each render pass we walk the
+	   freshly mounted tree and, for every wrapper whose
+	   data-user-id is an item id, tag its OWN `.node-avatar`
+	   element with `.item-node-avatar`. Marking the avatar (not
+	   the wrapper) is important — a descendant-style selector on
+	   the wrapper would also match nested user avatars under the
+	   item, restyling scouts inside the item subtree by accident.
+	   `wrapper.querySelector('.node-avatar')` returns the first
+	   match in DOM order, which is always the wrapper's own
+	   avatar (descendants come later). */
+	let treeContainer: HTMLDivElement | null = $state(null);
+	$effect(() => {
+		void forest;          // re-run when the forest rebuilds
+		void itemIds;         // re-run when the set of item ids changes
+		void rootUserId;      // re-run if the root user changes
+		if (!treeContainer) return;
+
+		/* CRITICAL: PropagationNode renders .row-selection-zone (and
+		   .node-avatar) with a REACTIVE class array binding that
+		   includes the `isSelected` branch. When isSelected toggles,
+		   Svelte re-writes the class attribute on those elements,
+		   which WIPES any classes we previously added via
+		   classList.add. That leaves the signal card without its
+		   `.item-node-row` marker → CSS for width/border/etc no
+		   longer applies → the card visually breaks (border vanishes,
+		   width collapses to content). Each marked element gets a
+		   MutationObserver that watches its class attribute and
+		   re-adds our marker whenever Svelte's binding strips it.
+		   Adding a class that's already present does NOT trigger a
+		   further mutation, so there's no loop. */
+		const observers: MutationObserver[] = [];
+		let cancelled = false;
+
+		requestAnimationFrame(() => {
+			if (cancelled || !treeContainer) return;
+			for (const id of itemIds) {
+				const wrapper = treeContainer.querySelector(`[data-user-id="${id}"]`);
+				if (!wrapper) continue;
+				/* Wrapper's class binding in PropagationNode is
+				   STATIC (`relative tree-node-wrapper`), so adding
+				   `.item-node-wrapper` once is enough — Svelte never
+				   re-writes it. */
+				wrapper.classList.add('item-node-wrapper');
+
+				const avatar = wrapper.querySelector('.node-avatar');
+				const row = wrapper.querySelector('.row-selection-zone');
+				const outerRow = row?.parentElement ?? null;
+
+				const targets: Array<{ el: Element | null; cls: string }> = [
+					{ el: avatar, cls: 'item-node-avatar' },
+					{ el: row, cls: 'item-node-row' },
+					{ el: outerRow, cls: 'item-node-outer-row' },
+				];
+
+				for (const { el, cls } of targets) {
+					if (!el) continue;
+					el.classList.add(cls);
+					const obs = new MutationObserver(() => {
+						if (!el.classList.contains(cls)) {
+							el.classList.add(cls);
+						}
+					});
+					obs.observe(el, { attributes: true, attributeFilter: ['class'] });
+					observers.push(obs);
+				}
+			}
+			/* Tag Dan's direct children container so we can give the
+			   first signal card extra space below his row. The
+			   container is the second normal-flow child of Dan's
+			   wrapper (after `.row-selection-zone`) and carries the
+			   `pl-12` Tailwind class. PropagationNode's container
+			   class is static, so a single add suffices. */
+			const danWrapper = treeContainer.querySelector(`[data-user-id="${rootUserId}"]`);
+			const rootKids = danWrapper?.querySelector(':scope > div.pl-12');
+			rootKids?.classList.add('root-children-container');
+		});
+
+		return () => {
+			cancelled = true;
+			for (const o of observers) o.disconnect();
+		};
+	});
+
+	/* ── "Signal: …" locator ──────────────────────────────────
+	   Replaces PropagationTree's "Your signal" pill with a small
+	   floating chip naming the item subtree currently in view.
+	   `currentUserId={null}` on PropagationTree below disables
+	   the original pill; this locator owns the same atmospheric
+	   role but tied to the signal, not the page owner. */
+	let currentSignal = $state<{ title: string; artist: string } | null>(null);
+	let visibleRatios = $state<Map<string, number>>(new Map());
+
+	$effect(() => {
+		void forest;
+		void itemIds;
+		if (!treeContainer) return;
+		const observer = new IntersectionObserver(
+			(entries) => {
+				const next = new Map(visibleRatios);
+				for (const entry of entries) {
+					const id = entry.target.getAttribute('data-user-id');
+					if (id) next.set(id, entry.intersectionRatio);
+				}
+				/* Pick the item with the largest visible ratio. Ties
+				   resolve to the order returned by the Map (insertion
+				   order, which mirrors the rendered order). */
+				let bestId: string | null = null;
+				let bestRatio = 0;
+				for (const [id, ratio] of next) {
+					if (ratio > bestRatio) {
+						bestRatio = ratio;
+						bestId = id;
+					}
+				}
+				visibleRatios = next;
+				currentSignal = bestId && bestRatio > 0
+					? (itemMeta.get(bestId) ?? null)
+					: null;
+			},
+			{
+				/* Shrink the effective viewport top by 56 px (fixed
+				   global header) and bottom by 80 px (fixed player
+				   bar) so the "current signal" reflects what the
+				   reader is genuinely focused on. */
+				rootMargin: '-56px 0px -80px 0px',
+				threshold: [0, 0.25, 0.5, 0.75, 1],
+			},
+		);
+		requestAnimationFrame(() => {
+			if (!treeContainer) return;
+			for (const id of itemIds) {
+				const el = treeContainer.querySelector(`[data-user-id="${id}"]`);
+				if (el) observer.observe(el);
+			}
+		});
+		return () => observer.disconnect();
+	});
 </script>
 
-<div class="user-signal-tree">
+{#if currentSignal}
+	<div class="signal-locator" aria-hidden="true">
+		<span class="signal-locator-title">{currentSignal.title}</span>
+		<span class="signal-locator-divider">—</span>
+		<span class="signal-locator-artist">{currentSignal.artist}</span>
+	</div>
+{/if}
+
+<div class="user-signal-tree" bind:this={treeContainer}>
 	<PropagationTree
 		forest={forest}
 		selectedUserId={selectedUserId}
 		onSelect={handleSelect}
 		onPreview={handlePreview}
-		currentUserId={tree.root.id}
+		currentUserId={null}
 	/>
 </div>
 
 <style>
-	/* Hide PropagationTree's section eyebrow ("Propagation lineage ·
-	   N origins · M reached") when mounted inside the User Tree —
-	   the surrounding page already carries the section context.
-	   Targets the eyebrow without touching PropagationTree.svelte
-	   itself (the eyebrow is the first `<div>` child of
-	   PropagationTree's outermost `<div class="flex flex-col gap-1">`,
-	   a stable structure inherited from the Item Detail page mount). */
+	/* Hide PropagationTree's section eyebrow when mounted inside
+	   the User Tree — surrounding page already carries the
+	   section context. Targets without touching
+	   PropagationTree.svelte itself. */
 	:global(.user-signal-tree > div > div:first-child) {
 		display: none;
+	}
+
+	/* ── Item-node visual identity ─────────────────────────────
+	   Applied to the `.node-avatar` element of each item node,
+	   marked `.item-node-avatar` by the script above. Selecting
+	   directly on the avatar avoids descendant-style leakage onto
+	   scout avatars NESTED beneath the item. Scoped under
+	   `.user-signal-tree` so the Item Detail tree is untouched. */
+
+	/* Override the hardcoded `w-7 h-7 rounded-full` avatar circle
+	   with a rounded square, substantially larger than scout
+	   avatars (52 px vs 28 px) so the cover becomes the visual
+	   anchor of the row and reads as the branch root. The cover
+	   sits fully inside the card — NO negative margins, no
+	   overflow tricks. The propagation conduit's elbow lands at
+	   the card's left edge, which is the correct visual contract
+	   here: card-is-the-node, cover-is-the-art-inside-it. */
+	:global(.user-signal-tree .item-node-avatar > div) {
+		width: 46px;
+		height: 46px;
+		border-radius: 7px;
+		/* Stronger cover contrast — the cover is the visual root
+		   of the branch, so its edge should crisp-up against the
+		   card body. Still a single hairline, just more present. */
+		border-color: oklch(1 0 0 / 0.18);
+		box-shadow: 0 1px 0 oklch(0 0 0 / 0.32);
+	}
+
+	/* Defensive: clear PropagationNode's `mt-0.5` and any prior
+	   negative-margin overrides. Avatar flows naturally in the
+	   row's flex layout; `align-items: center` on the row pins it
+	   vertically against the text column. */
+	:global(.user-signal-tree .item-node-avatar) {
+		margin: 0;
+	}
+
+	/* Suppress kind-halo + origin-glyph decorations on item nodes
+	   so the cover-square reads as an unambiguous media object,
+	   not a styled scout. */
+	:global(.user-signal-tree .item-node-avatar::before),
+	:global(.user-signal-tree .item-node-avatar::after),
+	:global(.user-signal-tree .item-node-avatar > span.sa-ripple) {
+		display: none !important;
+	}
+	:global(.user-signal-tree .item-node-avatar > .origin-glyph) {
+		display: none;
+	}
+
+	/* Signal-card container — fixed 280 px width across every item
+	   so the column of cards reads as a uniform vertical stack
+	   regardless of title / artist length. Lightweight glass:
+	   quiet vertical gradient, faint border, soft blur — sits
+	   under the cover artwork rather than competing with it.
+	   `background-image` (gradient) lets PropagationNode's
+	   selection-state `background-color` layer on top cleanly. */
+	:global(.user-signal-tree .item-node-row) {
+		width: 280px;
+		padding: 7px 12px;
+		gap: 10px;
+		align-items: center;
+		/* Brighter border + slightly stronger gradient + faint
+		   drop-shadow — the card now reads as a deliberate root
+		   node rather than a list row floating beside the scouts.
+		   Total contrast bump is modest (not "heavier"); the goal
+		   is *authority*, not weight.
+
+		   PERMANENT BASE OUTLINE: `!important` keeps this 1 px
+		   glass border visible across every selection-state
+		   transition so the card never appears borderless after a
+		   click-to-deselect cycle. PropagationNode's selected
+		   state adds `ring-1 ring-accent/45` (a box-shadow ring
+		   *outside* this border) — selection stacks ON TOP of the
+		   base outline rather than replacing it. */
+		border: 1px solid oklch(1 0 0 / 0.20) !important;
+		border-radius: 9px;
+		background-image: linear-gradient(
+			to bottom,
+			oklch(0.20 0.04 260 / 0.30) 0%,
+			oklch(0.16 0.03 260 / 0.20) 100%
+		);
+		backdrop-filter: blur(6px);
+		-webkit-backdrop-filter: blur(6px);
+		box-shadow: 0 1px 0 oklch(1 0 0 / 0.04) inset, 0 2px 12px oklch(0 0 0 / 0.18);
+		position: relative;
+	}
+
+	/* Conduit docking notch — a thin highlight on the card's left
+	   edge at the conduit elbow's Y position (elbow tip = 14 + 4 =
+	   18 px from wrapper top; card row starts at the same y, so
+	   notch sits at row_y ≈ 14). Reads as the card's "connector
+	   port", reinforcing that the conduit terminates INTO the
+	   card rather than landing adjacent to it. Neutral white-
+	   alpha (not blue) so it doesn't have to track the conduit's
+	   activity-driven colour palette and stays subtle. */
+	:global(.user-signal-tree .item-node-row)::before {
+		content: '';
+		position: absolute;
+		left: -1px;
+		top: 13px;
+		width: 2px;
+		height: 11px;
+		background: oklch(1 0 0 / 0.45);
+		border-radius: 1px;
+		pointer-events: none;
+	}
+
+	/* Brighten the title — modest weight bump (semibold→700) and
+	   a brighter alpha (95→100). Reads as "root-node title" vs.
+	   regular scout name. Targeted via the title-row > p (which
+	   `display: contents` lifts to be a direct child of the text
+	   column; ordered 1 by our flex rules above). */
+	:global(
+		.user-signal-tree
+		.item-node-row
+		> div:last-child
+		> div
+		> p:first-child
+	) {
+		color: oklch(0.98 0.005 260 / 1) !important;
+		font-weight: 700;
+	}
+
+	/* ── Vertical breathing room ──────────────────────────────
+	   Two surgical paddings that exploit the rail topology:
+
+	   1. Each item-node wrapper gets `padding-bottom: 28px`. The
+	      wrapper's bottom-extension SVG uses
+	      `preserveAspectRatio="none"` + `height: calc(100% - 20px)`,
+	      so it stretches to fill the new wrapper height. The next
+	      sibling's top-stub starts at its own wrapper-top, which
+	      sits flush against the previous wrapper's bottom — rail
+	      stays continuous. Visually this lifts each signal card
+	      off the previous subtree's tail (Saga, etc.) so adjacent
+	      signal branches feel like distinct roots, not a stack.
+
+	   2. Dan's children container gets `padding-top: 28px`. This
+	      pushes the FIRST item card down, creating a deliberate
+	      atmospheric break between Dan and the signals he sparked
+	      (Dan ↓ space ↓ signals ↓ scouts). The container has no
+	      rail SVG in its padding-top zone — that's intentional:
+	      the gap reads as "transmission space" rather than a
+	      continuous wire, reinforcing the hierarchy break.
+	      Particles still flow correctly because they use the
+	      `--conduit-path` variable on Dan's wrapper, independent
+	      of the static rail visuals. */
+	:global(.user-signal-tree .item-node-wrapper) {
+		padding-bottom: 28px;
+	}
+	:global(.user-signal-tree .root-children-container) {
+		padding-top: 28px;
+	}
+
+	/* ── Trunk → signal handoff ───────────────────────────────
+	   The outer row layout is `[chevron 16 px | gap 16 px | card]`
+	   = 32 px between trunk and card. Collapse only the gap (not
+	   the chevron) so the card slides ~16 px left while the
+	   expand/collapse affordance + its keyboard interaction stay
+	   fully intact. Chevron now sits flush against the card's
+	   left edge, which reads naturally as "node toggle attached
+	   to the signal node" rather than a stray control floating in
+	   the conduit area. */
+	:global(.user-signal-tree .item-node-outer-row) {
+		gap: 4px;
+	}
+
+	/* Signal → first scout: pull the item's children container UP
+	   so the first scout reads as the signal's direct descendant
+	   without sitting *underneath* the card's bottom border. -2 px
+	   is the sweet spot — at -12 px the scout's avatar was only
+	   2 px below the card's outline (the regression); at 0 px the
+	   gap regrows to ~14 px above-cover. -2 lands ~12 px of clean
+	   clearance between the card's bottom border and the scout's
+	   avatar top, while still feeling like an immediate handoff
+	   from the signal. Sibling-scout spacing inside the container
+	   is unaffected because they all shift together. */
+	:global(.user-signal-tree .item-node-wrapper > div.pl-12) {
+		margin-top: -2px;
+	}
+
+	/* Text column — promote to a flex COLUMN and use `order` to
+	   place rows as: name → artist → pill. The pill lives inside
+	   PropagationNode's inner title-row div (next to the name);
+	   `display: contents` dissolves that wrapper so its children
+	   (name <p> and pill <span>) become flex items of THIS column
+	   and can be re-ordered independently of the artist <p>.
+	   Avoids absolute positioning entirely. */
+	:global(.user-signal-tree .item-node-row > div:last-child) {
+		display: flex;
+		flex-direction: column;
+		flex: 1 1 auto;
+		min-width: 0;
+	}
+	:global(.user-signal-tree .item-node-row > div:last-child > div) {
+		display: contents;
+	}
+	:global(.user-signal-tree .item-node-row > div:last-child > div > p) {
+		order: 1;
+	}
+	:global(.user-signal-tree .item-node-row > div:last-child > p) {
+		order: 2;
+	}
+	:global(
+		.user-signal-tree
+		.item-node-row
+		> div:last-child
+		> div
+		> span[aria-label^='branch size']
+	) {
+		order: 3;
+		align-self: flex-start;
+		margin-top: 6px;
+		padding: 2px 8px;
+		border-radius: 9999px;
+		/* Bumped contrast across all three layers (bg / text /
+		   border) for at-a-glance comparability between +92, +88,
+		   +84, +50 stacked vertically across cards. Same hue
+		   (oklch 60 = amber), same size, same shape, just more
+		   confidently amber. */
+		background-color: oklch(0.86 0.12 60 / 0.18);
+		color: oklch(0.92 0.13 60 / 1) !important;
+		border: 1px solid oklch(0.86 0.12 60 / 0.50);
+		font-size: 10.5px;
+		font-weight: 600;
+		letter-spacing: 0.02em;
+		line-height: 1.2;
+	}
+
+	/* ── "Signal: …" locator pill ──────────────────────────────
+	   Quiet floating chip at top center; shape + tone mirrors the
+	   ItemMiniHeader pattern used elsewhere on the product so it
+	   feels native to the page family. Sits below the global
+	   header (h-14) and above the bottom player. */
+	.signal-locator {
+		position: fixed;
+		top: 4rem;
+		left: 50%;
+		transform: translateX(-50%);
+		z-index: 40;
+		display: inline-flex;
+		align-items: baseline;
+		gap: 0.375rem;
+		padding: 0.25rem 1rem;
+		border-radius: 9999px;
+		border: 1px solid oklch(1 0 0 / 0.12);
+		background-color: oklch(0.16 0.018 260 / 0.82);
+		backdrop-filter: blur(6px);
+		-webkit-backdrop-filter: blur(6px);
+		max-width: 90vw;
+		pointer-events: none;
+	}
+	.signal-locator-title {
+		font-size: 12.5px;
+		font-weight: 600;
+		color: oklch(0.88 0.001 0 / 0.94);
+		white-space: nowrap;
+	}
+	.signal-locator-divider {
+		font-size: 12px;
+		color: oklch(0.88 0.001 0 / 0.35);
+	}
+	.signal-locator-artist {
+		font-size: 12px;
+		color: oklch(0.88 0.001 0 / 0.65);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 </style>
