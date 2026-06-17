@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { ExternalLink } from 'lucide-svelte';
+	import { fade } from 'svelte/transition';
 	import type { UserDetail } from '$lib/mock/users';
 	import type { UserSignalTree } from '$lib/mock/userSignalTree';
 	import {
@@ -64,7 +65,20 @@
 	}
 </script>
 
-<aside class="flex flex-col gap-5">
+<aside class="flex flex-col">
+{#key selection.kind}
+	<!--
+		Calm cross-state transition. {#key selection.kind} re-mounts
+		this wrapper whenever the editorial state CHANGES (none →
+		signal, etc.) — but NOT when only the target id changes
+		within the same kind (e.g. scout-A → scout-B), since
+		selection.kind is unchanged. The block uses only `in:fade`,
+		no `out:fade`, so the old content is removed instantly and
+		the new content fades in over ~130 ms. No height animation,
+		no layout reflow — paired with the fixed-height shell on the
+		page, hovering rapidly produces zero page motion.
+	-->
+	<div class="flex flex-col gap-5" in:fade={{ duration: 130 }}>
 
 	<!-- Eyebrow — label switches by selection state. Accent dot also
 	     switches colour so role change is felt before it's read. -->
@@ -455,4 +469,6 @@
 		</section>
 	{/if}
 
+	</div>
+{/key}
 </aside>

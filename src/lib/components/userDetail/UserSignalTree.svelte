@@ -108,6 +108,20 @@
 	   is hash-seeded on item id, so this is deterministic and stable. */
 	const forest: PropagationForest = $derived(buildUnifiedForest(visibleTree));
 
+	/* Per-node initial expansion rule, passed into PropagationTree and
+	   threaded down through every PropagationNode → Self. Returns
+	   false for signal-layer nodes (the item ids surfaced by this
+	   tree) so they arrive collapsed on the FIRST paint — no flash,
+	   no DOM clicks. Returns true for everything else (the origin,
+	   and any scout nodes that eventually mount when the user expands
+	   a signal), so the existing "expand a signal → see its scouts"
+	   UX is unchanged. PropagationNode reads this once at
+	   construction; subsequent chevron clicks own the state from
+	   there on. */
+	const initialExpansionFor = $derived(
+		(u: PropagationUser) => !itemIds.has(u.id),
+	);
+
 	/* Click-toggle behaviour: re-selecting the active node clears
 	   the selection so the inspector falls back to its default
 	   Scout Summary state. Writing back through the $bindable
@@ -203,30 +217,11 @@
 			const rootKids = danWrapper?.querySelector(':scope > div.pl-12');
 			rootKids?.classList.add('root-children-container');
 
-			/* Auto-collapse each newly mounted signal so the tree
-			   starts compact ("the user chooses where to explore").
-			   PropagationNode's `expanded` is internal $state with
-			   default `true`, and we don't want to modify
-			   PropagationNode — so the override is a one-shot
-			   chevron click per wrapper, marked with
-			   `data-signal-initialized` so we never re-fire it on
-			   re-renders (e.g. selection toggles or new signals
-			   becoming visible via "Show more"). A CSS rule in this
-			   file pre-hides the children container of any
-			   uninitialised wrapper, which prevents a one-frame
-			   flash before the click flips `expanded` to false. */
-			for (const id of itemIds) {
-				const wrapper = treeContainer.querySelector(`[data-user-id="${id}"]`) as HTMLElement | null;
-				if (!wrapper) continue;
-				if (wrapper.dataset.signalInitialized === 'true') continue;
-				const chev = wrapper.querySelector(
-					':scope > div > button[aria-label$="branch"]',
-				) as HTMLButtonElement | null;
-				if (chev?.getAttribute('aria-label') === 'Collapse branch') {
-					chev.click();
-				}
-				wrapper.dataset.signalInitialized = 'true';
-			}
+			/* No synthetic auto-collapse — signal-layer nodes now
+			   start collapsed at construction via the `initialExpanded`
+			   predicate passed to PropagationTree below. The tree
+			   arrives collapsed on the first paint, with no DOM
+			   manipulation. */
 		});
 
 		return () => {
@@ -343,6 +338,7 @@
 		onSelect={handleSelect}
 		onPreview={handlePreview}
 		currentUserId={null}
+		initialExpanded={initialExpansionFor}
 	/>
 </div>
 
@@ -538,24 +534,10 @@
 		margin-top: -2px;
 	}
 
-	/* Auto-collapse flash guard — hide the children container of any
-	   newly mounted signal wrapper until our marker $effect has
-	   flipped `expanded` to false via the chevron click. Without
-	   this, signals briefly render with their full scout subtree
-	   visible for one frame before the click lands. The
-	   `data-signal-initialized` attribute is set by the same effect
-	   *after* the click, so the rule only ever blocks the initial
-	   paint of an as-yet-uninitialised wrapper. PropagationNode's
-	   conditional `{#if expanded}` removes the container entirely
-	   once it lands, so the rule has no effect on user-driven
-	   re-expansion. */
-	:global(
-		.user-signal-tree
-		.item-node-wrapper:not([data-signal-initialized='true'])
-		> div.pl-12
-	) {
-		display: none;
-	}
+	/* (Auto-collapse flash guard removed — signal nodes now arrive
+	   collapsed at construction via the `initialExpanded` predicate
+	   passed to PropagationTree, so the children container is never
+	   in the DOM until the user explicitly expands.) */
 
 	/* Text column — promote to a flex COLUMN and use `order` to
 	   place rows as: name → artist → pill. The pill lives inside

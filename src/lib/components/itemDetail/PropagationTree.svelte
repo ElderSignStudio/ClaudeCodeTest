@@ -29,11 +29,20 @@
 		hasPlayed = true,
 		revealNonce = 0,
 		onAmplify = undefined,
+		initialExpanded = undefined,
 	}: {
 		forest: PropagationForest;
 		selectedUserId: string | null;
 		onSelect: (user: PropagationUser) => void;
 		onPreview: (target: PreviewTarget | null) => void;
+		/** Optional predicate seeded into each PropagationNode's
+		 *  `expanded` state at construction. Returns true for nodes
+		 *  that should start expanded, false for nodes that should
+		 *  start collapsed. Threaded through PropagationNode → Self
+		 *  so the rule applies at every depth. Default `undefined`
+		 *  keeps every node expanded — unchanged for callers (Item
+		 *  Detail) that don't opt in. */
+		initialExpanded?: ((user: PropagationUser) => boolean) | undefined;
 		/** When the user clicks their OWN real node, the +page derives the
 		 *  ORIGIN → … → USER ancestor chain and passes it here. Every node
 		 *  in the set stays at full opacity; everything else dims via
@@ -489,6 +498,7 @@
 				{lineageOrderedIds}
 				depth={0}
 				{onAmplify}
+				{initialExpanded}
 			/>
 		{/each}
 	</div>
@@ -514,6 +524,7 @@
 						{onPreview}
 						depth={0}
 						{onAmplify}
+						{initialExpanded}
 					/>
 				{/each}
 			</div>

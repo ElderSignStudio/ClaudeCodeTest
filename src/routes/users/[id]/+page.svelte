@@ -74,10 +74,12 @@
 		emergingExpanded ? user.emergingSignals : user.emergingSignals.slice(0, 3),
 	);
 
-	/** Cap on signal roots rendered in the tree. Default 3, grows by
-	 *  +3 per "Show more signals" click, resets to 3 with "Show fewer
-	 *  signals" once the full set is visible. */
-	let visibleSignalCount = $state(3);
+	/** Cap on signal roots rendered in the tree. Default 5 (every
+	 *  signal arrives collapsed from the first paint, so 5 fits
+	 *  comfortably). Grows by +3 per "Show more signals" click,
+	 *  resets to 5 with "Show fewer signals" once the full set is
+	 *  visible. */
+	let visibleSignalCount = $state(5);
 	const totalSignals = $derived(signalTree?.root.children.length ?? 0);
 
 	/* Tick counters for bulk expand / collapse — UserSignalTree
@@ -91,7 +93,7 @@
 		if (visibleSignalCount < totalSignals) {
 			visibleSignalCount = Math.min(visibleSignalCount + 3, totalSignals);
 		} else {
-			visibleSignalCount = 3;
+			visibleSignalCount = 5;
 		}
 	}
 	function expandVisibleSignals() { expandCommand += 1; }
@@ -115,7 +117,7 @@
 		hoveredNodeId = null;
 		signatureExpanded = false;
 		emergingExpanded = false;
-		visibleSignalCount = 3;
+		visibleSignalCount = 5;
 	});
 
 	/* Follow toggle — local $state only; the spec is explicit that
@@ -722,10 +724,12 @@
 						/>
 
 						<!-- "Show more / Show fewer signals" — only renders
-						     once the tree has more roots than the initial 3.
-						     Same editorial italic styling as Signature /
-						     Emerging show-more controls. -->
-						{#if totalSignals > 3}
+						     once the tree has more roots than the initial 5.
+						     For users whose total ≤ 5 (Dan's current mock),
+						     no control surfaces because everything is
+						     already visible. Same editorial italic styling
+						     as Signature / Emerging show-more controls. -->
+						{#if totalSignals > 5}
 							<div class="mt-1 flex justify-center">
 								<button
 									type="button"
@@ -744,15 +748,46 @@
 						{/if}
 					</div>
 					<aside class="lg:sticky lg:top-6 lg:self-start">
+						<!-- LAYOUT-STABLE INSPECTOR SHELL.
+
+						     The inspector content varies in height between
+						     its four editorial states (Scout Summary is the
+						     tallest at ~780 px; Origin Scout is the
+						     shortest at ~510 px). Hover preview changes
+						     state on every node enter — without a fixed
+						     shell the right column would resize on every
+						     hover, with three knock-on problems:
+
+						       (a) the grid row tracks the content height,
+						           so the *page* re-flows;
+						       (b) the cursor's relative position to the
+						           hovered node can shift mid-hover,
+						           triggering mouseleave → mouseenter on
+						           an adjacent node — an audible flicker
+						           loop;
+						       (c) the tree itself appears to jump.
+
+						     Fix: pin the shell to a fixed height at lg+
+						     (`min(800, viewport - 4rem)` — 800 covers the
+						     measured tallest state with a small buffer,
+						     clamped to viewport so it never exceeds the
+						     sticky window). Internal `overflow-y: auto`
+						     handles the rare case where the viewport is
+						     smaller than the content. Below lg the shell
+						     reverts to natural flow (no height pin) since
+						     the inspector stacks beneath the tree and
+						     there's nothing to push around. -->
 						<div
-							class="rounded-xl border border-white/10 bg-base-200/55 p-5 lg:p-6"
+							class="rounded-xl border border-white/10 bg-base-200/55 user-tree-inspector-shell"
 							style="box-shadow: 0 0 0 1px rgba(255,255,255,0.05), 0 6px 22px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.035);"
 						>
-							<UserTreeInspector
-								user={user}
-								tree={signalTree}
-								selectedNodeId={effectiveNodeId}
-							/>
+							<div class="p-5 lg:p-6">
+								<UserTreeInspector
+									user={user}
+									tree={signalTree}
+									selectedNodeId={effectiveNodeId}
+								/>
+							</div>
 						</div>
 					</aside>
 				</div>
@@ -782,6 +817,18 @@
 	@media (max-width: 1023px) {
 		.user-detail .grid[style*="1.55fr"] {
 			grid-template-columns: minmax(0, 1fr) !important;
+		}
+	}
+
+	/* See the comment on `.user-tree-inspector-shell` in the
+	   Signal Tree section. The shell is pinned to a fixed height
+	   only at lg+ — below that the inspector flows naturally
+	   under the tree and a height cap would force unnecessary
+	   internal scrolling. */
+	@media (min-width: 1024px) {
+		.user-detail .user-tree-inspector-shell {
+			height: min(800px, calc(100vh - 4rem));
+			overflow-y: auto;
 		}
 	}
 </style>
