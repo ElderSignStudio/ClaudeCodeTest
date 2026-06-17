@@ -574,9 +574,9 @@ function makeNode(
 
 /* Pick a downstream-kind distribution for children of a given parent.
    Mostly passive/deep, with occasional amps and rare successful amps. */
-function pickDownstreamKind(rand: () => number, allowSuccess = false): PropagationNodeKind {
+function pickDownstreamKind(rand: () => number, allowSuccessfulAmplifier = false): PropagationNodeKind {
 	const r = rand();
-	if (allowSuccess && r < 0.04) return 'successful-amplifier';
+	if (allowSuccessfulAmplifier && r < 0.04) return 'successful-amplifier';
 	if (r < 0.18) return 'amplifier';
 	if (r < 0.50) return 'deep-listener';
 	return 'passive-listener';
@@ -613,12 +613,12 @@ function buildChain(
 function buildCluster(
 	ctx: BuilderCtx,
 	count: number,
-	options: { withGrandchildren?: boolean; allowSuccess?: boolean } = {},
+	options: { withGrandchildren?: boolean; allowSuccessfulAmplifier?: boolean } = {},
 ): PropagationUser[] {
-	const { withGrandchildren = true, allowSuccess = false } = options;
+	const { withGrandchildren = true, allowSuccessfulAmplifier = false } = options;
 	const out: PropagationUser[] = [];
 	for (let i = 0; i < count; i++) {
-		const kind = pickDownstreamKind(ctx.rand, allowSuccess && i === 0);
+		const kind = pickDownstreamKind(ctx.rand, allowSuccessfulAmplifier && i === 0);
 		const grandkids: PropagationUser[] = [];
 		if (withGrandchildren && (kind === 'amplifier' || kind === 'successful-amplifier')) {
 			const gcCount = kind === 'successful-amplifier'
@@ -759,7 +759,7 @@ function buildDeepChain(ctx: BuilderCtx): ArchetypeResult {
 
 /* 5. Bursty — origin → one successful amplifier → dense sibling cluster. */
 function buildBursty(ctx: BuilderCtx): ArchetypeResult {
-	const cluster = buildCluster(ctx, randInt(ctx.rand, 4, 6), { allowSuccess: true });
+	const cluster = buildCluster(ctx, randInt(ctx.rand, 4, 6), { allowSuccessfulAmplifier: true });
 	const sub = makeNode(ctx, 'successful-amplifier', {
 		children: cluster,
 		hiddenChildren: randInt(ctx.rand, 2, 5),

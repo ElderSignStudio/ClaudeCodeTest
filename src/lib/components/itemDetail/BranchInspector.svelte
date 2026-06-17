@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { PropagationForest, PreviewTarget, SignalRole, BranchActivityState } from '$lib/mock/propagation';
+	import type { PropagationForest, PropagationUser, PreviewTarget, SignalRole, BranchActivityState } from '$lib/mock/propagation';
 	import { findParentInForest, computeBranchActivity } from '$lib/mock/propagation';
 
 	/* Branch-state colour for the "Branch momentum" line on the entry-
@@ -96,9 +96,17 @@
 	let {
 		forest,
 		target,
+		lineageOrderedIds = null,
 	}: {
 		forest: PropagationForest;
 		target: PreviewTarget | null;
+		/** Ordered ORIGIN → … → USER chain from the page when a
+		 *  lineage reveal is active (i.e., the user has clicked
+		 *  their own real node). When non-null AND the currently
+		 *  active target is one of the scouts in this chain, the
+		 *  inspector switches to "Lineage context" mode and
+		 *  emphasises ancestry instead of branch metrics. */
+		lineageOrderedIds?: string[] | null;
 	} = $props();
 
 	const isAnonymousStub = $derived(
@@ -112,6 +120,217 @@
 			? findParentInForest(forest, target.user.id)
 			: null,
 	);
+
+	/* Largest branchSize anywhere in the visible forest — drives the
+	   "Created the largest branch" bullet in WHY THIS MATTERS. Walks
+	   both visible roots and hidden roots so a quiet origin that
+	   happens to hold the max isn't overlooked. */
+	const maxBranchInForest = $derived.by(() => {
+		let max = 0;
+		function walk(u: PropagationUser) {
+			if (u.branchSize > max) max = u.branchSize;
+			for (const c of u.children) walk(c);
+		}
+		for (const r of forest.roots) walk(r);
+		for (const r of forest.hiddenRootUsers) walk(r);
+		return max;
+	});
+
+	/* WHY THIS MATTERS — editorial explanation of the selected
+	   scout's contribution, structured as ONE headline statement
+	   plus up to THREE supporting bullets so the section reads as
+	   "explanation, then evidence" rather than a flat metric dump.
+
+	   Headline rules:
+	     • A qualitative scale statement when the branch is notable
+	       (largest in forest / one of the largest / a large
+	       downstream branch). The headline conveys SIGNIFICANCE;
+	       the count appears below as supporting evidence.
+	     • Falls back to a strong-timing statement
+	       ("Helped establish the signal early") when scale doesn't
+	       qualify but the scout was very early (≥90 %).
+	     • Otherwise null — the section still renders if at least
+	       two supporting bullets qualify, but no headline.
+
+	   Supporting bullets — emitted in narrative order:
+	     1. Timing — "Amplified earlier than X% of amplifiers"
+	     2. Activity — "Produced X successful forward shares"
+	     3. Scale evidence — "Generated X downstream scouts"
+	     4. Structural — "Connected listening circles" / "Bridged…"
+	   Capped at 3 so the section stays concise.
+
+	   No formulas, percentile breakpoints, or category names
+	   surface in the rendered copy. Section hides entirely when
+	   the scout has no headline AND fewer than two supporting
+	   bullets (passive listeners, anonymous stubs, fresh childless
+	   origins, etc.). */
+	const whyThisMatters = $derived.by((): { headline: string | null; supporting: string[] } => {
+		if (
+			!target
+			|| target.kind !== 'user'
+			|| target.user.isPreviewNode
+			|| isAnonymousStub
+		) return { headline: null, supporting: [] };
+		const u = target.user;
+		const isAmplifierRole = u.signalRole === 'Amplifier' || u.signalRole === 'Successful Amplifier';
+
+		// ── HEADLINE — the strongest qualitative significance line.
+		let headline: string | null = null;
+		if (u.branchSize > 0) {
+			if (u.branchSize === maxBranchInForest && u.branchSize >= 10) {
+				headline = 'Created the largest branch in this signal';
+			} else if (u.branchSize >= Math.max(20, Math.floor(maxBranchInForest * 0.6))) {
+				headline = 'Created one of the largest branches';
+			} else if (u.branchSize >= 25) {
+				headline = 'Created a large downstream branch';
+			}
+		}
+		if (
+			!headline
+			&& isAmplifierRole
+			&& typeof u.earlierThanPercent === 'number'
+			&& u.earlierThanPercent >= 90
+		) {
+			headline = 'Helped establish the signal early';
+		}
+
+		// ── SUPPORTING — in narrative order: timing → activity → scale evidence → structural.
+		const supporting: string[] = [];
+
+		if (
+			isAmplifierRole
+			&& typeof u.earlierThanPercent === 'number'
+			&& u.earlierThanPercent >= 65
+		) {
+			const role: SignalRole = u.signalRole as SignalRole;
+			supporting.push(`Amplified earlier than ${u.earlierThanPercent}% of ${ROLE_PLURAL[role]}`);
+		}
+
+		if (
+			typeof u.forwardAmplifications === 'number'
+			&& u.forwardAmplifications > 0
+			&& u.branchSize > 0
+		) {
+			supporting.push(`Produced ${u.forwardAmplifications} successful forward ${u.forwardAmplifications === 1 ? 'share' : 'shares'}`);
+		}
+
+		if (u.branchSize > 0) {
+			supporting.push(`Generated ${u.branchSize} downstream ${u.branchSize === 1 ? 'scout' : 'scouts'}`);
+		}
+
+		if (supporting.length < 3 && u.scenes && u.scenes.length >= 2) {
+			supporting.push(u.scenes.length >= 3
+				? 'Bridged separate listening circles'
+				: 'Connected listening circles');
+		}
+
+		return { headline, supporting: supporting.slice(0, 3) };
+	});
+
+	/* Used by the template to decide whether the section renders.
+	   A headline alone is enough (it's a complete statement); two
+	   or more supporting bullets are enough on their own. A single
+	   supporting bullet with no headline reads as a thin list and
+	   is suppressed. */
+	const whyHasContent = $derived(
+		whyThisMatters.headline !== null || whyThisMatters.supporting.length >= 2,
+	);
+
+	/* ── Lineage Context mode ──────────────────────────────────
+	   When the page has a lineage reveal active (lineageOrderedIds
+	   is non-null) AND the currently-active target is one of the
+	   scouts on that chain, the inspector switches into a dedicated
+	   ancestry-focused presentation: SIGNAL PATH + narrative +
+	   supporting lineage facts, and the branch-analysis sections
+	   (Why This Matters, role/journey/scenes/novelty, metrics)
+	   step aside.
+
+	   Triggers cleanly for any lineage member the user lands on
+	   (Dan selected → all his ancestors highlighted in the tree;
+	   hovering Gisli or any ancestor shows lineage context for
+	   that scout). When the user clicks OUT of the lineage path,
+	   selectedTarget changes, lineageOrderedIds re-derives to
+	   null on the page side, and the inspector returns to Branch
+	   Context naturally. */
+	const isLineageContext = $derived(
+		lineageOrderedIds !== null
+			&& lineageOrderedIds.length >= 2
+			&& target !== null
+			&& target.kind === 'user'
+			&& !target.user.isPreviewNode
+			&& lineageOrderedIds.includes(target.user.id),
+	);
+
+	/* Resolved PropagationUser objects for every step on the chain,
+	   ORIGIN → … → USER. Used to render the path with names instead
+	   of bare ids, and to look up the origin's name for supporting
+	   copy. Walks the forest once per change. */
+	const lineageScouts = $derived.by((): PropagationUser[] => {
+		if (!isLineageContext || !lineageOrderedIds) return [];
+		const out: PropagationUser[] = [];
+		function findIn(u: PropagationUser, id: string): PropagationUser | null {
+			if (u.id === id) return u;
+			for (const c of u.children) {
+				const hit = findIn(c, id);
+				if (hit) return hit;
+			}
+			return null;
+		}
+		for (const id of lineageOrderedIds) {
+			let found: PropagationUser | null = null;
+			for (const r of forest.roots) {
+				found = findIn(r, id);
+				if (found) break;
+			}
+			if (found) out.push(found);
+		}
+		return out;
+	});
+
+	const lineageDepth = $derived(
+		isLineageContext && lineageOrderedIds && target?.kind === 'user'
+			? lineageOrderedIds.indexOf(target.user.id)
+			: -1,
+	);
+
+	const lineageOrigin = $derived<PropagationUser | null>(lineageScouts[0] ?? null);
+
+	/* Depth-bucketed label shown in the "Position" supporting fact
+	   of the lineage card. Editorial — no formulas or numeric
+	   percentiles surface. "Origin scout" / "Your signal" /
+	   "Early amplifier" / "Mid-chain amplifier" / "Deep lineage
+	   node". */
+	const lineageDepthLabel = $derived.by((): string | null => {
+		if (!isLineageContext || !target || target.kind !== 'user') return null;
+		const u = target.user;
+		if (u.isOrigin) return 'Origin scout';
+		if (u.isCurrentUser) return 'Your signal';
+		if (lineageDepth <= 2) return 'Early amplifier';
+		if (lineageDepth <= 4) return 'Mid-chain amplifier';
+		return 'Deep lineage node';
+	});
+
+	/* One-sentence editorial narrative, varied so different lineage
+	   selections don't all read identically. The wording targets
+	   "how did the signal get here" rather than precise stats. */
+	const lineageNarrative = $derived.by((): string => {
+		if (!isLineageContext || !target || target.kind !== 'user' || !lineageOrderedIds) return '';
+		const u = target.user;
+		const depth = lineageDepth;
+		const totalGens = lineageOrderedIds.length - 1;
+		if (u.isCurrentUser && lineageOrigin) {
+			return `You entered this signal through ${lineageOrigin.name}'s branch.`;
+		}
+		if (u.isOrigin) {
+			const word = totalGens === 1 ? 'generation' : 'generations';
+			return `Brought this signal in from outside. The lineage runs ${totalGens} ${word} down to you.`;
+		}
+		if (depth >= 5) {
+			return 'Sits deep inside a long-running propagation chain.';
+		}
+		const word = depth === 1 ? 'generation' : 'generations';
+		return `${depth} ${word} from origin — the signal moved through several amplifiers to reach this point.`;
+	});
 </script>
 
 <aside class="flex flex-col gap-5">
@@ -127,6 +346,9 @@
 		{:else if target.user.isPreviewNode}
 			<span class="w-0.5 h-3.5 rounded-full bg-primary/55" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Your entry point</p>
+		{:else if isLineageContext}
+			<span class="w-0.5 h-3.5 rounded-full bg-primary/65" aria-hidden="true"></span>
+			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Lineage context</p>
 		{:else}
 			<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">Branch context</p>
@@ -401,13 +623,25 @@
 	{:else}
 		<!-- ─────────────────────── USER STATE ─────────────────────── -->
 
-		<!-- Identity row -->
+		<!-- Identity row. Scout name links to their detail page —
+		     unknown ids fall through to a synthesised "scout in
+		     progress" profile so the link never dead-ends.
+		     Anonymous +N-more stubs (empty avatar) skip the link
+		     since they don't represent a real identity. -->
 		<div class="flex items-center gap-3">
 			<div class={['w-11 h-11 rounded-full overflow-hidden border', target.user.isOrigin ? 'border-accent/55' : 'border-accent/35']}>
 				<img src={target.user.avatar} alt="" class="w-full h-full object-cover" />
 			</div>
 			<div class="min-w-0">
-				<p class="text-[15px] font-bold text-base-content/95 truncate">{target.user.name}</p>
+				{#if isAnonymousStub}
+					<p class="text-[15px] font-bold text-base-content/95 truncate">{target.user.name}</p>
+				{:else}
+					<a
+						href="/users/{target.user.id}"
+						class="text-[15px] font-bold text-base-content/95 hover:text-accent transition-colors truncate inline-block max-w-full"
+						title="View {target.user.name}'s scout profile"
+					>{target.user.name}</a>
+				{/if}
 				<p class="text-[12px] text-accent/72 truncate">{target.user.character}</p>
 			</div>
 		</div>
@@ -434,7 +668,11 @@
 			-->
 			<p class="text-[12px] -mt-3 leading-snug">
 				<span class="text-base-content/55">Discovered through</span>
-				<span class="text-accent/92 font-semibold">{parentOfTarget.name}</span>
+				<a
+					href="/users/{parentOfTarget.id}"
+					class="text-accent/92 hover:text-accent font-semibold transition-colors"
+					title="View {parentOfTarget.name}'s scout profile"
+				>{parentOfTarget.name}</a>
 			</p>
 		{/if}
 
@@ -445,38 +683,79 @@
 			</p>
 		{/if}
 
-		<!--
-			SIGNAL PATH — only on the current user's own real node. Walks
-			up via findParentInForest and reverses to produce ORIGIN → … →
-			USER, mirroring the visual lineage reveal in the tree. Compact
-			text confirmation of the route the signal actually took.
-		-->
-		{#if target.user.isCurrentUser && !target.user.isPreviewNode}
-			{@const lineage = (() => {
-				const out = [];
-				let cur: typeof target.user | null = target.user;
-				while (cur) {
-					out.push(cur);
-					cur = findParentInForest(forest, cur.id);
-				}
-				return out.reverse();
-			})()}
-			{#if lineage.length > 1}
-				<section class="pt-4 border-t border-white/6">
+		{#if isLineageContext}
+			<!--
+				LINEAGE CONTEXT mode — replaces the branch-analysis
+				sections below (role / journey / scenes / novelty / why
+				this matters / metrics) with an ancestry-focused
+				presentation:
+
+				  • SIGNAL PATH — the full ORIGIN → … → USER chain,
+				    rendered with subdued arrows. The currently
+				    inspected scout is highlighted in the panel's
+				    accent / semibold so it reads "this scout is here
+				    in the route" without becoming a breadcrumb
+				    navigation component.
+				  • Narrative — one editorial sentence answering
+				    "how did the signal get here?".
+				  • Supporting lineage facts — Depth from origin,
+				    Origin, Branch, Position. These remain secondary
+				    to the path + narrative above.
+
+				The block triggers any time the inspector's active
+				target is a member of the revealed lineage, so hovering
+				ancestor scouts during a path-to-origin reveal also
+				shows lineage context for them.
+			-->
+			<section class="pt-4 border-t border-white/6 flex flex-col gap-3">
+				<div>
 					<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-1.5">Signal path</p>
-					<p class="text-[12.5px] leading-relaxed text-base-content/78 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-						{#each lineage as step, i (step.id)}
+					<p class="text-[12.5px] leading-relaxed flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
+						{#each lineageScouts as step, i (step.id)}
 							{#if i > 0}
 								<span class="text-base-content/35" aria-hidden="true">→</span>
 							{/if}
-							<span class={i === lineage.length - 1 ? 'text-primary/92 font-semibold' : 'text-base-content/82'}>
+							<span class={step.id === target.user.id
+								? 'text-accent/92 font-semibold'
+								: 'text-base-content/68'}>
 								{step.name}
 							</span>
 						{/each}
 					</p>
-				</section>
-			{/if}
-		{/if}
+				</div>
+
+				{#if lineageNarrative}
+					<p class="text-[13px] leading-relaxed text-base-content/78">
+						{lineageNarrative}
+					</p>
+				{/if}
+
+				<dl class="grid grid-cols-2 gap-x-4 gap-y-3 mt-1">
+					<div>
+						<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Depth from origin</dt>
+						<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">
+							{lineageDepth} {lineageDepth === 1 ? 'generation' : 'generations'}
+						</dd>
+					</div>
+					{#if lineageOrigin}
+						<div>
+							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Origin</dt>
+							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineageOrigin.name}</dd>
+						</div>
+						<div>
+							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Branch</dt>
+							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineageOrigin.name}'s branch</dd>
+						</div>
+					{/if}
+					{#if lineageDepthLabel}
+						<div>
+							<dt class="text-[10px] uppercase tracking-widest text-base-content/45">Position</dt>
+							<dd class="mt-1 text-[13px] text-base-content/82 leading-snug">{lineageDepthLabel}</dd>
+						</div>
+					{/if}
+				</dl>
+			</section>
+		{:else}
 
 		<!--
 			ROLE IN SIGNAL — primary explanation of this scout's relationship
@@ -490,8 +769,8 @@
 		{#if target.user.signalRole}
 			{@const role = target.user.signalRole}
 			{@const isCu = !!target.user.isCurrentUser}
-			{@const ampedDays = target.user.amplifiedAt}
-			{@const joinedDays = target.user.firstSignalEventAt}
+			{@const amplifiedAfterDays = target.user.amplifiedAt}
+			{@const joinedAfterDays = target.user.firstSignalEventAt}
 			{@const pct = target.user.earlierThanPercent}
 			{@const reach = target.user.branchSize}
 			<section class="pt-4 border-t border-white/6">
@@ -505,20 +784,20 @@
 					{#if isCu}
 						<!-- Current-user copy — second person, omits the
 						     descriptive sentence (it's implied by "You"). -->
-						{#if ampedDays !== undefined}
-							<p>You amplified {ampedDays} {ampedDays === 1 ? 'day' : 'days'} after origin.</p>
-						{:else if joinedDays !== undefined}
-							<p>You joined {joinedDays} {joinedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{#if amplifiedAfterDays !== undefined}
+							<p>You amplified {amplifiedAfterDays} {amplifiedAfterDays === 1 ? 'day' : 'days'} after origin.</p>
+						{:else if joinedAfterDays !== undefined}
+							<p>You joined {joinedAfterDays} {joinedAfterDays === 1 ? 'day' : 'days'} after origin.</p>
 						{/if}
 						{#if pct !== undefined}
 							<p>Earlier than {pct}% of {ROLE_PLURAL[role]}.</p>
 						{/if}
 					{:else}
 						<p>{ROLE_DESCRIPTION[role]}</p>
-						{#if ampedDays !== undefined}
-							<p>Amplified {ampedDays} {ampedDays === 1 ? 'day' : 'days'} after origin.</p>
-						{:else if joinedDays !== undefined}
-							<p>{role === 'Passive Listener' ? 'Discovered' : 'Joined'} {joinedDays} {joinedDays === 1 ? 'day' : 'days'} after origin.</p>
+						{#if amplifiedAfterDays !== undefined}
+							<p>Amplified {amplifiedAfterDays} {amplifiedAfterDays === 1 ? 'day' : 'days'} after origin.</p>
+						{:else if joinedAfterDays !== undefined}
+							<p>{role === 'Passive Listener' ? 'Discovered' : 'Joined'} {joinedAfterDays} {joinedAfterDays === 1 ? 'day' : 'days'} after origin.</p>
 						{/if}
 						{#if pct !== undefined}
 							<p>Earlier than {pct}% of {ROLE_PLURAL[role]}.</p>
@@ -588,6 +867,62 @@
 		{/if}
 
 		<!--
+			WHY THIS MATTERS — editorial layer explaining the selected
+			scout's contribution in human terms BEFORE the raw metrics
+			below. Structured as ONE headline statement (the
+			qualitative significance) plus up to three supporting
+			bullets (the evidence). Selection logic lives in the
+			`whyThisMatters` derived; visibility is gated by
+			`whyHasContent`.
+
+			Visual hierarchy:
+			  • Headline gets `font-medium` + brighter alpha + a
+			    larger line — slightly more weight than the bullets,
+			    NOT a badge, NOT dramatically larger.
+			  • Supporting bullets follow the same dot-style as
+			    before, dimmed one alpha-step so the headline reads
+			    as the primary line.
+
+			Same `pt-4 border-t border-white/6` motif as the metrics
+			block below it so the two read as paired sections in the
+			inspector's lower half.
+		-->
+		{#if whyHasContent}
+			<section class="pt-4 border-t border-white/6">
+				<p class="text-[10px] uppercase tracking-widest text-base-content/45 mb-2.5">Why this matters</p>
+				{#if whyThisMatters.headline}
+					<!-- Headline — true headline treatment: a touch
+					     larger than body copy, semibold, in the warm
+					     "contribution" amber that already marks the
+					     Successful Amplifier role title (oklch hue 60,
+					     not the cyan brand accent). That distinguishes
+					     the answer from links / accent decoration
+					     elsewhere in the panel and gives it an
+					     editorial, "this is the thing" feel.
+					     `leading-tight` keeps the line set crisp; the
+					     bullets below carry their own line-height. No
+					     badge, no icon, no background, no underline. -->
+					<p class={[
+						'text-[15.5px] leading-tight font-semibold text-[oklch(0.86_0.12_60)]/94',
+						whyThisMatters.supporting.length > 0 && 'mb-3',
+					]}>
+						{whyThisMatters.headline}
+					</p>
+				{/if}
+				{#if whyThisMatters.supporting.length > 0}
+					<ul class="space-y-1.5">
+						{#each whyThisMatters.supporting as reason (reason)}
+							<li class="text-[12.5px] leading-relaxed text-base-content/78 flex items-start gap-2">
+								<span class="shrink-0 mt-1.75 w-1 h-1 rounded-full bg-accent/55" aria-hidden="true"></span>
+								<span>{reason}</span>
+							</li>
+						{/each}
+					</ul>
+				{/if}
+			</section>
+		{/if}
+
+		<!--
 			Metrics block — reach + amplifications + depth + biggest
 			subcascade + discovery score + joined-the-lineage. 2-column grid
 			keeps it scannable instead of becoming an analytics table. The
@@ -634,6 +969,7 @@
 				</div>
 			</dl>
 		</section>
+		{/if}<!-- /isLineageContext else -->
 
 	{/if}
 </aside>
