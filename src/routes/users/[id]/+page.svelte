@@ -5,6 +5,11 @@
 	import type { PreviewTarget } from '$lib/mock/propagation';
 	import UserSignalTree from '$lib/components/userDetail/UserSignalTree.svelte';
 	import UserTreeInspector from '$lib/components/userDetail/UserTreeInspector.svelte';
+	import {
+		overallPercentile,
+		formatTopPercentile,
+		growthOpportunities,
+	} from '$lib/analysis/scoutAnalysis';
 
 	/*
 		User Detail page.
@@ -33,6 +38,20 @@
 	let { data } = $props();
 	const user = $derived(data.user);
 	const signalTree = $derived(getUserSignalTree(user.id));
+
+	/* Distribution-aware profile interpretation.
+
+	   `overallPercentile` drives the "Top X%" line under the
+	   Discovery Score in the Quality cluster. `growthOpportunities`
+	   surfaces up to three distribution-aware recommendations,
+	   shown only on the current user's own profile (see
+	   isCurrentUser gate on the section below). Both are pure
+	   functions of `UserDetail` — no DOM, no Svelte coupling — so
+	   the same module can power future Why-Follow / Trust Signals /
+	   Scout-Comparison surfaces. */
+	const userPercentile = $derived(overallPercentile(user));
+	const userPercentileLabel = $derived(formatTopPercentile(userPercentile));
+	const userGrowthOpportunities = $derived(growthOpportunities(user, 3));
 
 	/* Right-side inspector selection — two-tier state matching the
 	   Item Detail tree's interaction model:
@@ -66,6 +85,12 @@
 	let signatureExpanded = $state(false);
 	/** Show-more toggle for Emerging Signals (default 3 visible). */
 	let emergingExpanded = $state(false);
+	/** Show-more toggle for Growth Opportunities (default 2 visible). */
+	let growthExpanded = $state(false);
+
+	const visibleGrowthOpportunities = $derived(
+		growthExpanded ? userGrowthOpportunities : userGrowthOpportunities.slice(0, 2),
+	);
 
 	const visibleSignatureSignals = $derived(
 		signatureExpanded ? user.signatureSignals : user.signatureSignals.slice(0, 3),
@@ -131,6 +156,7 @@
 		hoveredNodeId = null;
 		signatureExpanded = false;
 		emergingExpanded = false;
+		growthExpanded = false;
 		visibleSignalCount = SIGNAL_PAGE_SIZE;
 	});
 
@@ -283,7 +309,7 @@
 		     line between clusters at md+; at sm the clusters stack
 		     into rows and the dividers disappear naturally. -->
 		<div class="grid gap-6 md:gap-0 md:grid-cols-3 md:divide-x md:divide-white/6">
-			<!-- ── QUALITY: Discovery Score (headline) + Hit Rate ── -->
+			<!-- ── QUALITY: Discovery Score (headline) + Percentile + Hit Rate ── -->
 			<div class="md:pr-6 flex flex-col gap-4">
 				<p class="text-[10px] uppercase tracking-widest text-base-content/45">Quality</p>
 				<div class="flex items-baseline gap-3 -mt-1">
@@ -294,6 +320,18 @@
 						<span class="text-[11px] uppercase tracking-widest text-base-content/55">Discovery score</span>
 						<span class="text-[11px] text-base-content/45 italic">editorial 0–100</span>
 					</div>
+				</div>
+				<!-- Distribution-aware percentile. Same hierarchy as the
+				     hit-rate row below — secondary, informational, not
+				     a badge. Tabular alpha (/82) is one step brighter
+				     than the explanatory subtitle (/58) so the rank
+				     reads as data rather than microcopy. The value
+				     comes from `overallPercentile()` interpolated
+				     against the population anchors in
+				     `scoutAnalysis.ts`. -->
+				<div class="flex items-baseline gap-2">
+					<p class="text-[13px] font-medium tabular-nums text-base-content/82">{userPercentileLabel}</p>
+					<p class="text-[11.5px] text-base-content/58">of all scouts</p>
 				</div>
 				<div class="flex items-baseline gap-2">
 					<p class="text-[18px] font-semibold tabular-nums text-base-content/92">{formatPercent(user.hitRate)}</p>
@@ -403,6 +441,71 @@
 			<p class="text-[12.5px] italic text-base-content/45">No scene data tracked yet.</p>
 		{/if}
 	</section>
+
+	<!-- ═══════════════════════════════════════════════════════════
+	     3B. GROWTH OPPORTUNITIES (current user only)
+	     Compact coaching surface, not a written evaluation.
+	     Default: 2 highest-priority opportunities. A small italic
+	     text-link reveals the third on demand and snaps back to 2
+	     when re-clicked. Each opportunity = title (slightly
+	     brighter) + one-sentence diagnosis (body) + one focus line
+	     (dimmer, italic). No bullets, no badges, no colour. The
+	     underlying analysis engine in `scoutAnalysis.ts` (percentile
+	     model, weakest-metric detection, distribution awareness) is
+	     unchanged — only the presentation is denser.
+	     ═══════════════════════════════════════════════════════════ -->
+	{#if user.isCurrentUser && userGrowthOpportunities.length > 0}
+		<section
+			class="rounded-xl border border-white/6 bg-base-200/35 px-5 py-3.5 lg:px-6"
+			style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
+		>
+			<div class="flex items-center gap-2">
+				<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
+				<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
+					Growth opportunities
+				</p>
+			</div>
+
+			<!-- Three-line coaching card per opportunity (title /
+			     diagnosis / focus). Aggressive line-height
+			     (`leading-tight`) + minimal vertical gaps keep the
+			     section close to the "one signature-signal card +
+			     heading" vertical budget. No section subtitle —
+			     the eyebrow plus the opportunity titles carry the
+			     framing without an explanatory sentence. -->
+			<ul class="flex flex-col divide-y divide-white/6 -mx-1 mt-1.5">
+				{#each visibleGrowthOpportunities as opp (opp.metric)}
+					<li class="px-1 py-1.5">
+						<p class="text-[13px] font-semibold leading-tight text-base-content/95">
+							{opp.title}
+						</p>
+						<p class="text-[12px] leading-tight text-base-content/80 mt-0.5">
+							{opp.diagnosis}
+						</p>
+						<p class="text-[11.5px] leading-tight italic text-base-content/65 mt-0.5">
+							{opp.focus}
+						</p>
+					</li>
+				{/each}
+			</ul>
+
+			<!-- Show-more / Show fewer — only renders when a third
+			     opportunity exists. Same italic editorial styling as
+			     the Signature / Emerging / Signal Tree show-more
+			     links so it reads as a reader action, not a button. -->
+			{#if userGrowthOpportunities.length > 2}
+				<div class="mt-1.5 flex justify-center">
+					<button
+						type="button"
+						onclick={() => (growthExpanded = !growthExpanded)}
+						class="text-[11.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
+					>
+						{growthExpanded ? 'Show fewer' : 'Show one more opportunity'}
+					</button>
+				</div>
+			{/if}
+		</section>
+	{/if}
 
 	<!-- ═══════════════════════════════════════════════════════════
 	     4. SIGNATURE SIGNALS
