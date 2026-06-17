@@ -74,12 +74,18 @@
 		emergingExpanded ? user.emergingSignals : user.emergingSignals.slice(0, 3),
 	);
 
+	/** Default visible-signal slice + the step size for "Show N more".
+	 *  Both surface in the UI as `Show 5 more` and the "Showing N of
+	 *  M" counter. Keeping these as named constants makes the QA
+	 *  contract self-documenting. */
+	const SIGNAL_PAGE_SIZE = 5;
+
 	/** Cap on signal roots rendered in the tree. Default 5 (every
-	 *  signal arrives collapsed from the first paint, so 5 fits
-	 *  comfortably). Grows by +3 per "Show more signals" click,
-	 *  resets to 5 with "Show fewer signals" once the full set is
+	 *  signal arrives collapsed, so 5 fits comfortably). Grows by
+	 *  +5 per "Show 5 more" click, jumps to total via "Show all",
+	 *  and snaps back to 5 with "Show fewer" once the full set is
 	 *  visible. */
-	let visibleSignalCount = $state(5);
+	let visibleSignalCount = $state(SIGNAL_PAGE_SIZE);
 	const totalSignals = $derived(signalTree?.root.children.length ?? 0);
 
 	/* Tick counters for bulk expand / collapse — UserSignalTree
@@ -89,12 +95,20 @@
 	let expandCommand = $state(0);
 	let collapseCommand = $state(0);
 
-	function toggleVisibleSignals() {
-		if (visibleSignalCount < totalSignals) {
-			visibleSignalCount = Math.min(visibleSignalCount + 3, totalSignals);
-		} else {
-			visibleSignalCount = 5;
-		}
+	/** Reveal the next page-size slice of signals, clamped at the
+	 *  total. Newly mounted signals inherit PropagationNode's seeded
+	 *  collapsed state via `initialExpanded` — they NEVER inherit the
+	 *  user's current expand-visible expansion state. */
+	function showMoreSignals() {
+		visibleSignalCount = Math.min(visibleSignalCount + SIGNAL_PAGE_SIZE, totalSignals);
+	}
+	/** Reveal every remaining signal at once. */
+	function showAllSignals() {
+		visibleSignalCount = totalSignals;
+	}
+	/** Collapse the visibility list back to the default slice. */
+	function showFewerSignals() {
+		visibleSignalCount = SIGNAL_PAGE_SIZE;
 	}
 	function expandVisibleSignals() { expandCommand += 1; }
 	function collapseVisibleSignals() { collapseCommand += 1; }
@@ -117,7 +131,7 @@
 		hoveredNodeId = null;
 		signatureExpanded = false;
 		emergingExpanded = false;
-		visibleSignalCount = 5;
+		visibleSignalCount = SIGNAL_PAGE_SIZE;
 	});
 
 	/* Follow toggle — local $state only; the spec is explicit that
@@ -723,27 +737,45 @@
 							{collapseCommand}
 						/>
 
-						<!-- "Show more / Show fewer signals" — only renders
-						     once the tree has more roots than the initial 5.
-						     For users whose total ≤ 5 (Dan's current mock),
-						     no control surfaces because everything is
-						     already visible. Same editorial italic styling
-						     as Signature / Emerging show-more controls. -->
-						{#if totalSignals > 5}
-							<div class="mt-1 flex justify-center">
-								<button
-									type="button"
-									onclick={toggleVisibleSignals}
-									class="text-[12.5px] italic text-base-content/65 hover:text-base-content/95 transition-colors"
-								>
-									{#if visibleSignalCount < totalSignals}
-										{@const remaining = totalSignals - visibleSignalCount}
-										{@const step = Math.min(3, remaining)}
-										Show {step} more signal{step === 1 ? '' : 's'}
-									{:else}
-										Show fewer signals
-									{/if}
-								</button>
+						<!-- Signal-visibility controls — only render for trees
+						     with more roots than the initial slice. While
+						     more remain hidden, surface a paired action:
+						     "Show 5 more" advances one page-size step,
+						     "Show all" reveals the rest immediately. Once
+						     every signal is visible, both collapse into a
+						     single "Show fewer" action that snaps back to
+						     the default 5. Same editorial italic styling as
+						     the Signature / Emerging show-more controls so
+						     they read as reader actions, not toolbar
+						     buttons. The middot separator only appears
+						     between the two paired actions. -->
+						{#if totalSignals > SIGNAL_PAGE_SIZE}
+							<div class="mt-1 flex items-center justify-center gap-3 text-[12.5px] italic text-base-content/65">
+								{#if visibleSignalCount < totalSignals}
+									<button
+										type="button"
+										onclick={showMoreSignals}
+										class="hover:text-base-content/95 transition-colors"
+									>
+										Show {SIGNAL_PAGE_SIZE} more
+									</button>
+									<span class="text-base-content/30 not-italic" aria-hidden="true">·</span>
+									<button
+										type="button"
+										onclick={showAllSignals}
+										class="hover:text-base-content/95 transition-colors"
+									>
+										Show all
+									</button>
+								{:else}
+									<button
+										type="button"
+										onclick={showFewerSignals}
+										class="hover:text-base-content/95 transition-colors"
+									>
+										Show fewer
+									</button>
+								{/if}
 							</div>
 						{/if}
 					</div>
