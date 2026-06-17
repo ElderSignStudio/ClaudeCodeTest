@@ -443,10 +443,116 @@ const gisli: DraftUserDetail = {
 	followersCount: 87,
 };
 
+/* ─── Riku — power-scout QA fixture ─────────────────────────────
+   25 sparked signals across the full activity spectrum (active /
+   steady / quiet / dormant) and a mix of deep + branch-heavy
+   procedural subtrees. The profile exists primarily as a stress-
+   test surface for scrolling, inspector switching, expand/collapse
+   controls, and rendering density. Editorial content stays
+   consistent with the rest of the universe — Archive Cartographer
+   archetype, drone/ambient/post-rock lean. */
+const riku: DraftUserDetail = {
+	id: 'riku',
+	username: 'Riku',
+	avatar: dicebear('RikuArchive'),
+	bio: 'Archive cartographer. Maps long-tail crossings between drone, post-rock, and the strange edges of cassette ambient.',
+	isCurrentUser: false,
+	isFollowing: false,
+	discoveryScore: 89,
+	scoutArchetype: 'Archive Cartographer',
+	originSeeds: 78,
+	reshareBranches: 142,
+	uniqueListenersReached: 1340,
+	hitRate: 51,
+	strongestSignal: { id: 'iron-weather', title: 'Iron Weather', artist: 'Pale Motion' },
+	averageReachPerSeed: 17,
+	sceneFootprint: [
+		{ name: 'Drone',                  percent: 32 },
+		{ name: 'Tape Ambient',           percent: 22 },
+		{ name: 'Post-Rock / Drone',      percent: 16 },
+		{ name: 'Long-form Drone',        percent: 11 },
+		{ name: 'Cassette Orbit',         percent: 9  },
+		{ name: 'Experimental Crossover', percent: 10 },
+	],
+	sceneInterpretation: {
+		thirdPerson:
+			'Operates across drone, tape ambient, and post-rock circles, with a long-tail surface that reaches into experimental crossings.',
+		secondPerson:
+			'Your strongest footprint spans drone, tape ambient, and post-rock circles, with long-tail reach into experimental crossings.',
+	},
+	signatureSignals: [
+		{ id: 'iron-weather',   title: 'Iron Weather',   artist: 'Pale Motion',
+		  listeners: 96, generations: 8, impact: 96,
+		  badges: ['Cascade Starter', 'Deep Branch'],
+		  tags: ['drone', 'cassette ambient'],
+		  recentActivity: '+9 this week', liveStatus: 'Accelerating' },
+		{ id: 'low-orbit',      title: 'Low Orbit',      artist: 'Hollow Field',
+		  listeners: 84, generations: 7, impact: 92,
+		  badges: ['Cascade Starter'],
+		  tags: ['post-rock drone'],
+		  recentActivity: 'amplified today', liveStatus: 'Accelerating' },
+		{ id: 'tape-weather',   title: 'Tape Weather',   artist: 'Archive Unit',
+		  listeners: 71, generations: 11, impact: 90,
+		  badges: ['Long Tail', 'Trailblazer'],
+		  tags: ['cassette ambient'],
+		  recentActivity: '+3 branches forming', liveStatus: 'Branch forming' },
+		{ id: 'night-forest',   title: 'Night Forest',   artist: 'Pale Atelier',
+		  listeners: 62, generations: 12, impact: 88,
+		  badges: ['Long Tail'],
+		  tags: ['long-form drone'],
+		  recentActivity: '+2 this week', liveStatus: 'Still moving' },
+		{ id: 'glass-signal',   title: 'Glass Signal',   artist: 'Pale Archive',
+		  listeners: 49, generations: 6, impact: 80,
+		  badges: ['Cross-Scene Bridge'],
+		  tags: ['reverb drift', 'cassette orbit'],
+		  recentActivity: 'amplified yesterday', liveStatus: 'Still moving' },
+		{ id: 'cold-dispatch',  title: 'Cold Dispatch',  artist: 'Wire Theory',
+		  listeners: 42, generations: 5, impact: 74,
+		  badges: ['Early Seed'],
+		  tags: ['post-rock crossover'],
+		  recentActivity: 'new listener today', liveStatus: 'Still moving' },
+	],
+	emergingSignals: [
+		{ id: 'rust-channel',    title: 'Rust Channel',    artist: 'Bottom Field',
+		  listeners: 6, generations: 2, plantedAgo: '3 days ago', status: 'Early movement' },
+		{ id: 'ghost-archive',   title: 'Ghost Archive',   artist: 'Vault Signal',
+		  listeners: 4, generations: 1, plantedAgo: '5 days ago', status: 'Watching' },
+		{ id: 'paper-radio',     title: 'Paper Radio',     artist: 'Half-Tape',
+		  listeners: 3, generations: 1, plantedAgo: '6 days ago', status: 'Starting to move' },
+		{ id: 'mute-cathedral',  title: 'Mute Cathedral',  artist: 'Slow Brass',
+		  listeners: 2,                  plantedAgo: 'last week', status: 'Fragile signal' },
+		{ id: 'fragment-orbit',  title: 'Fragment Orbit',  artist: 'Margin Static',
+		  listeners: 1,                  plantedAgo: 'last week', status: 'Dormant seed' },
+	],
+	following: [
+		{ id: 'dan',    name: 'Dan',    avatar: dicebear('DanOuter')   },
+		{ id: 'alice',  name: 'Alice',  avatar: dicebear('AliceSignal') },
+		{ id: 'gisli',  name: 'Gisli',  avatar: dicebear('GisliReverb') },
+		{ id: 'marco',  name: 'Marco',  avatar: dicebear('MarcoAmb')   },
+		{ id: 'yuki',   name: 'Yuki',   avatar: dicebear('YukiQuiet')  },
+		{ id: 'tobias', name: 'Tobias', avatar: dicebear('TobiasCart') },
+		{ id: 'kalla',  name: 'Kalla',  avatar: dicebear('KallaCurate') },
+		{ id: 'jaakko', name: 'Jaakko', avatar: dicebear('JaakkoNight') },
+	],
+	followers: [
+		{ id: 'dan',    name: 'Dan',    avatar: dicebear('DanOuter')   },
+		{ id: 'alice',  name: 'Alice',  avatar: dicebear('AliceSignal') },
+		{ id: 'pauli',  name: 'Pauli',  avatar: dicebear('PauliSeed')  },
+		{ id: 'sanne',  name: 'Sanne',  avatar: dicebear('SanneField') },
+		{ id: 'olek',   name: 'Olek',   avatar: dicebear('OlekDrift')  },
+		{ id: 'doro',   name: 'Doro',   avatar: dicebear('DoroSleeve') },
+		{ id: 'leo',    name: 'Leo',    avatar: dicebear('LeoHalf')    },
+		{ id: 'hilde',  name: 'Hilde',  avatar: dicebear('HildeAbs')   },
+	],
+	followingCount: 96,
+	followersCount: 738,
+};
+
 const mockUsers: Record<string, UserDetail> = {
 	dan:   withCovers(dan),
 	alice: withCovers(alice),
 	gisli: withCovers(gisli),
+	riku:  withCovers(riku),
 };
 
 /* ─── Lookup + fallback ─────────────────────────────────────────
