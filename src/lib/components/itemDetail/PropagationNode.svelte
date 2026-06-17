@@ -39,12 +39,23 @@
 		outgoingTrunkOnLineage = false,
 		trunkLineageIndex = -1,
 		onAmplify = undefined,
+		initialExpanded = undefined,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
 		onSelect: (user: PropagationUser) => void;
 		onPreview: (target: PreviewTarget | null) => void;
 		depth?: number;
+		/** Optional predicate to seed each node's `expanded` $state at
+		 *  construction. Returns true to start expanded, false to start
+		 *  collapsed. When omitted (the default), every node starts
+		 *  expanded — preserving the legacy behaviour used by Item
+		 *  Detail. The User Detail tree passes a predicate that
+		 *  returns false for signal-layer nodes so the tree arrives
+		 *  collapsed from the first paint (no post-mount DOM clicks).
+		 *  Threaded through the recursive `<Self>` call so descendants
+		 *  inherit the same rule when they eventually mount. */
+		initialExpanded?: ((user: PropagationUser) => boolean) | undefined;
 		/** True when this node is the LAST item rendered in its parent's
 		 *  children container — including any "+N more" tail. Drives the
 		 *  rail segment height: last children draw a short stub that
@@ -239,7 +250,15 @@
 		return ids[hash32(user.id + '|white-anchor') % ids.length];
 	});
 
-	let expanded = $state(true);
+	/* `expanded` is seeded ONCE at construction from the optional
+	   `initialExpanded` predicate (default: every node expanded). The
+	   value lives in $state from then on — the chevron toggles it
+	   normally and parents can never override a user's explicit
+	   expand/collapse choice. Capturing only the initial value of
+	   the predicate is INTENTIONAL — Svelte 5's locality warning
+	   here is a false positive for this one-shot seed pattern. */
+	// svelte-ignore state_referenced_locally
+	let expanded = $state(initialExpanded ? initialExpanded(user) : true);
 	let tailExpanded = $state(false);
 
 	const hasVisibleChildren = $derived(user.children.length > 0);
@@ -1962,6 +1981,7 @@
 					{selectedUserId}
 					{onSelect}
 					{onPreview}
+					{initialExpanded}
 					depth={depth + 1}
 					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
 					onParticleArrival={onChildParticleArrival}

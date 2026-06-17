@@ -623,13 +623,25 @@
 	{:else}
 		<!-- ─────────────────────── USER STATE ─────────────────────── -->
 
-		<!-- Identity row -->
+		<!-- Identity row. Scout name links to their detail page —
+		     unknown ids fall through to a synthesised "scout in
+		     progress" profile so the link never dead-ends.
+		     Anonymous +N-more stubs (empty avatar) skip the link
+		     since they don't represent a real identity. -->
 		<div class="flex items-center gap-3">
 			<div class={['w-11 h-11 rounded-full overflow-hidden border', target.user.isOrigin ? 'border-accent/55' : 'border-accent/35']}>
 				<img src={target.user.avatar} alt="" class="w-full h-full object-cover" />
 			</div>
 			<div class="min-w-0">
-				<p class="text-[15px] font-bold text-base-content/95 truncate">{target.user.name}</p>
+				{#if isAnonymousStub}
+					<p class="text-[15px] font-bold text-base-content/95 truncate">{target.user.name}</p>
+				{:else}
+					<a
+						href="/users/{target.user.id}"
+						class="text-[15px] font-bold text-base-content/95 hover:text-accent transition-colors truncate inline-block max-w-full"
+						title="View {target.user.name}'s scout profile"
+					>{target.user.name}</a>
+				{/if}
 				<p class="text-[12px] text-accent/72 truncate">{target.user.character}</p>
 			</div>
 		</div>
@@ -656,7 +668,11 @@
 			-->
 			<p class="text-[12px] -mt-3 leading-snug">
 				<span class="text-base-content/55">Discovered through</span>
-				<span class="text-accent/92 font-semibold">{parentOfTarget.name}</span>
+				<a
+					href="/users/{parentOfTarget.id}"
+					class="text-accent/92 hover:text-accent font-semibold transition-colors"
+					title="View {parentOfTarget.name}'s scout profile"
+				>{parentOfTarget.name}</a>
 			</p>
 		{/if}
 
