@@ -545,31 +545,28 @@
 				{#each userTrustSignals.evidence.parts as part}{#if typeof part === 'string'}{part}{:else}{part.hi}{/if}{/each}
 			</p>
 
-			<!-- Supporting evidence — three compact rows that explain
-			     the headline. Each row = small uppercase label + an
-			     editorial sentence rendered from a `parts` array. The
-			     headline-to-rows gap (`mt-4` here vs the `mt-2` we
-			     had previously between the eyebrow and the row list)
-			     gives the headline the breathing room called for in
-			     the spec. Inline `{hi: ...}` parts still surface key
-			     data within each supporting row so a reader can
-			     scan the comparison, specialty, and follower
-			     value-proposition at a glance — no bullets, no
-			     chips, no badges. -->
-			<ul class="flex flex-col divide-y divide-white/6 -mx-1 mt-4">
+			<!-- Supporting signals strip — three compact columns,
+			     one per trust dimension. Each column = small
+			     uppercase label + a 2–6 word noun phrase emitted by
+			     `trustAnalysis.ts` as `row.summary`. The columns
+			     stack vertically on sub-md viewports, preserving the
+			     same hierarchy. No icons, no badges, no boxes, no
+			     dividers between columns — just whitespace and
+			     typography. The headline above carries the proof;
+			     this strip is for fast scanning of the three
+			     supporting signals. -->
+			<div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
 				{#each [userTrustSignals.peers, userTrustSignals.distinctive, userTrustSignals.followers] as row (row.label)}
-					<li class="px-1 py-2.5">
+					<div>
 						<p class="text-[10px] uppercase tracking-widest text-base-content/52">
 							{row.label}
 						</p>
-						<p class="mt-1.5 text-[12.5px] leading-normal text-base-content/80">
-							{#each row.parts as part}
-								{#if typeof part === 'string'}{part}{:else}<span class="font-semibold text-base-content/95">{part.hi}</span>{/if}
-							{/each}
+						<p class="mt-1.5 text-[12.5px] leading-snug text-base-content/82">
+							{row.summary ?? ''}
 						</p>
-					</li>
+					</div>
 				{/each}
-			</ul>
+			</div>
 		</section>
 	{/if}
 

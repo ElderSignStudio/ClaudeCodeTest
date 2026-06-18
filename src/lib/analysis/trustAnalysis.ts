@@ -38,6 +38,13 @@ export type TrustRow = {
 	 *  let the page surface the key evidence inline without
 	 *  introducing badges, chips, or colour. */
 	parts: TextPart[];
+	/** Optional ultra-compact summary — a 2–6 word noun phrase the
+	 *  page uses inside the 3-column "supporting signals" strip
+	 *  beneath the headline. Only emitted for the three supporting
+	 *  dimensions (peers / distinctive / followers); the headline
+	 *  row (evidence) uses `parts` directly. Designed to fit on a
+	 *  single line on desktop; two lines maximum. */
+	summary?: string;
 };
 
 /** Helper: stringify a parts array into the flat sentence — useful
@@ -138,6 +145,32 @@ const PEER_METRIC_LABELS: Record<ActionableMetric, string> = {
 	uniqueListenersReached: 'downstream footprint',
 };
 
+/* Ultra-compact metric labels used by the summary strip — slightly
+   shorter than the long-form labels above so each card fits on a
+   single line at typical column widths. */
+const PEER_METRIC_LABELS_SHORT: Record<ActionableMetric, string> = {
+	hitRate:                'hit rate',
+	originSeeds:            'discovery volume',
+	averageReachPerSeed:    'amplification depth',
+	reshareBranches:        'branch reach',
+	uniqueListenersReached: 'downstream reach',
+};
+
+/** Ordinal suffix: 1 → 'st', 2 → 'nd', 3 → 'rd', 11/12/13 → 'th',
+ *  otherwise 'th'. Percentile values land in the 50–99 range in
+ *  practice so this almost always returns 'th', but handling the
+ *  general case keeps the helper safe for future use elsewhere. */
+function ordinalSuffix(n: number): string {
+	const lastTwo = Math.abs(n) % 100;
+	if (lastTwo >= 11 && lastTwo <= 13) return 'th';
+	switch (Math.abs(n) % 10) {
+		case 1: return 'st';
+		case 2: return 'nd';
+		case 3: return 'rd';
+		default: return 'th';
+	}
+}
+
 function comparedWithPeers(user: UserDetail): TrustRow {
 	const p = scoutPercentiles(user);
 	const candidates: Array<{ metric: ActionableMetric; percentile: number }> = [
@@ -151,6 +184,7 @@ function comparedWithPeers(user: UserDetail): TrustRow {
 
 	const top = ranked[0];
 	const label = PEER_METRIC_LABELS[top.metric];
+	const shortLabel = PEER_METRIC_LABELS_SHORT[top.metric];
 	const pct = Math.min(99, Math.round(top.percentile));
 	const capitalised = label.charAt(0).toUpperCase() + label.slice(1);
 	return {
@@ -161,6 +195,7 @@ function comparedWithPeers(user: UserDetail): TrustRow {
 			{ hi: `${pct}% of scouts` },
 			' at similar activity level.',
 		],
+		summary: `${pct}${ordinalSuffix(pct)} percentile ${shortLabel}`,
 	};
 }
 
@@ -172,9 +207,20 @@ function comparedWithPeers(user: UserDetail): TrustRow {
 
    Falls back to a neutral framing for archetypes we haven't
    authored copy for (e.g. the synthetic-fallback 'Scout'). */
+/* Short noun-phrase per archetype for the supporting-signal
+   strip. Sentence-case so the UPPERCASE label above it carries the
+   tracking treatment and the summary reads as ordinary prose. */
+const ARCHETYPE_SUMMARY: Record<string, string> = {
+	'Cross-Scene Bridge':   'Cross-scene bridge',
+	'Underground Seeder':   'Underground seeder',
+	'Trailblazer':          'Trailblazer',
+	'Archive Cartographer': 'Archive cartographer',
+};
+
 function distinctiveStrength(user: UserDetail): TrustRow {
 	const topScene = user.sceneFootprint[0]?.name.toLowerCase();
 	const archetype = user.scoutArchetype;
+	const summary = ARCHETYPE_SUMMARY[archetype] ?? 'Long-tail discovery';
 
 	let parts: TextPart[];
 	switch (archetype) {
@@ -222,7 +268,7 @@ function distinctiveStrength(user: UserDetail): TrustRow {
 				]
 				: ['Discoveries tend to travel further than their initial scene would suggest.'];
 	}
-	return { label: 'Scouting Edge', parts };
+	return { label: 'Scouting Edge', parts, summary };
 }
 
 /* ── 4. Why people follow this scout ──────────────────────────
@@ -257,16 +303,30 @@ function followerNarrative(user: UserDetail): TrustRow {
 
 	let valuePhrase: string;
 	let connector = ' in ';
+	/* Parallel summary phrasing — same priority chain, but each
+	   branch emits a 2–6 word noun phrase suitable for the
+	   supporting-signal strip. */
+	let summaryStem: string;
+	let summaryConnector = ' in ';
 	if (user.hitRate >= 40) {
 		valuePhrase = 'reliably early discoveries';
+		summaryStem  = 'Early discoveries';
 	} else if (user.scoutArchetype === 'Underground Seeder' || user.scoutArchetype === 'Archive Cartographer') {
 		valuePhrase = 'long-tail propagation that grows out of overlooked signals';
+		summaryStem  = 'Long-tail signals';
+		summaryConnector = ' from ';
 	} else if (user.uniqueListenersReached > 300) {
 		valuePhrase = 'discoveries that spread broadly';
 		connector = ' across ';
+		summaryStem  = 'Broad cross-scene spread';
+		summaryConnector = ' from ';
 	} else {
 		valuePhrase = 'careful early scouting';
+		summaryStem  = 'Careful scouting';
 	}
+
+	const topSceneShort = scenes[0] ?? 'their primary scenes';
+	const summary = `${summaryStem}${summaryConnector}${topSceneShort}`;
 
 	return {
 		label: 'Why Followers Stay',
@@ -277,5 +337,6 @@ function followerNarrative(user: UserDetail): TrustRow {
 			{ hi: scenesPhrase },
 			scenesSuffix + '.',
 		],
+		summary,
 	};
 }
