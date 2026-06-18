@@ -10,6 +10,7 @@
 		formatTopPercentile,
 		growthOpportunities,
 	} from '$lib/analysis/scoutAnalysis';
+	import { trustSignals } from '$lib/analysis/trustAnalysis';
 
 	/*
 		User Detail page.
@@ -52,6 +53,10 @@
 	const userPercentile = $derived(overallPercentile(user));
 	const userPercentileLabel = $derived(formatTopPercentile(userPercentile));
 	const userGrowthOpportunities = $derived(growthOpportunities(user, 3));
+	/** Four-row trust narrative. `null` for synthetic fallback users
+	 *  with no track record — the page hides the section in that case
+	 *  instead of rendering empty editorial copy. */
+	const userTrustSignals = $derived(trustSignals(user));
 
 	/* Right-side inspector selection — two-tier state matching the
 	   Item Detail tree's interaction model:
@@ -443,7 +448,82 @@
 	</section>
 
 	<!-- ═══════════════════════════════════════════════════════════
-	     3B. GROWTH OPPORTUNITIES (current user only)
+	     3B. TRUST SIGNALS
+	     Reputation explainer — answers "why should I trust this
+	     scout?" via four short editorial rows: Proven Reach, Peer
+	     Comparison, Scouting Edge, Why Followers Stay. Each row's
+	     sentence is derived from real profile data in
+	     `trustAnalysis.ts` and emitted as alternating text /
+	     emphasis `TextPart`s so the page can mark the key evidence
+	     inline (brighter alpha + semibold) without introducing
+	     badges, chips, or colour.
+
+	     Sits ABOVE Growth Opportunities because trust signals
+	     answer the UNIVERSAL question — every visitor asks it —
+	     while Growth Opportunities only fires for the current user.
+	     Trust before improvement also matches the editorial
+	     instinct: explain the scout first, then coach.
+
+	     Renders on BOTH current-user and other-user profiles;
+	     suppressed only when `trustSignals()` returns null
+	     (synthetic fallback scouts with no track record).
+	     ═══════════════════════════════════════════════════════════ -->
+	{#if userTrustSignals}
+		<section
+			class="rounded-xl border border-white/6 bg-base-200/35 px-5 py-4 lg:px-6 lg:py-5"
+			style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
+		>
+			<div class="flex items-center gap-2">
+				<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
+				<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
+					Trust signals
+				</p>
+			</div>
+
+			<!-- HEADLINE — the evidence row promoted into the primary
+			     editorial takeaway. No uppercase label above it: the
+			     whole sentence IS the proof, and a row label would
+			     demote it back into "one of four facts". 14.5 px
+			     semibold + alpha 0.92 lifts it above the supporting
+			     rows below without becoming a marquee. Inline
+			     emphasis is intentionally NOT applied here — the
+			     whole headline already reads as data; bolding
+			     fragments inside it would compete with the prominence
+			     of the sentence as a whole. -->
+			<p class="mt-2.5 text-[14.5px] font-semibold leading-snug text-base-content/92">
+				{#each userTrustSignals.evidence.parts as part}{#if typeof part === 'string'}{part}{:else}{part.hi}{/if}{/each}
+			</p>
+
+			<!-- Supporting evidence — three compact rows that explain
+			     the headline. Each row = small uppercase label + an
+			     editorial sentence rendered from a `parts` array. The
+			     headline-to-rows gap (`mt-4` here vs the `mt-2` we
+			     had previously between the eyebrow and the row list)
+			     gives the headline the breathing room called for in
+			     the spec. Inline `{hi: ...}` parts still surface key
+			     data within each supporting row so a reader can
+			     scan the comparison, specialty, and follower
+			     value-proposition at a glance — no bullets, no
+			     chips, no badges. -->
+			<ul class="flex flex-col divide-y divide-white/6 -mx-1 mt-4">
+				{#each [userTrustSignals.peers, userTrustSignals.distinctive, userTrustSignals.followers] as row (row.label)}
+					<li class="px-1 py-2.5">
+						<p class="text-[10px] uppercase tracking-widest text-base-content/52">
+							{row.label}
+						</p>
+						<p class="mt-1.5 text-[12.5px] leading-normal text-base-content/80">
+							{#each row.parts as part}
+								{#if typeof part === 'string'}{part}{:else}<span class="font-semibold text-base-content/95">{part.hi}</span>{/if}
+							{/each}
+						</p>
+					</li>
+				{/each}
+			</ul>
+		</section>
+	{/if}
+
+	<!-- ═══════════════════════════════════════════════════════════
+	     3C. GROWTH OPPORTUNITIES (current user only)
 	     Compact coaching surface, not a written evaluation.
 	     Default: 2 highest-priority opportunities. A small italic
 	     text-link reveals the third on demand and snaps back to 2
@@ -453,6 +533,11 @@
 	     underlying analysis engine in `scoutAnalysis.ts` (percentile
 	     model, weakest-metric detection, distribution awareness) is
 	     unchanged — only the presentation is denser.
+
+	     Sits BELOW Trust Signals because the trust question is
+	     universal whereas the coaching question is personal —
+	     visitors deserve the trust answer first, the page owner
+	     gets the coaching question second.
 	     ═══════════════════════════════════════════════════════════ -->
 	{#if user.isCurrentUser && userGrowthOpportunities.length > 0}
 		<section
