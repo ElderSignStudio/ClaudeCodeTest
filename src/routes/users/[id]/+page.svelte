@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { UserCheck, UserPlus, ExternalLink } from 'lucide-svelte';
+	import { UserCheck, UserPlus, ExternalLink, ChevronDown } from 'lucide-svelte';
+	import { slide } from 'svelte/transition';
 	import type { LiveStatus } from '$lib/mock/users';
 	import { getUserSignalTree } from '$lib/mock/userSignalTree';
 	import type { PreviewTarget } from '$lib/mock/propagation';
@@ -93,6 +94,33 @@
 	/** Show-more toggle for Growth Opportunities (default 2 visible). */
 	let growthExpanded = $state(false);
 
+	/* ── Section-level progressive disclosure ─────────────────
+	   Three secondary sections start COLLAPSED on page load so the
+	   default view immediately answers the four primary questions
+	   (who · how good · why trust · what propagated) via Header,
+	   Scout Profile, Trust Signals, Signature Signals, and the
+	   Signal Tree. The collapsed sections still render their title
+	   + a one-line summary so visitors know what's available
+	   without having to expand to find out. State is local to this
+	   page and resets on profile navigation. */
+	let sceneFootprintOpen     = $state(false);
+	let growthOpportunitiesOpen = $state(false);
+	let emergingSignalsOpen    = $state(false);
+
+	const sceneFootprintSummary = $derived(
+		user.sceneFootprint.length > 0
+			? `Primary scene: ${user.sceneFootprint[0].name}`
+			: 'No scene data tracked yet.',
+	);
+	const growthOpportunitiesSummary = $derived(
+		`${userGrowthOpportunities.length} growth ${userGrowthOpportunities.length === 1 ? 'opportunity' : 'opportunities'} identified`,
+	);
+	const emergingSignalsSummary = $derived(
+		user.emergingSignals.length > 0
+			? `${user.emergingSignals.length} emerging ${user.emergingSignals.length === 1 ? 'signal' : 'signals'} being tracked`
+			: 'No emerging seeds tracked.',
+	);
+
 	const visibleGrowthOpportunities = $derived(
 		growthExpanded ? userGrowthOpportunities : userGrowthOpportunities.slice(0, 2),
 	);
@@ -162,6 +190,9 @@
 		signatureExpanded = false;
 		emergingExpanded = false;
 		growthExpanded = false;
+		sceneFootprintOpen = false;
+		growthOpportunitiesOpen = false;
+		emergingSignalsOpen = false;
 		visibleSignalCount = SIGNAL_PAGE_SIZE;
 	});
 
@@ -407,43 +438,63 @@
 	     the user has to read the numbers.
 	     ═══════════════════════════════════════════════════════════ -->
 	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-4"
+		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
 		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 	>
-		<div class="flex items-center gap-2">
+		<!-- Disclosure header — same eyebrow styling, now wrapped in a
+		     button with a chevron on the right. Clicking anywhere on
+		     the header toggles. `aria-expanded` mirrors state so
+		     assistive tech can announce the change. -->
+		<button
+			type="button"
+			onclick={() => (sceneFootprintOpen = !sceneFootprintOpen)}
+			aria-expanded={sceneFootprintOpen}
+			class="group w-full flex items-center gap-2 text-left"
+		>
 			<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
 				Scene footprint
 			</p>
-		</div>
+			<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({sceneFootprintOpen ? 0 : -90}deg);">
+				<ChevronDown size={14} />
+			</span>
+		</button>
 
-		<p class="text-[13.5px] leading-relaxed text-base-content/78 max-w-2xl">
-			{user.isCurrentUser
-				? user.sceneInterpretation.secondPerson
-				: user.sceneInterpretation.thirdPerson}
-		</p>
+		{#if sceneFootprintOpen}
+			<div transition:slide={{ duration: 200 }} class="mt-4 space-y-4">
+				<p class="text-[13.5px] leading-relaxed text-base-content/78 max-w-2xl">
+					{user.isCurrentUser
+						? user.sceneInterpretation.secondPerson
+						: user.sceneInterpretation.thirdPerson}
+				</p>
 
-		{#if user.sceneFootprint.length > 0}
-			<ul class="flex flex-col gap-2.5 mt-2">
-				{#each user.sceneFootprint as scene (scene.name)}
-					<li class="flex items-center gap-4">
-						<div class="w-44 shrink-0 text-[12.5px] text-base-content/78 truncate">
-							{scene.name}
-						</div>
-						<div class="flex-1 h-1.5 rounded-full bg-white/6 overflow-hidden">
-							<div
-								class="h-full rounded-full bg-[oklch(0.72_0.13_230)]/55"
-								style="width: {Math.min(100, scene.percent)}%"
-							></div>
-						</div>
-						<div class="w-12 shrink-0 text-right text-[12px] tabular-nums text-base-content/68">
-							{formatPercent(scene.percent)}
-						</div>
-					</li>
-				{/each}
-			</ul>
+				{#if user.sceneFootprint.length > 0}
+					<ul class="flex flex-col gap-2.5 mt-2">
+						{#each user.sceneFootprint as scene (scene.name)}
+							<li class="flex items-center gap-4">
+								<div class="w-44 shrink-0 text-[12.5px] text-base-content/78 truncate">
+									{scene.name}
+								</div>
+								<div class="flex-1 h-1.5 rounded-full bg-white/6 overflow-hidden">
+									<div
+										class="h-full rounded-full bg-[oklch(0.72_0.13_230)]/55"
+										style="width: {Math.min(100, scene.percent)}%"
+									></div>
+								</div>
+								<div class="w-12 shrink-0 text-right text-[12px] tabular-nums text-base-content/68">
+									{formatPercent(scene.percent)}
+								</div>
+							</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="text-[12.5px] italic text-base-content/45">No scene data tracked yet.</p>
+				{/if}
+			</div>
 		{:else}
-			<p class="text-[12.5px] italic text-base-content/45">No scene data tracked yet.</p>
+			<p class="mt-2 text-[12.5px] italic text-base-content/62">
+				{sceneFootprintSummary}
+			</p>
 		{/if}
 	</section>
 
@@ -541,53 +592,66 @@
 	     ═══════════════════════════════════════════════════════════ -->
 	{#if user.isCurrentUser && userGrowthOpportunities.length > 0}
 		<section
-			class="rounded-xl border border-white/6 bg-base-200/35 px-5 py-3.5 lg:px-6"
+			class="rounded-xl border border-white/6 bg-base-200/35 px-5 py-3.5 lg:px-6 lg:py-4"
 			style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 		>
-			<div class="flex items-center gap-2">
+			<button
+				type="button"
+				onclick={() => (growthOpportunitiesOpen = !growthOpportunitiesOpen)}
+				aria-expanded={growthOpportunitiesOpen}
+				class="group w-full flex items-center gap-2 text-left"
+			>
 				<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
 				<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
 					Growth opportunities
 				</p>
-			</div>
+				<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({growthOpportunitiesOpen ? 0 : -90}deg);">
+					<ChevronDown size={14} />
+				</span>
+			</button>
 
-			<!-- Three-line coaching card per opportunity (title /
-			     diagnosis / focus). Aggressive line-height
-			     (`leading-tight`) + minimal vertical gaps keep the
-			     section close to the "one signature-signal card +
-			     heading" vertical budget. No section subtitle —
-			     the eyebrow plus the opportunity titles carry the
-			     framing without an explanatory sentence. -->
-			<ul class="flex flex-col divide-y divide-white/6 -mx-1 mt-1.5">
-				{#each visibleGrowthOpportunities as opp (opp.metric)}
-					<li class="px-1 py-1.5">
-						<p class="text-[13px] font-semibold leading-tight text-base-content/95">
-							{opp.title}
-						</p>
-						<p class="text-[12px] leading-tight text-base-content/80 mt-0.5">
-							{opp.diagnosis}
-						</p>
-						<p class="text-[11.5px] leading-tight italic text-base-content/65 mt-0.5">
-							{opp.focus}
-						</p>
-					</li>
-				{/each}
-			</ul>
+			{#if growthOpportunitiesOpen}
+				<div transition:slide={{ duration: 200 }}>
+					<!-- Three-line coaching card per opportunity (title /
+					     diagnosis / focus). Aggressive line-height
+					     (`leading-tight`) + minimal vertical gaps keep
+					     the section close to the "one signature-signal
+					     card + heading" vertical budget. No section
+					     subtitle — the eyebrow plus the opportunity
+					     titles carry the framing without an explanatory
+					     sentence. -->
+					<ul class="flex flex-col divide-y divide-white/6 -mx-1 mt-1.5">
+						{#each visibleGrowthOpportunities as opp (opp.metric)}
+							<li class="px-1 py-1.5">
+								<p class="text-[13px] font-semibold leading-tight text-base-content/95">
+									{opp.title}
+								</p>
+								<p class="text-[12px] leading-tight text-base-content/80 mt-0.5">
+									{opp.diagnosis}
+								</p>
+								<p class="text-[11.5px] leading-tight italic text-base-content/65 mt-0.5">
+									{opp.focus}
+								</p>
+							</li>
+						{/each}
+					</ul>
 
-			<!-- Show-more / Show fewer — only renders when a third
-			     opportunity exists. Same italic editorial styling as
-			     the Signature / Emerging / Signal Tree show-more
-			     links so it reads as a reader action, not a button. -->
-			{#if userGrowthOpportunities.length > 2}
-				<div class="mt-1.5 flex justify-center">
-					<button
-						type="button"
-						onclick={() => (growthExpanded = !growthExpanded)}
-						class="text-[11.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
-					>
-						{growthExpanded ? 'Show fewer' : 'Show one more opportunity'}
-					</button>
+					{#if userGrowthOpportunities.length > 2}
+						<div class="mt-1.5 flex justify-center">
+							<button
+								type="button"
+								onclick={() => (growthExpanded = !growthExpanded)}
+								class="text-[11.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
+							>
+								{growthExpanded ? 'Show fewer' : 'Show one more opportunity'}
+							</button>
+						</div>
+					{/if}
 				</div>
+			{:else}
+				<p class="mt-2 text-[12.5px] italic text-base-content/62">
+					{growthOpportunitiesSummary}
+				</p>
 			{/if}
 		</section>
 	{/if}
@@ -704,15 +768,26 @@
 	     status label per row instead of impact / badges.
 	     ═══════════════════════════════════════════════════════════ -->
 	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-3"
+		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
 		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 	>
-		<div class="flex items-center gap-2">
+		<button
+			type="button"
+			onclick={() => (emergingSignalsOpen = !emergingSignalsOpen)}
+			aria-expanded={emergingSignalsOpen}
+			class="group w-full flex items-center gap-2 text-left"
+		>
 			<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
 				Emerging signals
 			</p>
-		</div>
+			<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({emergingSignalsOpen ? 0 : -90}deg);">
+				<ChevronDown size={14} />
+			</span>
+		</button>
+
+		{#if emergingSignalsOpen}
+		<div transition:slide={{ duration: 200 }} class="mt-3 space-y-3">
 		<p class="text-[12.5px] text-base-content/55 italic">
 			Quiet seeds that may become important later.
 		</p>
@@ -777,6 +852,12 @@
 			{/if}
 		{:else}
 			<p class="text-[12.5px] italic text-base-content/45">No emerging seeds tracked.</p>
+		{/if}
+		</div>
+		{:else}
+			<p class="mt-2 text-[12.5px] italic text-base-content/62">
+				{emergingSignalsSummary}
+			</p>
 		{/if}
 	</section>
 
