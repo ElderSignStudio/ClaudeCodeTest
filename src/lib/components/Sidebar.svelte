@@ -47,7 +47,7 @@
 			class="group flex items-center gap-2.5 -mx-1 px-1 py-0.5 rounded-md hover:bg-white/4 transition-colors"
 			title="Open your scout profile"
 		>
-			<div class="w-9 h-9 rounded-full border border-primary/28 group-hover:border-primary/48 overflow-hidden shrink-0 transition-colors">
+			<div class="w-11 h-11 rounded-full border border-primary/28 group-hover:border-primary/48 overflow-hidden shrink-0 transition-colors">
 				<img
 					src={currentUser.avatarUrl}
 					alt={currentUser.name}

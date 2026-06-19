@@ -269,7 +269,7 @@
 		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 	>
 		<div class="flex items-start gap-5 md:gap-7">
-			<div class="shrink-0 w-20 h-20 md:w-24 md:h-24 rounded-full border border-primary/30 overflow-hidden">
+			<div class="shrink-0 w-22 h-22 md:w-27 md:h-27 rounded-full border border-primary/30 overflow-hidden">
 				<img src={user.avatar} alt="" class="w-full h-full object-cover" />
 			</div>
 			<div class="min-w-0 flex-1 flex flex-col gap-2">

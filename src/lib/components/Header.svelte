@@ -32,7 +32,7 @@
 				The border + bg remain visible either way.
 			-->
 			<div
-				class="w-7 h-7 rounded-full border border-primary/38 overflow-hidden cursor-pointer hover:border-primary/58 transition-colors shrink-0"
+				class="w-9 h-9 rounded-full border border-primary/38 overflow-hidden cursor-pointer hover:border-primary/58 transition-colors shrink-0"
 				role="button"
 				tabindex="0"
 				aria-label="User profile"

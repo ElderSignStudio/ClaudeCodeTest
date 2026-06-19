@@ -14,9 +14,16 @@
 */
 
 import { coverOf } from './data';
+import { avatarFor } from './scoutAvatars';
 
-const dicebear = (seed: string) =>
-	`https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=1e1b4b`;
+/* Thin shim so the existing `dicebear('SomeSeed')` call sites can
+   stay readable. We pass `undefined` as the id so the function
+   always falls through to the dicebear generator — this is only
+   used for headline-row decorative seeds that don't have a scout
+   id (e.g. legacy follower placeholders). All other call sites
+   should use `avatarFor(id, seed)` directly so portrait mappings
+   apply. */
+const dicebear = (seed: string) => avatarFor('__no-id__', seed);
 
 export type ScoutBadge =
 	| 'Cascade Starter'
@@ -173,7 +180,7 @@ function withCovers(raw: DraftUserDetail): UserDetail {
 const dan: DraftUserDetail = {
 	id: 'dan',
 	username: 'Dan',
-	avatar: dicebear('DanOuter'),
+	avatar: avatarFor('dan', 'DanOuter'),
 	bio: 'Tracing overlooked signals across ambient, post-rock, and strange border scenes.',
 	isCurrentUser: true,
 	isFollowing: false,
@@ -253,20 +260,20 @@ const dan: DraftUserDetail = {
 		  listeners: 2, generations: 1, plantedAgo: '4 days ago', status: 'Fragile signal' },
 	],
 	following: [
-		{ id: 'alice',  name: 'Alice',  avatar: dicebear('AliceSignal') },
-		{ id: 'gisli',  name: 'Gisli',  avatar: dicebear('GisliReverb') },
-		{ id: 'marco',  name: 'Marco',  avatar: dicebear('MarcoAmb')   },
-		{ id: 'yuki',   name: 'Yuki',   avatar: dicebear('YukiQuiet')  },
-		{ id: 'tobias', name: 'Tobias', avatar: dicebear('TobiasCart') },
-		{ id: 'kalla',  name: 'Kalla',  avatar: dicebear('KallaCurate') },
+		{ id: 'alice',  name: 'Alice',  avatar: avatarFor('alice', 'AliceSignal') },
+		{ id: 'gisli',  name: 'Gisli',  avatar: avatarFor('gisli', 'GisliReverb') },
+		{ id: 'marco',  name: 'Marco',  avatar: avatarFor('marco', 'MarcoAmb') },
+		{ id: 'yuki',   name: 'Yuki',   avatar: avatarFor('yuki', 'YukiQuiet') },
+		{ id: 'tobias', name: 'Tobias', avatar: avatarFor('tobias', 'TobiasCart') },
+		{ id: 'kalla',  name: 'Kalla',  avatar: avatarFor('kalla', 'KallaCurate') },
 	],
 	followers: [
-		{ id: 'pauli',  name: 'Pauli',  avatar: dicebear('PauliSeed')  },
-		{ id: 'jaakko', name: 'Jaakko', avatar: dicebear('JaakkoLate') },
-		{ id: 'sanna',  name: 'Sanna',  avatar: dicebear('SannaQuiet') },
-		{ id: 'olek',   name: 'Olek',   avatar: dicebear('OlekDrift')  },
-		{ id: 'doro',   name: 'Doro',   avatar: dicebear('DoroSleeve') },
-		{ id: 'hilde',  name: 'Hilde',  avatar: dicebear('HildeAbs')   },
+		{ id: 'pauli',  name: 'Pauli',  avatar: avatarFor('pauli', 'PauliSeed') },
+		{ id: 'jaakko', name: 'Jaakko', avatar: avatarFor('jaakko', 'JaakkoLate') },
+		{ id: 'sanna',  name: 'Sanna',  avatar: avatarFor('sanna', 'SannaQuiet') },
+		{ id: 'olek',   name: 'Olek',   avatar: avatarFor('olek', 'OlekDrift') },
+		{ id: 'doro',   name: 'Doro',   avatar: avatarFor('doro', 'DoroSleeve') },
+		{ id: 'hilde',  name: 'Hilde',  avatar: avatarFor('hilde', 'HildeAbs') },
 	],
 	followingCount: 38,
 	followersCount: 112,
@@ -275,7 +282,7 @@ const dan: DraftUserDetail = {
 const alice: DraftUserDetail = {
 	id: 'alice',
 	username: 'Alice',
-	avatar: dicebear('AliceSignal'),
+	avatar: avatarFor('alice', 'AliceSignal'),
 	bio: 'Deep-scene explorer. Usually early to slow-moving signals before they surface.',
 	isCurrentUser: false,
 	isFollowing: false,
@@ -340,20 +347,20 @@ const alice: DraftUserDetail = {
 		  listeners: 3, generations: 1, plantedAgo: '2 days ago',  status: 'Fragile signal' },
 	],
 	following: [
-		{ id: 'marco',  name: 'Marco',  avatar: dicebear('MarcoAmb')   },
-		{ id: 'yuki',   name: 'Yuki',   avatar: dicebear('YukiQuiet')  },
-		{ id: 'gisli',  name: 'Gisli',  avatar: dicebear('GisliReverb') },
-		{ id: 'kalla',  name: 'Kalla',  avatar: dicebear('KallaCurate') },
-		{ id: 'dan',    name: 'Dan',    avatar: dicebear('DanOuter')   },
-		{ id: 'tobias', name: 'Tobias', avatar: dicebear('TobiasCart') },
+		{ id: 'marco',  name: 'Marco',  avatar: avatarFor('marco', 'MarcoAmb') },
+		{ id: 'yuki',   name: 'Yuki',   avatar: avatarFor('yuki', 'YukiQuiet') },
+		{ id: 'gisli',  name: 'Gisli',  avatar: avatarFor('gisli', 'GisliReverb') },
+		{ id: 'kalla',  name: 'Kalla',  avatar: avatarFor('kalla', 'KallaCurate') },
+		{ id: 'dan',    name: 'Dan',    avatar: avatarFor('dan', 'DanOuter') },
+		{ id: 'tobias', name: 'Tobias', avatar: avatarFor('tobias', 'TobiasCart') },
 	],
 	followers: [
-		{ id: 'dan',    name: 'Dan',    avatar: dicebear('DanOuter')   },
-		{ id: 'pauli',  name: 'Pauli',  avatar: dicebear('PauliSeed')  },
-		{ id: 'olek',   name: 'Olek',   avatar: dicebear('OlekDrift')  },
-		{ id: 'doro',   name: 'Doro',   avatar: dicebear('DoroSleeve') },
-		{ id: 'sanna',  name: 'Sanna',  avatar: dicebear('SannaQuiet') },
-		{ id: 'leo',    name: 'Leo',    avatar: dicebear('LeoHalf')    },
+		{ id: 'dan',    name: 'Dan',    avatar: avatarFor('dan', 'DanOuter') },
+		{ id: 'pauli',  name: 'Pauli',  avatar: avatarFor('pauli', 'PauliSeed') },
+		{ id: 'olek',   name: 'Olek',   avatar: avatarFor('olek', 'OlekDrift') },
+		{ id: 'doro',   name: 'Doro',   avatar: avatarFor('doro', 'DoroSleeve') },
+		{ id: 'sanna',  name: 'Sanna',  avatar: avatarFor('sanna', 'SannaQuiet') },
+		{ id: 'leo',    name: 'Leo',    avatar: avatarFor('leo', 'LeoHalf') },
 	],
 	followingCount: 54,
 	followersCount: 261,
@@ -362,7 +369,7 @@ const alice: DraftUserDetail = {
 const gisli: DraftUserDetail = {
 	id: 'gisli',
 	username: 'Gisli',
-	avatar: dicebear('GisliReverb'),
+	avatar: avatarFor('gisli', 'GisliReverb'),
 	bio: 'Reverb cartographer. Maps the long tail of slow, atmospheric crossings.',
 	isCurrentUser: false,
 	isFollowing: true,
@@ -427,17 +434,17 @@ const gisli: DraftUserDetail = {
 		  listeners: 2, generations: 1, plantedAgo: '3 days ago',  status: 'Fragile signal' },
 	],
 	following: [
-		{ id: 'dan',    name: 'Dan',    avatar: dicebear('DanOuter')   },
-		{ id: 'alice',  name: 'Alice',  avatar: dicebear('AliceSignal') },
-		{ id: 'marco',  name: 'Marco',  avatar: dicebear('MarcoAmb')   },
-		{ id: 'kalla',  name: 'Kalla',  avatar: dicebear('KallaCurate') },
+		{ id: 'dan',    name: 'Dan',    avatar: avatarFor('dan', 'DanOuter') },
+		{ id: 'alice',  name: 'Alice',  avatar: avatarFor('alice', 'AliceSignal') },
+		{ id: 'marco',  name: 'Marco',  avatar: avatarFor('marco', 'MarcoAmb') },
+		{ id: 'kalla',  name: 'Kalla',  avatar: avatarFor('kalla', 'KallaCurate') },
 	],
 	followers: [
-		{ id: 'doro',   name: 'Doro',   avatar: dicebear('DoroSleeve') },
-		{ id: 'pauli',  name: 'Pauli',  avatar: dicebear('PauliSeed')  },
-		{ id: 'yuki',   name: 'Yuki',   avatar: dicebear('YukiQuiet')  },
-		{ id: 'hilde',  name: 'Hilde',  avatar: dicebear('HildeAbs')   },
-		{ id: 'tobias', name: 'Tobias', avatar: dicebear('TobiasCart') },
+		{ id: 'doro',   name: 'Doro',   avatar: avatarFor('doro', 'DoroSleeve') },
+		{ id: 'pauli',  name: 'Pauli',  avatar: avatarFor('pauli', 'PauliSeed') },
+		{ id: 'yuki',   name: 'Yuki',   avatar: avatarFor('yuki', 'YukiQuiet') },
+		{ id: 'hilde',  name: 'Hilde',  avatar: avatarFor('hilde', 'HildeAbs') },
+		{ id: 'tobias', name: 'Tobias', avatar: avatarFor('tobias', 'TobiasCart') },
 	],
 	followingCount: 22,
 	followersCount: 87,
@@ -454,7 +461,7 @@ const gisli: DraftUserDetail = {
 const riku: DraftUserDetail = {
 	id: 'riku',
 	username: 'Riku',
-	avatar: dicebear('RikuArchive'),
+	avatar: avatarFor('riku', 'RikuArchive'),
 	bio: 'Archive cartographer. Maps long-tail crossings between drone, post-rock, and the strange edges of cassette ambient.',
 	isCurrentUser: false,
 	isFollowing: false,
@@ -525,24 +532,24 @@ const riku: DraftUserDetail = {
 		  listeners: 1,                  plantedAgo: 'last week', status: 'Dormant seed' },
 	],
 	following: [
-		{ id: 'dan',    name: 'Dan',    avatar: dicebear('DanOuter')   },
-		{ id: 'alice',  name: 'Alice',  avatar: dicebear('AliceSignal') },
-		{ id: 'gisli',  name: 'Gisli',  avatar: dicebear('GisliReverb') },
-		{ id: 'marco',  name: 'Marco',  avatar: dicebear('MarcoAmb')   },
-		{ id: 'yuki',   name: 'Yuki',   avatar: dicebear('YukiQuiet')  },
-		{ id: 'tobias', name: 'Tobias', avatar: dicebear('TobiasCart') },
-		{ id: 'kalla',  name: 'Kalla',  avatar: dicebear('KallaCurate') },
-		{ id: 'jaakko', name: 'Jaakko', avatar: dicebear('JaakkoNight') },
+		{ id: 'dan',    name: 'Dan',    avatar: avatarFor('dan', 'DanOuter') },
+		{ id: 'alice',  name: 'Alice',  avatar: avatarFor('alice', 'AliceSignal') },
+		{ id: 'gisli',  name: 'Gisli',  avatar: avatarFor('gisli', 'GisliReverb') },
+		{ id: 'marco',  name: 'Marco',  avatar: avatarFor('marco', 'MarcoAmb') },
+		{ id: 'yuki',   name: 'Yuki',   avatar: avatarFor('yuki', 'YukiQuiet') },
+		{ id: 'tobias', name: 'Tobias', avatar: avatarFor('tobias', 'TobiasCart') },
+		{ id: 'kalla',  name: 'Kalla',  avatar: avatarFor('kalla', 'KallaCurate') },
+		{ id: 'jaakko', name: 'Jaakko', avatar: avatarFor('jaakko', 'JaakkoNight') },
 	],
 	followers: [
-		{ id: 'dan',    name: 'Dan',    avatar: dicebear('DanOuter')   },
-		{ id: 'alice',  name: 'Alice',  avatar: dicebear('AliceSignal') },
-		{ id: 'pauli',  name: 'Pauli',  avatar: dicebear('PauliSeed')  },
-		{ id: 'sanne',  name: 'Sanne',  avatar: dicebear('SanneField') },
-		{ id: 'olek',   name: 'Olek',   avatar: dicebear('OlekDrift')  },
-		{ id: 'doro',   name: 'Doro',   avatar: dicebear('DoroSleeve') },
-		{ id: 'leo',    name: 'Leo',    avatar: dicebear('LeoHalf')    },
-		{ id: 'hilde',  name: 'Hilde',  avatar: dicebear('HildeAbs')   },
+		{ id: 'dan',    name: 'Dan',    avatar: avatarFor('dan', 'DanOuter') },
+		{ id: 'alice',  name: 'Alice',  avatar: avatarFor('alice', 'AliceSignal') },
+		{ id: 'pauli',  name: 'Pauli',  avatar: avatarFor('pauli', 'PauliSeed') },
+		{ id: 'sanne',  name: 'Sanne',  avatar: avatarFor('sanne', 'SanneField') },
+		{ id: 'olek',   name: 'Olek',   avatar: avatarFor('olek', 'OlekDrift') },
+		{ id: 'doro',   name: 'Doro',   avatar: avatarFor('doro', 'DoroSleeve') },
+		{ id: 'leo',    name: 'Leo',    avatar: avatarFor('leo', 'LeoHalf') },
+		{ id: 'hilde',  name: 'Hilde',  avatar: avatarFor('hilde', 'HildeAbs') },
 	],
 	followingCount: 96,
 	followersCount: 738,
@@ -568,7 +575,7 @@ function makeFallbackUser(id: string): UserDetail {
 	return {
 		id,
 		username: name,
-		avatar: dicebear(`${id}-fallback`),
+		avatar: avatarFor(id, `${id}-fallback`),
 		bio: 'A scout in the propagation graph. Their full profile hasn’t been authored yet.',
 		isCurrentUser: false,
 		isFollowing: false,

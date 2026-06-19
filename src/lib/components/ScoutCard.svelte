@@ -35,7 +35,7 @@
 			<div class="relative shrink-0">
 				<div
 					class={[
-						'w-11 h-11 rounded-full overflow-hidden border',
+						'w-16 h-16 rounded-full overflow-hidden border',
 						scout.following ? 'border-primary/40' : 'border-white/15',
 					]}
 				>

@@ -17,6 +17,7 @@
 
 import { coverOf } from './data';
 import type { LiveStatus } from './users';
+import { avatarFor } from './scoutAvatars';
 
 const dicebear = (seed: string) =>
 	`https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=1e1b4b`;
@@ -103,7 +104,7 @@ function u(
 		type: 'user',
 		id,
 		name,
-		avatar: dicebear(`${id}-scout`),
+		avatar: avatarFor(id, `${id}-scout`),
 		character,
 		score,
 		children: children.length > 0 ? children : undefined,
@@ -116,7 +117,7 @@ const danTree: DraftRoot = {
 	type: 'user',
 	id: 'dan',
 	name: 'Dan',
-	avatar: dicebear('DanOuter'),
+	avatar: avatarFor('dan', 'DanOuter'),
 	role: 'Cross-scene bridge · score 84',
 	children: [
 		{
@@ -219,7 +220,7 @@ const aliceTree: DraftRoot = {
 	type: 'user',
 	id: 'alice',
 	name: 'Alice',
-	avatar: dicebear('AliceSignal'),
+	avatar: avatarFor('alice', 'AliceSignal'),
 	role: 'Underground seeder · score 91',
 	children: [
 		{
@@ -310,7 +311,7 @@ const gisliTree: DraftRoot = {
 	type: 'user',
 	id: 'gisli',
 	name: 'Gisli',
-	avatar: dicebear('GisliReverb'),
+	avatar: avatarFor('gisli', 'GisliReverb'),
 	role: 'Trailblazer · score 72',
 	children: [
 		{
@@ -411,7 +412,7 @@ const rikuTree: DraftRoot = {
 	type: 'user',
 	id: 'riku',
 	name: 'Riku',
-	avatar: dicebear('RikuArchive'),
+	avatar: avatarFor('riku', 'RikuArchive'),
 	role: 'Archive cartographer · score 89',
 	children: [
 		// ── Hero impacts ──────────────────────────────────────────

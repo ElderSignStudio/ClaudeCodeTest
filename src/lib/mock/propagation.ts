@@ -225,8 +225,14 @@ export type PropagationForest = {
 	originNote: string;
 };
 
-const dicebear = (seed: string) =>
-	`https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=1e1b4b`;
+import { avatarFor } from './scoutAvatars';
+
+/* Thin shim so legacy `dicebear('SomeSeed')` call sites in this
+   file's editorial pools and hardcoded archetype templates can
+   stay readable. Any site that knows the scout id should call
+   `avatarFor(id, seed)` directly so the portrait mapping applies;
+   the shim is the fallback for headline decorative seeds. */
+const dicebear = (seed: string) => avatarFor('__no-id__', seed);
 
 /* ─────────────── Editorial pools (used by the generator) ─────────────── */
 
@@ -523,7 +529,7 @@ function makeNode(
 ): PropagationUser {
 	const name = opts.name ?? uniqueName(ctx);
 	const id = opts.id ?? uniqueId(ctx, name);
-	const avatar = opts.avatar ?? dicebear(id + Math.floor(ctx.rand() * 1000));
+	const avatar = opts.avatar ?? avatarFor(id, id + Math.floor(ctx.rand() * 1000));
 	const hashSeed = hashString(id);
 	const signalRole = opts.signalRole ?? deriveSignalRole(kind, hashSeed);
 	const timing = deriveSignalTiming(signalRole, hashSeed);
@@ -1964,7 +1970,7 @@ function buildDanDeepLineage(ctx: BuilderCtx): ArchetypeResult {
 	const marcoDeep = makeNode(ctx, 'amplifier', {
 		id: 'marco',
 		name: 'Marco',
-		avatar: dicebear('MarcoAmb'),
+		avatar: avatarFor('marco', 'MarcoAmb'),
 		character: 'Underground connector',
 		branchState: 'accelerating',
 		children: [
@@ -2055,7 +2061,7 @@ function buildDanLongLineage(ctx: BuilderCtx): ArchetypeResult {
 	const marcoDeep = makeNode(ctx, 'amplifier', {
 		id: 'marco',
 		name: 'Marco',
-		avatar: dicebear('MarcoAmb'),
+		avatar: avatarFor('marco', 'MarcoAmb'),
 		character: 'Underground connector',
 		branchState: 'accelerating',
 		children: [
@@ -2194,7 +2200,7 @@ function buildDanOriginPeers(ctx: BuilderCtx): ArchetypeResult {
 	const danOrigin = makeNode(ctx, 'amplifier', {
 		id: 'dan',
 		name: 'Dan',
-		avatar: dicebear('DanOuter'),
+		avatar: avatarFor('dan', 'DanOuter'),
 		character: 'Early signal hunter',
 		isOrigin: true,
 		branchState: 'alive',
@@ -2309,10 +2315,10 @@ const ROTATION_ARCHETYPES = ARCHETYPES.filter(
    include the one matching `sourceScoutId` so the route insertion
    (Dan's preview / amp node) can find them. */
 const KNOWN_SCOUTS: Record<string, { name: string; avatar: string; character: string }> = {
-	marco: { name: 'Marco', avatar: dicebear('MarcoAmb'), character: 'Underground connector' },
-	alice: { name: 'Alice', avatar: dicebear('AliceSignal'), character: 'Deep scene explorer' },
-	yuki:  { name: 'Yuki',  avatar: dicebear('YukiQuiet'),   character: 'Cross-scene bridge'   },
-	dan:   { name: 'Dan',   avatar: dicebear('DanOuter'),    character: 'Early signal hunter'  },
+	marco: { name: 'Marco', avatar: avatarFor('marco', 'MarcoAmb'), character: 'Underground connector' },
+	alice: { name: 'Alice', avatar: avatarFor('alice', 'AliceSignal'), character: 'Deep scene explorer' },
+	yuki:  { name: 'Yuki',  avatar: avatarFor('yuki', 'YukiQuiet'),   character: 'Cross-scene bridge'   },
+	dan:   { name: 'Dan',   avatar: avatarFor('dan', 'DanOuter'),    character: 'Early signal hunter'  },
 };
 
 /* Find a "promotable" origin in the forest and rebrand it as the known

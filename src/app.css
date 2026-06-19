@@ -2007,4 +2007,33 @@ body {
     mix-blend-mode: soft-light;
     opacity: 0.022;
   }
+
+  /* ─── Scout portrait face-forward crop ─────────────────────
+     The portraits in `static/avatars/scouts/` are framed as full
+     headshots — face takes up ~60% of the frame, with hair, shoulders
+     and background occupying the rest. At avatar render sizes
+     (16–96 px) the face becomes the smallest part of an already-small
+     circle. This rule zooms every portrait by ~18% inside its
+     container so the face fills more of the circle — same pattern
+     Slack / Discord / Spotify / LinkedIn use to make headshots
+     recognizable in a 24 px chip.
+
+     Targeting is purely by URL prefix, so this hits every <img> that
+     resolves through `avatarFor()` in the static portrait set, no
+     matter where it's rendered (Sidebar current user, Human Signals
+     cards, Following / Followers chips, Propagation Tree nodes, User
+     Detail page, Item Detail lineage trees, anywhere else).
+     Avatars that fall back to dicebear are untouched — those
+     illustrations are already centre-cropped tightly.
+
+     The transform requires the container to clip overflow. Every
+     avatar container in the app already uses `rounded-full overflow-
+     hidden` (or `rounded-md overflow-hidden` for the few square
+     thumbnails), so the scaled image clips cleanly to the original
+     dimensions. No layout, dimension, border, ring, or selection
+     state is affected — only the pixels INSIDE the existing circle. */
+  img[src^="/avatars/scouts/"] {
+    transform: scale(1.18);
+    transform-origin: center 35%;
+  }
 }
