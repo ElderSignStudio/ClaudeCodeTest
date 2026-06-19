@@ -192,10 +192,6 @@ export type Scout = {
 	recentSignals: string[]; // Spotify cover URLs for the thumbnail strip
 };
 
-function avatar(seed: string): string {
-	return `https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=1e1b4b`;
-}
-
 export const scoutItems: Scout[] = [
 	{
 		id:            'dan',

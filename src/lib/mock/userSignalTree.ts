@@ -19,9 +19,6 @@ import { coverOf } from './data';
 import type { LiveStatus } from './users';
 import { avatarFor } from './scoutAvatars';
 
-const dicebear = (seed: string) =>
-	`https://api.dicebear.com/9.x/thumbs/svg?seed=${seed}&backgroundColor=1e1b4b`;
-
 /* ─── Types ───────────────────────────────────────────────────── */
 
 /** User descendant. May recurse via `children`. */

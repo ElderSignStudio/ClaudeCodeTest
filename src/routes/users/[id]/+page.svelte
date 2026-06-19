@@ -1,11 +1,15 @@
 <script lang="ts">
-	import { UserCheck, UserPlus, ExternalLink, ChevronDown } from 'lucide-svelte';
-	import { slide } from 'svelte/transition';
+	import { UserCheck, UserPlus, ExternalLink } from 'lucide-svelte';
 	import type { LiveStatus } from '$lib/mock/users';
 	import { getUserSignalTree } from '$lib/mock/userSignalTree';
 	import type { PreviewTarget } from '$lib/mock/propagation';
 	import UserSignalTree from '$lib/components/userDetail/UserSignalTree.svelte';
 	import UserTreeInspector from '$lib/components/userDetail/UserTreeInspector.svelte';
+	import ProfileCard from '$lib/components/userDetail/ProfileCard.svelte';
+	import SectionEyebrow from '$lib/components/userDetail/SectionEyebrow.svelte';
+	import CollapsibleSection from '$lib/components/userDetail/CollapsibleSection.svelte';
+	import MetricRow from '$lib/components/userDetail/MetricRow.svelte';
+	import ShowMoreToggle from '$lib/components/userDetail/ShowMoreToggle.svelte';
 	import {
 		overallPercentile,
 		formatTopPercentile,
@@ -330,16 +334,8 @@
 	     headline anchor inside Quality. Strongest Signal sits on a
 	     dedicated bottom row, slightly elevated.
 	     ═══════════════════════════════════════════════════════════ -->
-	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-5"
-		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
-	>
-		<div class="flex items-center gap-2">
-			<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
-			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
-				Scout profile
-			</p>
-		</div>
+	<ProfileCard extraClass="space-y-5">
+		<SectionEyebrow label="Scout profile" color="accent" />
 
 		<!-- Cluster grid. `md:divide-x` paints a 1 px subtle vertical
 		     line between clusters at md+; at sm the clusters stack
@@ -392,27 +388,15 @@
 			<!-- ── OUTPUT: Origin Seeds + Re-share Branches ── -->
 			<div class="md:px-6 flex flex-col gap-3">
 				<p class="text-[10px] uppercase tracking-widest text-base-content/45">Output</p>
-				<div class="flex items-baseline gap-2">
-					<p class="text-[22px] font-semibold tabular-nums text-base-content/92 leading-none">{user.originSeeds}</p>
-					<p class="text-[11.5px] text-base-content/58">origin seeds · signals sparked</p>
-				</div>
-				<div class="flex items-baseline gap-2">
-					<p class="text-[22px] font-semibold tabular-nums text-base-content/92 leading-none">{user.reshareBranches}</p>
-					<p class="text-[11.5px] text-base-content/58">re-share branches · forward shares</p>
-				</div>
+				<MetricRow value={user.originSeeds} label="origin seeds · signals sparked" />
+				<MetricRow value={user.reshareBranches} label="re-share branches · forward shares" />
 			</div>
 
 			<!-- ── REACH: Unique Listeners + Avg / Seed ── -->
 			<div class="md:pl-6 flex flex-col gap-3">
 				<p class="text-[10px] uppercase tracking-widest text-base-content/45">Reach</p>
-				<div class="flex items-baseline gap-2">
-					<p class="text-[22px] font-semibold tabular-nums text-base-content/92 leading-none">{user.uniqueListenersReached}</p>
-					<p class="text-[11.5px] text-base-content/58">unique listeners · reached downstream</p>
-				</div>
-				<div class="flex items-baseline gap-2">
-					<p class="text-[22px] font-semibold tabular-nums text-base-content/92 leading-none">{user.averageReachPerSeed}</p>
-					<p class="text-[11.5px] text-base-content/58">avg reach · listeners per seed</p>
-				</div>
+				<MetricRow value={user.uniqueListenersReached} label="unique listeners · reached downstream" />
+				<MetricRow value={user.averageReachPerSeed} label="avg reach · listeners per seed" />
 			</div>
 		</div>
 
@@ -441,7 +425,7 @@
 				</a>
 			</div>
 		{/if}
-	</section>
+	</ProfileCard>
 
 	<!-- ═══════════════════════════════════════════════════════════
 	     3. SCENE FOOTPRINT
@@ -451,31 +435,14 @@
 	     "what kind of scenes does this scout operate in?" before
 	     the user has to read the numbers.
 	     ═══════════════════════════════════════════════════════════ -->
-	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
-		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
-	>
-		<!-- Disclosure header — same eyebrow styling, now wrapped in a
-		     button with a chevron on the right. Clicking anywhere on
-		     the header toggles. `aria-expanded` mirrors state so
-		     assistive tech can announce the change. -->
-		<button
-			type="button"
-			onclick={() => (sceneFootprintOpen = !sceneFootprintOpen)}
-			aria-expanded={sceneFootprintOpen}
-			class="group w-full flex items-center gap-2 text-left"
+	<ProfileCard>
+		<CollapsibleSection
+			label="Scene footprint"
+			color="accent"
+			bind:open={sceneFootprintOpen}
+			summary={sceneFootprintSummary}
 		>
-			<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
-			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
-				Scene footprint
-			</p>
-			<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({sceneFootprintOpen ? 0 : -90}deg);">
-				<ChevronDown size={14} />
-			</span>
-		</button>
-
-		{#if sceneFootprintOpen}
-			<div transition:slide={{ duration: 200 }} class="mt-4 space-y-4">
+			<div class="mt-4 space-y-4">
 				<p class="text-[13.5px] leading-relaxed text-base-content/78 max-w-2xl">
 					{user.isCurrentUser
 						? user.sceneInterpretation.secondPerson
@@ -505,12 +472,8 @@
 					<p class="text-[12.5px] italic text-base-content/45">No scene data tracked yet.</p>
 				{/if}
 			</div>
-		{:else}
-			<p class="mt-2 text-[12.5px] italic text-base-content/62">
-				{sceneFootprintSummary}
-			</p>
-		{/if}
-	</section>
+		</CollapsibleSection>
+	</ProfileCard>
 
 	<!-- ═══════════════════════════════════════════════════════════
 	     3B. TRUST SIGNALS
@@ -534,16 +497,8 @@
 	     (synthetic fallback scouts with no track record).
 	     ═══════════════════════════════════════════════════════════ -->
 	{#if userTrustSignals}
-		<section
-			class="rounded-xl border border-white/6 bg-base-200/35 px-5 py-4 lg:px-6 lg:py-5"
-			style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
-		>
-			<div class="flex items-center gap-2">
-				<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
-				<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
-					Trust signals
-				</p>
-			</div>
+		<ProfileCard padding="px-5 py-4 lg:px-6 lg:py-5">
+			<SectionEyebrow label="Trust signals" color="secondary" />
 
 			<!-- HEADLINE — the evidence row promoted into the primary
 			     editorial takeaway. No uppercase label above it: the
@@ -581,7 +536,7 @@
 					</div>
 				{/each}
 			</div>
-		</section>
+		</ProfileCard>
 	{/if}
 
 	<!-- ═══════════════════════════════════════════════════════════
@@ -602,69 +557,44 @@
 	     gets the coaching question second.
 	     ═══════════════════════════════════════════════════════════ -->
 	{#if user.isCurrentUser && userGrowthOpportunities.length > 0}
-		<section
-			class="rounded-xl border border-white/6 bg-base-200/35 px-5 py-3.5 lg:px-6 lg:py-4"
-			style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
-		>
-			<button
-				type="button"
-				onclick={() => (growthOpportunitiesOpen = !growthOpportunitiesOpen)}
-				aria-expanded={growthOpportunitiesOpen}
-				class="group w-full flex items-center gap-2 text-left"
+		<ProfileCard padding="px-5 py-3.5 lg:px-6 lg:py-4">
+			<CollapsibleSection
+				label="Growth opportunities"
+				color="accent"
+				bind:open={growthOpportunitiesOpen}
+				summary={growthOpportunitiesSummary}
 			>
-				<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
-				<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
-					Growth opportunities
-				</p>
-				<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({growthOpportunitiesOpen ? 0 : -90}deg);">
-					<ChevronDown size={14} />
-				</span>
-			</button>
+				<!-- Three-line coaching card per opportunity (title /
+				     diagnosis / focus). Aggressive line-height
+				     (`leading-tight`) + minimal vertical gaps keep
+				     the section close to the "one signature-signal
+				     card + heading" vertical budget. No section
+				     subtitle — the eyebrow plus the opportunity
+				     titles carry the framing without an explanatory
+				     sentence. -->
+				<ul class="flex flex-col divide-y divide-white/6 -mx-1 mt-1.5">
+					{#each visibleGrowthOpportunities as opp (opp.metric)}
+						<li class="px-1 py-1.5">
+							<p class="text-[13px] font-semibold leading-tight text-base-content/95">
+								{opp.title}
+							</p>
+							<p class="text-[12px] leading-tight text-base-content/80 mt-0.5">
+								{opp.diagnosis}
+							</p>
+							<p class="text-[11.5px] leading-tight italic text-base-content/65 mt-0.5">
+								{opp.focus}
+							</p>
+						</li>
+					{/each}
+				</ul>
 
-			{#if growthOpportunitiesOpen}
-				<div transition:slide={{ duration: 200 }}>
-					<!-- Three-line coaching card per opportunity (title /
-					     diagnosis / focus). Aggressive line-height
-					     (`leading-tight`) + minimal vertical gaps keep
-					     the section close to the "one signature-signal
-					     card + heading" vertical budget. No section
-					     subtitle — the eyebrow plus the opportunity
-					     titles carry the framing without an explanatory
-					     sentence. -->
-					<ul class="flex flex-col divide-y divide-white/6 -mx-1 mt-1.5">
-						{#each visibleGrowthOpportunities as opp (opp.metric)}
-							<li class="px-1 py-1.5">
-								<p class="text-[13px] font-semibold leading-tight text-base-content/95">
-									{opp.title}
-								</p>
-								<p class="text-[12px] leading-tight text-base-content/80 mt-0.5">
-									{opp.diagnosis}
-								</p>
-								<p class="text-[11.5px] leading-tight italic text-base-content/65 mt-0.5">
-									{opp.focus}
-								</p>
-							</li>
-						{/each}
-					</ul>
-
-					{#if userGrowthOpportunities.length > 2}
-						<div class="mt-1.5 flex justify-center">
-							<button
-								type="button"
-								onclick={() => (growthExpanded = !growthExpanded)}
-								class="text-[11.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
-							>
-								{growthExpanded ? 'Show fewer' : 'Show one more opportunity'}
-							</button>
-						</div>
-					{/if}
-				</div>
-			{:else}
-				<p class="mt-2 text-[12.5px] italic text-base-content/62">
-					{growthOpportunitiesSummary}
-				</p>
-			{/if}
-		</section>
+				{#if userGrowthOpportunities.length > 2}
+					<ShowMoreToggle onclick={() => (growthExpanded = !growthExpanded)}>
+						{growthExpanded ? 'Show fewer' : 'Show one more opportunity'}
+					</ShowMoreToggle>
+				{/if}
+			</CollapsibleSection>
+		</ProfileCard>
 	{/if}
 
 	<!-- ═══════════════════════════════════════════════════════════
@@ -674,16 +604,8 @@
 	     icon to telegraph item-detail navigation), supporting
 	     metrics on the next line, badges + scene tags below.
 	     ═══════════════════════════════════════════════════════════ -->
-	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-3"
-		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
-	>
-		<div class="flex items-center gap-2">
-			<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
-			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
-				Signature signals
-			</p>
-		</div>
+	<ProfileCard extraClass="space-y-3">
+		<SectionEyebrow label="Signature signals" color="accent" />
 		<p class="text-[12.5px] text-base-content/55 italic">
 			The signals that contributed most to this scout’s reputation.
 		</p>
@@ -753,24 +675,16 @@
 				{/each}
 			</ul>
 			{#if user.signatureSignals.length > 3}
-				<!-- Editorial preview control — small italic text-link in
-				     the section's natural rhythm, no toolbar styling. -->
-				<div class="mt-3 flex justify-center">
-					<button
-						type="button"
-						onclick={() => (signatureExpanded = !signatureExpanded)}
-						class="text-[12.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
-					>
-						{signatureExpanded
-							? 'Show less'
-							: `Show ${user.signatureSignals.length - 3} more`}
-					</button>
-				</div>
+				<ShowMoreToggle onclick={() => (signatureExpanded = !signatureExpanded)}>
+					{signatureExpanded
+						? 'Show less'
+						: `Show ${user.signatureSignals.length - 3} more`}
+				</ShowMoreToggle>
 			{/if}
 		{:else}
 			<p class="text-[12.5px] italic text-base-content/45">No signature signals yet.</p>
 		{/if}
-	</section>
+	</ProfileCard>
 
 	<!-- ═══════════════════════════════════════════════════════════
 	     5. EMERGING SIGNALS
@@ -778,27 +692,14 @@
 	     wins. Quieter card surface (no bg lift), softer text, and a
 	     status label per row instead of impact / badges.
 	     ═══════════════════════════════════════════════════════════ -->
-	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
-		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
-	>
-		<button
-			type="button"
-			onclick={() => (emergingSignalsOpen = !emergingSignalsOpen)}
-			aria-expanded={emergingSignalsOpen}
-			class="group w-full flex items-center gap-2 text-left"
+	<ProfileCard>
+		<CollapsibleSection
+			label="Emerging signals"
+			color="secondary"
+			bind:open={emergingSignalsOpen}
+			summary={emergingSignalsSummary}
 		>
-			<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
-			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
-				Emerging signals
-			</p>
-			<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({emergingSignalsOpen ? 0 : -90}deg);">
-				<ChevronDown size={14} />
-			</span>
-		</button>
-
-		{#if emergingSignalsOpen}
-		<div transition:slide={{ duration: 200 }} class="mt-3 space-y-3">
+		<div class="mt-3 space-y-3">
 		<p class="text-[12.5px] text-base-content/55 italic">
 			Quiet seeds that may become important later.
 		</p>
@@ -849,28 +750,18 @@
 				{/each}
 			</ul>
 			{#if user.emergingSignals.length > 3}
-				<div class="mt-3 flex justify-center">
-					<button
-						type="button"
-						onclick={() => (emergingExpanded = !emergingExpanded)}
-						class="text-[12.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
-					>
-						{emergingExpanded
-							? 'Show less'
-							: `Show ${user.emergingSignals.length - 3} more`}
-					</button>
-				</div>
+				<ShowMoreToggle onclick={() => (emergingExpanded = !emergingExpanded)}>
+					{emergingExpanded
+						? 'Show less'
+						: `Show ${user.emergingSignals.length - 3} more`}
+				</ShowMoreToggle>
 			{/if}
 		{:else}
 			<p class="text-[12.5px] italic text-base-content/45">No emerging seeds tracked.</p>
 		{/if}
 		</div>
-		{:else}
-			<p class="mt-2 text-[12.5px] italic text-base-content/62">
-				{emergingSignalsSummary}
-			</p>
-		{/if}
-	</section>
+		</CollapsibleSection>
+	</ProfileCard>
 
 	<!-- ═══════════════════════════════════════════════════════════
 	     6. FOLLOWING / FOLLOWERS
@@ -894,16 +785,8 @@
 				list: user.followers,
 			},
 		] as col (col.kind)}
-			<div
-				class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-3"
-				style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
-			>
-				<div class="flex items-center gap-2">
-					<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
-					<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
-						{col.heading}
-					</p>
-				</div>
+			<ProfileCard tag="div" extraClass="space-y-3">
+				<SectionEyebrow label={col.heading} color="secondary" />
 				<p class="text-[28px] leading-none font-semibold tabular-nums text-base-content/92">{col.count}</p>
 				{#if col.list.length > 0}
 					<div class="flex flex-wrap items-center gap-2 mt-2">
@@ -925,7 +808,7 @@
 				{:else}
 					<p class="text-[12.5px] italic text-base-content/45">No scouts yet.</p>
 				{/if}
-			</div>
+			</ProfileCard>
 		{/each}
 	</section>
 
@@ -937,16 +820,8 @@
 	     Visual hierarchy and connector geometry live in the component
 	     itself so the page file stays readable.
 	     ═══════════════════════════════════════════════════════════ -->
-	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-3"
-		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
-	>
-		<div class="flex items-center gap-2">
-			<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
-			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
-				Signal tree
-			</p>
-		</div>
+	<ProfileCard extraClass="space-y-3">
+		<SectionEyebrow label="Signal tree" color="secondary" />
 		<p class="text-[12.5px] text-base-content/55 italic">
 			Signals sparked by this scout, and the listeners they reached.
 		</p>
@@ -1030,12 +905,12 @@
 						     buttons. The middot separator only appears
 						     between the two paired actions. -->
 						{#if totalSignals > SIGNAL_PAGE_SIZE}
-							<div class="mt-1 flex items-center justify-center gap-3 text-[12.5px] italic text-base-content/65">
+							<div class="mt-1 flex items-center justify-center gap-3 text-[12.5px] italic text-base-content/62">
 								{#if visibleSignalCount < totalSignals}
 									<button
 										type="button"
 										onclick={showMoreSignals}
-										class="hover:text-base-content/95 transition-colors"
+										class="hover:text-base-content/92 transition-colors"
 									>
 										Show {SIGNAL_PAGE_SIZE} more
 									</button>
@@ -1043,7 +918,7 @@
 									<button
 										type="button"
 										onclick={showAllSignals}
-										class="hover:text-base-content/95 transition-colors"
+										class="hover:text-base-content/92 transition-colors"
 									>
 										Show all
 									</button>
@@ -1051,7 +926,7 @@
 									<button
 										type="button"
 										onclick={showFewerSignals}
-										class="hover:text-base-content/95 transition-colors"
+										class="hover:text-base-content/92 transition-colors"
 									>
 										Show fewer
 									</button>
@@ -1114,7 +989,7 @@
 				</p>
 			</div>
 		{/if}
-	</section>
+	</ProfileCard>
 
 </div>
 
