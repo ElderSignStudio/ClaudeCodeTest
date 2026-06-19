@@ -235,10 +235,19 @@
 	   own counter and fires DOM clicks on the chevrons of the
 	   CURRENTLY VISIBLE signals only. Skipping the initial 0 value
 	   means mount doesn't trigger a bulk command — `expand-visible`
-	   is opt-in, not the default. */
+	   is opt-in, not the default.
+
+	   IMPORTANT: the effect MUST NOT depend on `itemIds`. If it did,
+	   revealing more signals via "Show 5 more" would re-fire the
+	   most recent expand / collapse command against the newly
+	   revealed signals (since the counter is still > 0). The closure
+	   still reads the current `itemIds` value when it actually fires,
+	   so "expand visible at this moment" semantics are preserved.
+	   Newly revealed signals inherit PropagationNode's collapsed
+	   construction state and stay collapsed until the user explicitly
+	   clicks them or fires a NEW bulk command. */
 	$effect(() => {
 		void expandCommand;
-		void itemIds;
 		if (expandCommand === 0 || !treeContainer) return;
 		requestAnimationFrame(() => {
 			if (!treeContainer) return;
@@ -253,7 +262,6 @@
 	});
 	$effect(() => {
 		void collapseCommand;
-		void itemIds;
 		if (collapseCommand === 0 || !treeContainer) return;
 		requestAnimationFrame(() => {
 			if (!treeContainer) return;
