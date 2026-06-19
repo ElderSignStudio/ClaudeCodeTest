@@ -345,33 +345,47 @@
 		     line between clusters at md+; at sm the clusters stack
 		     into rows and the dividers disappear naturally. -->
 		<div class="grid gap-6 md:gap-0 md:grid-cols-3 md:divide-x md:divide-white/6">
-			<!-- ── QUALITY: Discovery Score (headline) + Percentile + Hit Rate ── -->
+			<!-- ── QUALITY: Discovery Score + inline supporting metadata ──
+			     The big editorial score (44–52 px) anchors the cluster
+			     on the left. The right-hand column now carries FOUR
+			     stacked elements that read as one unit: the
+			     "Discovery score" eyebrow, then the percentile rank,
+			     then the hit rate. The "editorial 0–100" subtitle
+			     was retired — the percentile + hit rate carry the
+			     same role (context for the score) but with real data.
+			     Both supporting metrics use the same prominence
+			     pattern (semibold tabular `/95` for the value, plain
+			     `/52` for the explanatory tail) so the numbers carry
+			     the visual weight while the labels read as quiet
+			     microcopy. `items-center` vertically centres the
+			     metadata column against the big number so the three
+			     text lines visually balance the score's height. -->
 			<div class="md:pr-6 flex flex-col gap-4">
 				<p class="text-[10px] uppercase tracking-widest text-base-content/45">Quality</p>
-				<div class="flex items-baseline gap-3 -mt-1">
-					<p class="text-[44px] md:text-[52px] leading-none font-semibold tabular-nums text-[oklch(0.86_0.12_60)]/94">
+				<div class="flex items-center gap-3 -mt-1">
+					<p class="shrink-0 text-[44px] md:text-[52px] leading-none font-semibold tabular-nums text-[oklch(0.86_0.12_60)]/94">
 						{user.discoveryScore}
 					</p>
-					<div class="flex flex-col leading-tight">
+					<!-- Metadata column. Explicit `mt-*` margins on each
+					     child (rather than a single parent `gap-*`) let
+					     the eyebrow-to-metrics gap (`mt-1.5`) be a few
+					     pixels larger than the metric-to-metric gap
+					     (`mt-0.5`), so the metric pair reads as a tight
+					     subgroup under the "Discovery score" label. Each
+					     metric row is now a flex line with `gap-2` (8 px)
+					     between the semibold value and the dimmer
+					     descriptor — no longer visually glued together. -->
+					<div class="min-w-0 flex flex-col leading-tight">
 						<span class="text-[11px] uppercase tracking-widest text-base-content/55">Discovery score</span>
-						<span class="text-[11px] text-base-content/45 italic">editorial 0–100</span>
+						<p class="mt-1.5 flex items-baseline gap-2 text-[12.5px] tabular-nums">
+							<span class="font-semibold text-base-content/95">{userPercentileLabel}</span>
+							<span class="text-base-content/52">of all scouts</span>
+						</p>
+						<p class="mt-0.5 flex items-baseline gap-2 text-[12.5px] tabular-nums">
+							<span class="font-semibold text-base-content/95">{formatPercent(user.hitRate)}</span>
+							<span class="text-base-content/52">hit rate</span>
+						</p>
 					</div>
-				</div>
-				<!-- Distribution-aware percentile. Same hierarchy as the
-				     hit-rate row below — secondary, informational, not
-				     a badge. Tabular alpha (/82) is one step brighter
-				     than the explanatory subtitle (/58) so the rank
-				     reads as data rather than microcopy. The value
-				     comes from `overallPercentile()` interpolated
-				     against the population anchors in
-				     `scoutAnalysis.ts`. -->
-				<div class="flex items-baseline gap-2">
-					<p class="text-[13px] font-medium tabular-nums text-base-content/82">{userPercentileLabel}</p>
-					<p class="text-[11.5px] text-base-content/58">of all scouts</p>
-				</div>
-				<div class="flex items-baseline gap-2">
-					<p class="text-[18px] font-semibold tabular-nums text-base-content/92">{formatPercent(user.hitRate)}</p>
-					<p class="text-[11.5px] text-base-content/58">hit rate · seeds that propagated</p>
 				</div>
 			</div>
 
