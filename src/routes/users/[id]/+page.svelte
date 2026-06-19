@@ -1,10 +1,17 @@
 <script lang="ts">
-	import { UserCheck, UserPlus, ExternalLink } from 'lucide-svelte';
+	import { UserCheck, UserPlus, ExternalLink, ChevronDown } from 'lucide-svelte';
+	import { slide } from 'svelte/transition';
 	import type { LiveStatus } from '$lib/mock/users';
 	import { getUserSignalTree } from '$lib/mock/userSignalTree';
 	import type { PreviewTarget } from '$lib/mock/propagation';
 	import UserSignalTree from '$lib/components/userDetail/UserSignalTree.svelte';
 	import UserTreeInspector from '$lib/components/userDetail/UserTreeInspector.svelte';
+	import {
+		overallPercentile,
+		formatTopPercentile,
+		growthOpportunities,
+	} from '$lib/analysis/scoutAnalysis';
+	import { trustSignals } from '$lib/analysis/trustAnalysis';
 
 	/*
 		User Detail page.
@@ -33,6 +40,24 @@
 	let { data } = $props();
 	const user = $derived(data.user);
 	const signalTree = $derived(getUserSignalTree(user.id));
+
+	/* Distribution-aware profile interpretation.
+
+	   `overallPercentile` drives the "Top X%" line under the
+	   Discovery Score in the Quality cluster. `growthOpportunities`
+	   surfaces up to three distribution-aware recommendations,
+	   shown only on the current user's own profile (see
+	   isCurrentUser gate on the section below). Both are pure
+	   functions of `UserDetail` — no DOM, no Svelte coupling — so
+	   the same module can power future Why-Follow / Trust Signals /
+	   Scout-Comparison surfaces. */
+	const userPercentile = $derived(overallPercentile(user));
+	const userPercentileLabel = $derived(formatTopPercentile(userPercentile));
+	const userGrowthOpportunities = $derived(growthOpportunities(user, 3));
+	/** Four-row trust narrative. `null` for synthetic fallback users
+	 *  with no track record — the page hides the section in that case
+	 *  instead of rendering empty editorial copy. */
+	const userTrustSignals = $derived(trustSignals(user));
 
 	/* Right-side inspector selection — two-tier state matching the
 	   Item Detail tree's interaction model:
@@ -66,6 +91,39 @@
 	let signatureExpanded = $state(false);
 	/** Show-more toggle for Emerging Signals (default 3 visible). */
 	let emergingExpanded = $state(false);
+	/** Show-more toggle for Growth Opportunities (default 2 visible). */
+	let growthExpanded = $state(false);
+
+	/* ── Section-level progressive disclosure ─────────────────
+	   Three secondary sections start COLLAPSED on page load so the
+	   default view immediately answers the four primary questions
+	   (who · how good · why trust · what propagated) via Header,
+	   Scout Profile, Trust Signals, Signature Signals, and the
+	   Signal Tree. The collapsed sections still render their title
+	   + a one-line summary so visitors know what's available
+	   without having to expand to find out. State is local to this
+	   page and resets on profile navigation. */
+	let sceneFootprintOpen     = $state(false);
+	let growthOpportunitiesOpen = $state(false);
+	let emergingSignalsOpen    = $state(false);
+
+	const sceneFootprintSummary = $derived(
+		user.sceneFootprint.length > 0
+			? `Primary scene: ${user.sceneFootprint[0].name}`
+			: 'No scene data tracked yet.',
+	);
+	const growthOpportunitiesSummary = $derived(
+		`${userGrowthOpportunities.length} growth ${userGrowthOpportunities.length === 1 ? 'opportunity' : 'opportunities'} identified`,
+	);
+	const emergingSignalsSummary = $derived(
+		user.emergingSignals.length > 0
+			? `${user.emergingSignals.length} emerging ${user.emergingSignals.length === 1 ? 'signal' : 'signals'} being tracked`
+			: 'No emerging seeds tracked.',
+	);
+
+	const visibleGrowthOpportunities = $derived(
+		growthExpanded ? userGrowthOpportunities : userGrowthOpportunities.slice(0, 2),
+	);
 
 	const visibleSignatureSignals = $derived(
 		signatureExpanded ? user.signatureSignals : user.signatureSignals.slice(0, 3),
@@ -74,12 +132,18 @@
 		emergingExpanded ? user.emergingSignals : user.emergingSignals.slice(0, 3),
 	);
 
+	/** Default visible-signal slice + the step size for "Show N more".
+	 *  Both surface in the UI as `Show 5 more` and the "Showing N of
+	 *  M" counter. Keeping these as named constants makes the QA
+	 *  contract self-documenting. */
+	const SIGNAL_PAGE_SIZE = 5;
+
 	/** Cap on signal roots rendered in the tree. Default 5 (every
-	 *  signal arrives collapsed from the first paint, so 5 fits
-	 *  comfortably). Grows by +3 per "Show more signals" click,
-	 *  resets to 5 with "Show fewer signals" once the full set is
+	 *  signal arrives collapsed, so 5 fits comfortably). Grows by
+	 *  +5 per "Show 5 more" click, jumps to total via "Show all",
+	 *  and snaps back to 5 with "Show fewer" once the full set is
 	 *  visible. */
-	let visibleSignalCount = $state(5);
+	let visibleSignalCount = $state(SIGNAL_PAGE_SIZE);
 	const totalSignals = $derived(signalTree?.root.children.length ?? 0);
 
 	/* Tick counters for bulk expand / collapse — UserSignalTree
@@ -89,12 +153,20 @@
 	let expandCommand = $state(0);
 	let collapseCommand = $state(0);
 
-	function toggleVisibleSignals() {
-		if (visibleSignalCount < totalSignals) {
-			visibleSignalCount = Math.min(visibleSignalCount + 3, totalSignals);
-		} else {
-			visibleSignalCount = 5;
-		}
+	/** Reveal the next page-size slice of signals, clamped at the
+	 *  total. Newly mounted signals inherit PropagationNode's seeded
+	 *  collapsed state via `initialExpanded` — they NEVER inherit the
+	 *  user's current expand-visible expansion state. */
+	function showMoreSignals() {
+		visibleSignalCount = Math.min(visibleSignalCount + SIGNAL_PAGE_SIZE, totalSignals);
+	}
+	/** Reveal every remaining signal at once. */
+	function showAllSignals() {
+		visibleSignalCount = totalSignals;
+	}
+	/** Collapse the visibility list back to the default slice. */
+	function showFewerSignals() {
+		visibleSignalCount = SIGNAL_PAGE_SIZE;
 	}
 	function expandVisibleSignals() { expandCommand += 1; }
 	function collapseVisibleSignals() { collapseCommand += 1; }
@@ -117,7 +189,11 @@
 		hoveredNodeId = null;
 		signatureExpanded = false;
 		emergingExpanded = false;
-		visibleSignalCount = 5;
+		growthExpanded = false;
+		sceneFootprintOpen = false;
+		growthOpportunitiesOpen = false;
+		emergingSignalsOpen = false;
+		visibleSignalCount = SIGNAL_PAGE_SIZE;
 	});
 
 	/* Follow toggle — local $state only; the spec is explicit that
@@ -269,21 +345,47 @@
 		     line between clusters at md+; at sm the clusters stack
 		     into rows and the dividers disappear naturally. -->
 		<div class="grid gap-6 md:gap-0 md:grid-cols-3 md:divide-x md:divide-white/6">
-			<!-- ── QUALITY: Discovery Score (headline) + Hit Rate ── -->
+			<!-- ── QUALITY: Discovery Score + inline supporting metadata ──
+			     The big editorial score (44–52 px) anchors the cluster
+			     on the left. The right-hand column now carries FOUR
+			     stacked elements that read as one unit: the
+			     "Discovery score" eyebrow, then the percentile rank,
+			     then the hit rate. The "editorial 0–100" subtitle
+			     was retired — the percentile + hit rate carry the
+			     same role (context for the score) but with real data.
+			     Both supporting metrics use the same prominence
+			     pattern (semibold tabular `/95` for the value, plain
+			     `/52` for the explanatory tail) so the numbers carry
+			     the visual weight while the labels read as quiet
+			     microcopy. `items-center` vertically centres the
+			     metadata column against the big number so the three
+			     text lines visually balance the score's height. -->
 			<div class="md:pr-6 flex flex-col gap-4">
 				<p class="text-[10px] uppercase tracking-widest text-base-content/45">Quality</p>
-				<div class="flex items-baseline gap-3 -mt-1">
-					<p class="text-[44px] md:text-[52px] leading-none font-semibold tabular-nums text-[oklch(0.86_0.12_60)]/94">
+				<div class="flex items-center gap-3 -mt-1">
+					<p class="shrink-0 text-[44px] md:text-[52px] leading-none font-semibold tabular-nums text-[oklch(0.86_0.12_60)]/94">
 						{user.discoveryScore}
 					</p>
-					<div class="flex flex-col leading-tight">
+					<!-- Metadata column. Explicit `mt-*` margins on each
+					     child (rather than a single parent `gap-*`) let
+					     the eyebrow-to-metrics gap (`mt-1.5`) be a few
+					     pixels larger than the metric-to-metric gap
+					     (`mt-0.5`), so the metric pair reads as a tight
+					     subgroup under the "Discovery score" label. Each
+					     metric row is now a flex line with `gap-2` (8 px)
+					     between the semibold value and the dimmer
+					     descriptor — no longer visually glued together. -->
+					<div class="min-w-0 flex flex-col leading-tight">
 						<span class="text-[11px] uppercase tracking-widest text-base-content/55">Discovery score</span>
-						<span class="text-[11px] text-base-content/45 italic">editorial 0–100</span>
+						<p class="mt-1.5 flex items-baseline gap-2 text-[12.5px] tabular-nums">
+							<span class="font-semibold text-base-content/95">{userPercentileLabel}</span>
+							<span class="text-base-content/52">of all scouts</span>
+						</p>
+						<p class="mt-0.5 flex items-baseline gap-2 text-[12.5px] tabular-nums">
+							<span class="font-semibold text-base-content/95">{formatPercent(user.hitRate)}</span>
+							<span class="text-base-content/52">hit rate</span>
+						</p>
 					</div>
-				</div>
-				<div class="flex items-baseline gap-2">
-					<p class="text-[18px] font-semibold tabular-nums text-base-content/92">{formatPercent(user.hitRate)}</p>
-					<p class="text-[11.5px] text-base-content/58">hit rate · seeds that propagated</p>
 				</div>
 			</div>
 
@@ -350,45 +452,220 @@
 	     the user has to read the numbers.
 	     ═══════════════════════════════════════════════════════════ -->
 	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-4"
+		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
 		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 	>
-		<div class="flex items-center gap-2">
+		<!-- Disclosure header — same eyebrow styling, now wrapped in a
+		     button with a chevron on the right. Clicking anywhere on
+		     the header toggles. `aria-expanded` mirrors state so
+		     assistive tech can announce the change. -->
+		<button
+			type="button"
+			onclick={() => (sceneFootprintOpen = !sceneFootprintOpen)}
+			aria-expanded={sceneFootprintOpen}
+			class="group w-full flex items-center gap-2 text-left"
+		>
 			<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
 				Scene footprint
 			</p>
-		</div>
+			<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({sceneFootprintOpen ? 0 : -90}deg);">
+				<ChevronDown size={14} />
+			</span>
+		</button>
 
-		<p class="text-[13.5px] leading-relaxed text-base-content/78 max-w-2xl">
-			{user.isCurrentUser
-				? user.sceneInterpretation.secondPerson
-				: user.sceneInterpretation.thirdPerson}
-		</p>
+		{#if sceneFootprintOpen}
+			<div transition:slide={{ duration: 200 }} class="mt-4 space-y-4">
+				<p class="text-[13.5px] leading-relaxed text-base-content/78 max-w-2xl">
+					{user.isCurrentUser
+						? user.sceneInterpretation.secondPerson
+						: user.sceneInterpretation.thirdPerson}
+				</p>
 
-		{#if user.sceneFootprint.length > 0}
-			<ul class="flex flex-col gap-2.5 mt-2">
-				{#each user.sceneFootprint as scene (scene.name)}
-					<li class="flex items-center gap-4">
-						<div class="w-44 shrink-0 text-[12.5px] text-base-content/78 truncate">
-							{scene.name}
-						</div>
-						<div class="flex-1 h-1.5 rounded-full bg-white/6 overflow-hidden">
-							<div
-								class="h-full rounded-full bg-[oklch(0.72_0.13_230)]/55"
-								style="width: {Math.min(100, scene.percent)}%"
-							></div>
-						</div>
-						<div class="w-12 shrink-0 text-right text-[12px] tabular-nums text-base-content/68">
-							{formatPercent(scene.percent)}
-						</div>
-					</li>
-				{/each}
-			</ul>
+				{#if user.sceneFootprint.length > 0}
+					<ul class="flex flex-col gap-2.5 mt-2">
+						{#each user.sceneFootprint as scene (scene.name)}
+							<li class="flex items-center gap-4">
+								<div class="w-44 shrink-0 text-[12.5px] text-base-content/78 truncate">
+									{scene.name}
+								</div>
+								<div class="flex-1 h-1.5 rounded-full bg-white/6 overflow-hidden">
+									<div
+										class="h-full rounded-full bg-[oklch(0.72_0.13_230)]/55"
+										style="width: {Math.min(100, scene.percent)}%"
+									></div>
+								</div>
+								<div class="w-12 shrink-0 text-right text-[12px] tabular-nums text-base-content/68">
+									{formatPercent(scene.percent)}
+								</div>
+							</li>
+						{/each}
+					</ul>
+				{:else}
+					<p class="text-[12.5px] italic text-base-content/45">No scene data tracked yet.</p>
+				{/if}
+			</div>
 		{:else}
-			<p class="text-[12.5px] italic text-base-content/45">No scene data tracked yet.</p>
+			<p class="mt-2 text-[12.5px] italic text-base-content/62">
+				{sceneFootprintSummary}
+			</p>
 		{/if}
 	</section>
+
+	<!-- ═══════════════════════════════════════════════════════════
+	     3B. TRUST SIGNALS
+	     Reputation explainer — answers "why should I trust this
+	     scout?" via four short editorial rows: Proven Reach, Peer
+	     Comparison, Scouting Edge, Why Followers Stay. Each row's
+	     sentence is derived from real profile data in
+	     `trustAnalysis.ts` and emitted as alternating text /
+	     emphasis `TextPart`s so the page can mark the key evidence
+	     inline (brighter alpha + semibold) without introducing
+	     badges, chips, or colour.
+
+	     Sits ABOVE Growth Opportunities because trust signals
+	     answer the UNIVERSAL question — every visitor asks it —
+	     while Growth Opportunities only fires for the current user.
+	     Trust before improvement also matches the editorial
+	     instinct: explain the scout first, then coach.
+
+	     Renders on BOTH current-user and other-user profiles;
+	     suppressed only when `trustSignals()` returns null
+	     (synthetic fallback scouts with no track record).
+	     ═══════════════════════════════════════════════════════════ -->
+	{#if userTrustSignals}
+		<section
+			class="rounded-xl border border-white/6 bg-base-200/35 px-5 py-4 lg:px-6 lg:py-5"
+			style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
+		>
+			<div class="flex items-center gap-2">
+				<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
+				<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
+					Trust signals
+				</p>
+			</div>
+
+			<!-- HEADLINE — the evidence row promoted into the primary
+			     editorial takeaway. No uppercase label above it: the
+			     whole sentence IS the proof, and a row label would
+			     demote it back into "one of four facts". 14.5 px
+			     semibold + alpha 0.92 lifts it above the supporting
+			     rows below without becoming a marquee. Inline
+			     emphasis is intentionally NOT applied here — the
+			     whole headline already reads as data; bolding
+			     fragments inside it would compete with the prominence
+			     of the sentence as a whole. -->
+			<p class="mt-2.5 text-[14.5px] font-semibold leading-snug text-base-content/92">
+				{#each userTrustSignals.evidence.parts as part}{#if typeof part === 'string'}{part}{:else}{part.hi}{/if}{/each}
+			</p>
+
+			<!-- Supporting signals strip — three compact columns,
+			     one per trust dimension. Each column = small
+			     uppercase label + a 2–6 word noun phrase emitted by
+			     `trustAnalysis.ts` as `row.summary`. The columns
+			     stack vertically on sub-md viewports, preserving the
+			     same hierarchy. No icons, no badges, no boxes, no
+			     dividers between columns — just whitespace and
+			     typography. The headline above carries the proof;
+			     this strip is for fast scanning of the three
+			     supporting signals. -->
+			<div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+				{#each [userTrustSignals.peers, userTrustSignals.distinctive, userTrustSignals.followers] as row (row.label)}
+					<div>
+						<p class="text-[10px] uppercase tracking-widest text-base-content/52">
+							{row.label}
+						</p>
+						<p class="mt-1.5 text-[12.5px] leading-snug text-base-content/82">
+							{row.summary ?? ''}
+						</p>
+					</div>
+				{/each}
+			</div>
+		</section>
+	{/if}
+
+	<!-- ═══════════════════════════════════════════════════════════
+	     3C. GROWTH OPPORTUNITIES (current user only)
+	     Compact coaching surface, not a written evaluation.
+	     Default: 2 highest-priority opportunities. A small italic
+	     text-link reveals the third on demand and snaps back to 2
+	     when re-clicked. Each opportunity = title (slightly
+	     brighter) + one-sentence diagnosis (body) + one focus line
+	     (dimmer, italic). No bullets, no badges, no colour. The
+	     underlying analysis engine in `scoutAnalysis.ts` (percentile
+	     model, weakest-metric detection, distribution awareness) is
+	     unchanged — only the presentation is denser.
+
+	     Sits BELOW Trust Signals because the trust question is
+	     universal whereas the coaching question is personal —
+	     visitors deserve the trust answer first, the page owner
+	     gets the coaching question second.
+	     ═══════════════════════════════════════════════════════════ -->
+	{#if user.isCurrentUser && userGrowthOpportunities.length > 0}
+		<section
+			class="rounded-xl border border-white/6 bg-base-200/35 px-5 py-3.5 lg:px-6 lg:py-4"
+			style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
+		>
+			<button
+				type="button"
+				onclick={() => (growthOpportunitiesOpen = !growthOpportunitiesOpen)}
+				aria-expanded={growthOpportunitiesOpen}
+				class="group w-full flex items-center gap-2 text-left"
+			>
+				<span class="w-0.5 h-3.5 rounded-full bg-accent/65" aria-hidden="true"></span>
+				<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
+					Growth opportunities
+				</p>
+				<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({growthOpportunitiesOpen ? 0 : -90}deg);">
+					<ChevronDown size={14} />
+				</span>
+			</button>
+
+			{#if growthOpportunitiesOpen}
+				<div transition:slide={{ duration: 200 }}>
+					<!-- Three-line coaching card per opportunity (title /
+					     diagnosis / focus). Aggressive line-height
+					     (`leading-tight`) + minimal vertical gaps keep
+					     the section close to the "one signature-signal
+					     card + heading" vertical budget. No section
+					     subtitle — the eyebrow plus the opportunity
+					     titles carry the framing without an explanatory
+					     sentence. -->
+					<ul class="flex flex-col divide-y divide-white/6 -mx-1 mt-1.5">
+						{#each visibleGrowthOpportunities as opp (opp.metric)}
+							<li class="px-1 py-1.5">
+								<p class="text-[13px] font-semibold leading-tight text-base-content/95">
+									{opp.title}
+								</p>
+								<p class="text-[12px] leading-tight text-base-content/80 mt-0.5">
+									{opp.diagnosis}
+								</p>
+								<p class="text-[11.5px] leading-tight italic text-base-content/65 mt-0.5">
+									{opp.focus}
+								</p>
+							</li>
+						{/each}
+					</ul>
+
+					{#if userGrowthOpportunities.length > 2}
+						<div class="mt-1.5 flex justify-center">
+							<button
+								type="button"
+								onclick={() => (growthExpanded = !growthExpanded)}
+								class="text-[11.5px] italic text-base-content/62 hover:text-base-content/92 transition-colors"
+							>
+								{growthExpanded ? 'Show fewer' : 'Show one more opportunity'}
+							</button>
+						</div>
+					{/if}
+				</div>
+			{:else}
+				<p class="mt-2 text-[12.5px] italic text-base-content/62">
+					{growthOpportunitiesSummary}
+				</p>
+			{/if}
+		</section>
+	{/if}
 
 	<!-- ═══════════════════════════════════════════════════════════
 	     4. SIGNATURE SIGNALS
@@ -502,15 +779,26 @@
 	     status label per row instead of impact / badges.
 	     ═══════════════════════════════════════════════════════════ -->
 	<section
-		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6 space-y-3"
+		class="rounded-xl border border-white/6 bg-base-200/35 p-5 lg:p-6"
 		style="box-shadow: 0 0 0 1px rgba(255,255,255,0.04), 0 4px 18px rgba(0,0,0,0.22), inset 0 1px 0 rgba(255,255,255,0.025);"
 	>
-		<div class="flex items-center gap-2">
+		<button
+			type="button"
+			onclick={() => (emergingSignalsOpen = !emergingSignalsOpen)}
+			aria-expanded={emergingSignalsOpen}
+			class="group w-full flex items-center gap-2 text-left"
+		>
 			<span class="w-0.5 h-3.5 rounded-full bg-secondary/55" aria-hidden="true"></span>
 			<p class="text-[11px] font-semibold uppercase tracking-widest text-base-content/68">
 				Emerging signals
 			</p>
-		</div>
+			<span aria-hidden="true" class="ml-auto inline-flex items-center text-base-content/50 group-hover:text-base-content/85 transition-colors" style="transition: transform 200ms ease; transform: rotate({emergingSignalsOpen ? 0 : -90}deg);">
+				<ChevronDown size={14} />
+			</span>
+		</button>
+
+		{#if emergingSignalsOpen}
+		<div transition:slide={{ duration: 200 }} class="mt-3 space-y-3">
 		<p class="text-[12.5px] text-base-content/55 italic">
 			Quiet seeds that may become important later.
 		</p>
@@ -575,6 +863,12 @@
 			{/if}
 		{:else}
 			<p class="text-[12.5px] italic text-base-content/45">No emerging seeds tracked.</p>
+		{/if}
+		</div>
+		{:else}
+			<p class="mt-2 text-[12.5px] italic text-base-content/62">
+				{emergingSignalsSummary}
+			</p>
 		{/if}
 	</section>
 
@@ -723,27 +1017,45 @@
 							{collapseCommand}
 						/>
 
-						<!-- "Show more / Show fewer signals" — only renders
-						     once the tree has more roots than the initial 5.
-						     For users whose total ≤ 5 (Dan's current mock),
-						     no control surfaces because everything is
-						     already visible. Same editorial italic styling
-						     as Signature / Emerging show-more controls. -->
-						{#if totalSignals > 5}
-							<div class="mt-1 flex justify-center">
-								<button
-									type="button"
-									onclick={toggleVisibleSignals}
-									class="text-[12.5px] italic text-base-content/65 hover:text-base-content/95 transition-colors"
-								>
-									{#if visibleSignalCount < totalSignals}
-										{@const remaining = totalSignals - visibleSignalCount}
-										{@const step = Math.min(3, remaining)}
-										Show {step} more signal{step === 1 ? '' : 's'}
-									{:else}
-										Show fewer signals
-									{/if}
-								</button>
+						<!-- Signal-visibility controls — only render for trees
+						     with more roots than the initial slice. While
+						     more remain hidden, surface a paired action:
+						     "Show 5 more" advances one page-size step,
+						     "Show all" reveals the rest immediately. Once
+						     every signal is visible, both collapse into a
+						     single "Show fewer" action that snaps back to
+						     the default 5. Same editorial italic styling as
+						     the Signature / Emerging show-more controls so
+						     they read as reader actions, not toolbar
+						     buttons. The middot separator only appears
+						     between the two paired actions. -->
+						{#if totalSignals > SIGNAL_PAGE_SIZE}
+							<div class="mt-1 flex items-center justify-center gap-3 text-[12.5px] italic text-base-content/65">
+								{#if visibleSignalCount < totalSignals}
+									<button
+										type="button"
+										onclick={showMoreSignals}
+										class="hover:text-base-content/95 transition-colors"
+									>
+										Show {SIGNAL_PAGE_SIZE} more
+									</button>
+									<span class="text-base-content/30 not-italic" aria-hidden="true">·</span>
+									<button
+										type="button"
+										onclick={showAllSignals}
+										class="hover:text-base-content/95 transition-colors"
+									>
+										Show all
+									</button>
+								{:else}
+									<button
+										type="button"
+										onclick={showFewerSignals}
+										class="hover:text-base-content/95 transition-colors"
+									>
+										Show fewer
+									</button>
+								{/if}
 							</div>
 						{/if}
 					</div>
