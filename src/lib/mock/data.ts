@@ -23,6 +23,7 @@
 */
 
 import spotifyData from '../../../data/home-seed.spotify.json';
+import { avatarFor } from './scoutAvatars';
 
 export type Item = {
 	id: string;
@@ -199,7 +200,7 @@ export const scoutItems: Scout[] = [
 	{
 		id:            'dan',
 		name:          'Dan',
-		avatar:        avatar('DanOuter'),
+		avatar:        avatarFor('dan', 'DanOuter'),
 		tasteProfile:  'Obscure prog · dark folk · lost tapes',
 		contextLine:   'Closely aligned with your late-night listening',
 		sparks:        8,
@@ -212,7 +213,7 @@ export const scoutItems: Scout[] = [
 	{
 		id:            'alice',
 		name:          'Alice',
-		avatar:        avatar('AliceSignal'),
+		avatar:        avatarFor('alice', 'AliceSignal'),
 		tasteProfile:  'Brazilian psych · strange collage · obscure finds',
 		contextLine:   'Found through your ambient overlap',
 		sparks:        14,
@@ -225,7 +226,7 @@ export const scoutItems: Scout[] = [
 	{
 		id:           'marco',
 		name:         'Marco',
-		avatar:       avatar('MarcoAmb'),
+		avatar:       avatarFor('marco', 'MarcoAmb'),
 		tasteProfile: 'Ambient · ritual · sonic geography',
 		contextLine:  'Bridges ritual music and field recordings',
 		sparks:       22,
@@ -238,7 +239,7 @@ export const scoutItems: Scout[] = [
 	{
 		id:            'yuki',
 		name:          'Yuki',
-		avatar:        avatar('YukiDeep'),
+		avatar:        avatarFor('yuki', 'YukiDeep'),
 		tasteProfile:  'Early experimental · field recordings · micro-scenes',
 		contextLine:   'Often surfaces signals before breakout',
 		sparks:        6,
