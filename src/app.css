@@ -1693,6 +1693,34 @@
   .conduit-entry-filament { animation: none !important; opacity: 0; }
 }
 
+/* ─── Viewport-paused conduits ──────────────────────────────
+   When a PropagationNode's CHILDREN CONTAINER (the overflow-clip div
+   that holds its child nodes) scrolls outside the viewport, the
+   shared tree-viewport observer adds `.tree-conduits-paused` to it.
+   The rules below freeze the conduit animations of that container's
+   DIRECT children via `animation-play-state: paused` — the cheapest
+   possible way to skip per-frame work for hundreds of off-screen
+   particles in tall trees. State is preserved, so when the user
+   scrolls the container back into view the particles resume
+   mid-cycle.
+
+   Scope is deliberately ONE level (`>`), never a descendant
+   selector: a child's particles travel up the rail to its parent's
+   avatar and are clipped by this container, so the container's
+   viewport intersection is exactly what decides whether those
+   particles can be seen. Nested containers register themselves and
+   decide for their own children. An earlier version observed each
+   node's own wrapper and used descendant selectors; it froze
+   particles that were visibly mid-flight far above their wrapper. */
+.tree-conduits-paused > .tree-node-wrapper > .conduit-particle,
+.tree-conduits-paused > .tree-node-wrapper > .conduit-particle .conduit-trail,
+.tree-conduits-paused > .tree-node-wrapper > .conduit-particle .conduit-head,
+.tree-conduits-paused > .tree-node-wrapper > .conduit-particle .conduit-bloom,
+.tree-conduits-paused > .tree-node-wrapper > .conduit-entry-filament,
+.tree-conduits-paused > * > .conduit-breath {
+  animation-play-state: paused;
+}
+
 /* ─── Personal lineage reveal ───────────────────────────────
    When the user clicks their own real node, the +page derives the
    ORIGIN → … → USER ancestor chain. Three tagged element types

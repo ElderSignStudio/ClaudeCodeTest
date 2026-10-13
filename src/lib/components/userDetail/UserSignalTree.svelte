@@ -43,8 +43,7 @@
 		selectedNodeId = $bindable(null),
 		onPreview: onPreviewCallback,
 		visibleSignalCount = null,
-		expandCommand = 0,
-		collapseCommand = 0,
+		expansionCommand = null,
 	}: {
 		tree: UserSignalTreeData;
 		/** Two-way bound — the parent page reads this to drive the
@@ -61,14 +60,12 @@
 		 *  `null` = show all. Driven by the page's "Show more signals"
 		 *  control so the tree never becomes an infinite vertical sink. */
 		visibleSignalCount?: number | null;
-		/** Tick counter the page increments to request "expand every
-		 *  currently visible signal". The effect runs DOM clicks on the
-		 *  visible signal chevrons — PropagationNode keeps owning the
-		 *  per-node `expanded` state. Initial 0 is a no-op. */
-		expandCommand?: number;
-		/** Tick counter for the symmetric "collapse all currently visible
-		 *  signal subtrees" command. */
-		collapseCommand?: number;
+		/** Bulk-expansion command from the page (the two header buttons).
+		 *  Bumping the nonce + setting kind fires a forest-wide flip on
+		 *  exactly the signal-layer nodes (scoped via `itemIds` below).
+		 *  Per-node chevrons continue to own per-node expansion between
+		 *  commands. Default `null` is a no-op. */
+		expansionCommand?: { kind: 'expand' | 'collapse'; nonce: number } | null;
 	} = $props();
 
 	/* Sliced tree — the rendered forest only includes the top-N
@@ -122,6 +119,24 @@
 		(u: PropagationUser) => !itemIds.has(u.id),
 	);
 
+	/* Per-node decoration. PropagationTree calls this on every node
+	   it mounts; for the item-layer (signal) nodes we return the four
+	   marker classes that scope the rest of this file's CSS. Because
+	   the strings participate in PropagationNode's reactive class
+	   arrays, they survive every selection-state re-render without a
+	   MutationObserver. */
+	const decorateNodeFn = $derived(
+		(u: PropagationUser) =>
+			itemIds.has(u.id)
+				? {
+					wrapper: 'item-node-wrapper',
+					outerRow: 'item-node-outer-row',
+					row: 'item-node-row',
+					avatar: 'item-node-avatar',
+				}
+				: {},
+	);
+
 	/* Click-toggle behaviour: re-selecting the active node clears
 	   the selection so the inspector falls back to its default
 	   Scout Summary state. Writing back through the $bindable
@@ -138,141 +153,61 @@
 		onPreviewCallback?.(target);
 	}
 
-	/* ── Item-node DOM marker ─────────────────────────────────
-	   PropagationNode renders the same wrapper / avatar markup
-	   regardless of nodeKind, so visual differentiation has to be
-	   applied externally. After each render pass we walk the
-	   freshly mounted tree and, for every wrapper whose
-	   data-user-id is an item id, tag its OWN `.node-avatar`
-	   element with `.item-node-avatar`. Marking the avatar (not
-	   the wrapper) is important — a descendant-style selector on
-	   the wrapper would also match nested user avatars under the
-	   item, restyling scouts inside the item subtree by accident.
-	   `wrapper.querySelector('.node-avatar')` returns the first
-	   match in DOM order, which is always the wrapper's own
-	   avatar (descendants come later). */
+	/* ── Root children container marker ────────────────────────
+	   Tag Dan's direct children container so we can give the first
+	   signal card extra space below his row. The container is the
+	   second normal-flow child of Dan's wrapper (after
+	   `.row-selection-zone`) and carries the `pl-12` Tailwind
+	   class. PropagationNode's container class is STATIC, so a
+	   single add per mount is enough — no MutationObserver guard
+	   needed.
+
+	   The item-layer wrapper / avatar / row / outer-row markers
+	   used to live here too, applied via `classList.add` +
+	   MutationObservers that re-added the classes after every
+	   reactive class-binding re-render. That whole pattern is
+	   gone now: they're applied via the `decorateNode` prop on
+	   PropagationTree (see `decorateNodeFn` above) so they
+	   participate in Svelte's reactive class arrays and survive
+	   selection-state changes natively. */
 	let treeContainer: HTMLDivElement | null = $state(null);
 	$effect(() => {
-		void forest;          // re-run when the forest rebuilds
-		void itemIds;         // re-run when the set of item ids changes
-		void rootUserId;      // re-run if the root user changes
+		void forest;
+		void rootUserId;
 		if (!treeContainer) return;
-
-		/* CRITICAL: PropagationNode renders .row-selection-zone (and
-		   .node-avatar) with a REACTIVE class array binding that
-		   includes the `isSelected` branch. When isSelected toggles,
-		   Svelte re-writes the class attribute on those elements,
-		   which WIPES any classes we previously added via
-		   classList.add. That leaves the signal card without its
-		   `.item-node-row` marker → CSS for width/border/etc no
-		   longer applies → the card visually breaks (border vanishes,
-		   width collapses to content). Each marked element gets a
-		   MutationObserver that watches its class attribute and
-		   re-adds our marker whenever Svelte's binding strips it.
-		   Adding a class that's already present does NOT trigger a
-		   further mutation, so there's no loop. */
-		const observers: MutationObserver[] = [];
-		let cancelled = false;
-
 		requestAnimationFrame(() => {
-			if (cancelled || !treeContainer) return;
-			for (const id of itemIds) {
-				const wrapper = treeContainer.querySelector(`[data-user-id="${id}"]`);
-				if (!wrapper) continue;
-				/* Wrapper's class binding in PropagationNode is
-				   STATIC (`relative tree-node-wrapper`), so adding
-				   `.item-node-wrapper` once is enough — Svelte never
-				   re-writes it. */
-				wrapper.classList.add('item-node-wrapper');
-
-				const avatar = wrapper.querySelector('.node-avatar');
-				const row = wrapper.querySelector('.row-selection-zone');
-				const outerRow = row?.parentElement ?? null;
-
-				const targets: Array<{ el: Element | null; cls: string }> = [
-					{ el: avatar, cls: 'item-node-avatar' },
-					{ el: row, cls: 'item-node-row' },
-					{ el: outerRow, cls: 'item-node-outer-row' },
-				];
-
-				for (const { el, cls } of targets) {
-					if (!el) continue;
-					el.classList.add(cls);
-					const obs = new MutationObserver(() => {
-						if (!el.classList.contains(cls)) {
-							el.classList.add(cls);
-						}
-					});
-					obs.observe(el, { attributes: true, attributeFilter: ['class'] });
-					observers.push(obs);
-				}
-			}
-			/* Tag Dan's direct children container so we can give the
-			   first signal card extra space below his row. The
-			   container is the second normal-flow child of Dan's
-			   wrapper (after `.row-selection-zone`) and carries the
-			   `pl-12` Tailwind class. PropagationNode's container
-			   class is static, so a single add suffices. */
+			if (!treeContainer) return;
 			const danWrapper = treeContainer.querySelector(`[data-user-id="${rootUserId}"]`);
 			const rootKids = danWrapper?.querySelector(':scope > div.pl-12');
 			rootKids?.classList.add('root-children-container');
-
-			/* No synthetic auto-collapse — signal-layer nodes now
-			   start collapsed at construction via the `initialExpanded`
-			   predicate passed to PropagationTree below. The tree
-			   arrives collapsed on the first paint, with no DOM
-			   manipulation. */
 		});
-
-		return () => {
-			cancelled = true;
-			for (const o of observers) o.disconnect();
-		};
 	});
 
 	/* ── Bulk "Expand visible" / "Collapse visible" ─────────────
-	   The page increments these counters; each effect watches its
-	   own counter and fires DOM clicks on the chevrons of the
-	   CURRENTLY VISIBLE signals only. Skipping the initial 0 value
-	   means mount doesn't trigger a bulk command — `expand-visible`
-	   is opt-in, not the default.
-
-	   IMPORTANT: the effect MUST NOT depend on `itemIds`. If it did,
-	   revealing more signals via "Show 5 more" would re-fire the
-	   most recent expand / collapse command against the newly
-	   revealed signals (since the counter is still > 0). The closure
-	   still reads the current `itemIds` value when it actually fires,
-	   so "expand visible at this moment" semantics are preserved.
-	   Newly revealed signals inherit PropagationNode's collapsed
-	   construction state and stay collapsed until the user explicitly
-	   clicks them or fires a NEW bulk command. */
+	   The page bumps `expansionCommand.nonce` whenever its header
+	   buttons fire. We snapshot `itemIds` at the MOMENT the
+	   upstream nonce changes and forward a propagation-level
+	   command that targets exactly that snapshot. Subsequent
+	   `itemIds` growth (e.g. from "Show 5 more") deliberately does
+	   NOT re-broadcast the command — newly revealed signals
+	   inherit PropagationNode's collapsed construction state and
+	   stay collapsed until the user fires a NEW bulk command.
+	   This matches the original DOM-click-based behaviour: "expand
+	   visible at this moment" semantics. */
+	let scopedExpansionCommand = $state<
+		{ kind: 'expand' | 'collapse'; nonce: number; targets: Set<string> } | null
+	>(null);
+	let lastUpstreamExpansionNonce = -1;
 	$effect(() => {
-		void expandCommand;
-		if (expandCommand === 0 || !treeContainer) return;
-		requestAnimationFrame(() => {
-			if (!treeContainer) return;
-			for (const id of itemIds) {
-				const wrapper = treeContainer.querySelector(`[data-user-id="${id}"]`);
-				const chev = wrapper?.querySelector(
-					':scope > div > button[aria-label$="branch"]',
-				) as HTMLButtonElement | null;
-				if (chev?.getAttribute('aria-label') === 'Expand branch') chev.click();
-			}
-		});
-	});
-	$effect(() => {
-		void collapseCommand;
-		if (collapseCommand === 0 || !treeContainer) return;
-		requestAnimationFrame(() => {
-			if (!treeContainer) return;
-			for (const id of itemIds) {
-				const wrapper = treeContainer.querySelector(`[data-user-id="${id}"]`);
-				const chev = wrapper?.querySelector(
-					':scope > div > button[aria-label$="branch"]',
-				) as HTMLButtonElement | null;
-				if (chev?.getAttribute('aria-label') === 'Collapse branch') chev.click();
-			}
-		});
+		const cmd = expansionCommand;
+		if (!cmd) return;
+		if (cmd.nonce === lastUpstreamExpansionNonce) return;
+		lastUpstreamExpansionNonce = cmd.nonce;
+		scopedExpansionCommand = {
+			kind: cmd.kind,
+			nonce: cmd.nonce,
+			targets: new Set(itemIds),
+		};
 	});
 
 	/* ── "Signal: …" locator ──────────────────────────────────
@@ -347,6 +282,8 @@
 		onPreview={handlePreview}
 		currentUserId={null}
 		initialExpanded={initialExpansionFor}
+		decorateNode={decorateNodeFn}
+		expansionCommand={scopedExpansionCommand}
 	/>
 </div>
 

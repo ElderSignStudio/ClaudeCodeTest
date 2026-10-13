@@ -150,12 +150,14 @@
 	let visibleSignalCount = $state(SIGNAL_PAGE_SIZE);
 	const totalSignals = $derived(signalTree?.root.children.length ?? 0);
 
-	/* Tick counters for bulk expand / collapse — UserSignalTree
-	   watches these and fires DOM clicks on the visible signal
-	   chevrons. Counters (not booleans) so the same command can
-	   re-fire without resetting. */
-	let expandCommand = $state(0);
-	let collapseCommand = $state(0);
+	/* Bulk expand / collapse — a single command object whose `nonce`
+	   the page bumps when the header buttons fire. UserSignalTree
+	   scopes the command to the currently visible signal-layer ids
+	   and forwards it through PropagationTree → PropagationNode,
+	   which updates each matched node's internal `expanded` state.
+	   No DOM clicks, no chevron simulation. */
+	let expansionNonce = 0;
+	let expansionCommand = $state<{ kind: 'expand' | 'collapse'; nonce: number } | null>(null);
 
 	/** Reveal the next page-size slice of signals, clamped at the
 	 *  total. Newly mounted signals inherit PropagationNode's seeded
@@ -172,8 +174,14 @@
 	function showFewerSignals() {
 		visibleSignalCount = SIGNAL_PAGE_SIZE;
 	}
-	function expandVisibleSignals() { expandCommand += 1; }
-	function collapseVisibleSignals() { collapseCommand += 1; }
+	function expandVisibleSignals() {
+		expansionNonce += 1;
+		expansionCommand = { kind: 'expand', nonce: expansionNonce };
+	}
+	function collapseVisibleSignals() {
+		expansionNonce += 1;
+		expansionCommand = { kind: 'collapse', nonce: expansionNonce };
+	}
 
 	function handleTreePreview(target: PreviewTarget | null) {
 		/* Only user-node previews drive the inspector. `cluster`
@@ -888,8 +896,7 @@
 							bind:selectedNodeId
 							onPreview={handleTreePreview}
 							{visibleSignalCount}
-							{expandCommand}
-							{collapseCommand}
+							{expansionCommand}
 						/>
 
 						<!-- Signal-visibility controls — only render for trees

@@ -5,6 +5,7 @@
 	import type { PropagationUser, PreviewTarget, BranchActivityState } from '$lib/mock/propagation';
 	import { sortNodesByPropagation, computeBranchActivity } from '$lib/mock/propagation';
 	import Self from './PropagationNode.svelte';
+	import { observeConduitsForPause } from './treeViewportObserver.ts';
 
 	/*
 		One row of the propagation tree. Renders this user plus, recursively,
@@ -40,6 +41,8 @@
 		trunkLineageIndex = -1,
 		onAmplify = undefined,
 		initialExpanded = undefined,
+		decorateNode = undefined,
+		expansionCommand = null,
 	}: {
 		user: PropagationUser;
 		selectedUserId: string | null;
@@ -127,7 +130,55 @@
 		 *  for the non-current-user case — the button never appears
 		 *  on rows other than Dan's. */
 		onAmplify?: (() => void) | undefined;
+		/** Optional per-node decoration hook. Called for every node
+		 *  (including children mounted via recursion) with the user
+		 *  payload; returns CSS class strings to append to the
+		 *  wrapper / outer-row / row-selection-zone / avatar
+		 *  elements. Designed for callers that need to apply
+		 *  persistent decorator classes alongside Svelte's reactive
+		 *  class bindings (e.g. User Detail's item-node treatment)
+		 *  without resorting to DOM mutation. Each returned string
+		 *  participates in the same class-array binding as
+		 *  PropagationNode's own classes, so it survives every
+		 *  selection-state re-render without a MutationObserver.
+		 *  Threaded through to `<Self>` so descendants inherit the
+		 *  same decoration rule. */
+		decorateNode?:
+			| ((user: PropagationUser) => {
+				wrapper?: string;
+				outerRow?: string;
+				row?: string;
+				avatar?: string;
+			})
+			| undefined;
+		/** Optional bulk-expansion command. When the `nonce` changes
+		 *  AND this node's id is in `targets`, this node's internal
+		 *  `expanded` state snaps to `kind === 'expand'`. Lets external
+		 *  callers programmatically expand or collapse a slice of the
+		 *  tree without simulating chevron clicks via the DOM. Chevron
+		 *  interaction continues to work unchanged afterwards. Threaded
+		 *  through to `<Self>` so descendants react to the same
+		 *  command on the same nonce tick. */
+		expansionCommand?: {
+			targets: Set<string>;
+			kind: 'expand' | 'collapse';
+			nonce: number;
+		} | null;
 	} = $props();
+
+	/* Per-instance memory of the last command nonce this node acted
+	   on. Plain `let` (not `$state`) because we never want this to
+	   trigger re-renders — it's just a "have we already processed
+	   this command?" latch. Survives selection re-renders since
+	   PropagationNode instances persist as long as their parent
+	   keyed-each iteration does. */
+	let lastSeenExpansionNonce = -1;
+
+	/* Resolve decorations once per render. The decorator is a pure
+	   function of `user`, so the four class strings are stable for a
+	   given node. Memoised via $derived so we don't call the
+	   decorator on every selection-state re-render. */
+	const decoration = $derived(decorateNode ? decorateNode(user) : undefined);
 
 	/* True when THIS node sits on the user's personal lineage. Used to
 	   tag the row + conduit SVGs with data-on-lineage so the CSS dim
@@ -260,6 +311,22 @@
 	// svelte-ignore state_referenced_locally
 	let expanded = $state(initialExpanded ? initialExpanded(user) : true);
 	let tailExpanded = $state(false);
+
+	/* React to bulk expand/collapse commands from the parent. We
+	   only obey the command when its nonce is new AND this node's
+	   id is in the targets set, so unrelated nodes are untouched.
+	   The `lastSeenExpansionNonce` latch above prevents the same
+	   command from re-firing if some other dependency causes the
+	   effect to re-run (e.g. selection state). Chevron clicks
+	   continue to own `expanded` between bulk commands. */
+	$effect(() => {
+		const cmd = expansionCommand;
+		if (!cmd) return;
+		if (cmd.nonce === lastSeenExpansionNonce) return;
+		lastSeenExpansionNonce = cmd.nonce;
+		if (!cmd.targets.has(user.id)) return;
+		expanded = cmd.kind === 'expand';
+	});
 
 	const hasVisibleChildren = $derived(user.children.length > 0);
 	const isSelected = $derived(selectedUserId === user.id);
@@ -1059,6 +1126,35 @@
 	   arrival at the parent). */
 	let wrapperEl: HTMLDivElement | null = $state(null);
 
+	/* Ref to this node's children container (the overflow-clip div
+	   rendered below when expanded). Null while collapsed. */
+	let childrenEl: HTMLDivElement | null = $state(null);
+
+	/* Register the children container with the shared tree-viewport
+	   observer. When the container scrolls outside the viewport (plus
+	   a 200 px hysteresis margin) the observer adds
+	   `.tree-conduits-paused` to it; CSS rules in app.css then pause
+	   the conduit animations of its DIRECT children via
+	   `animation-play-state: paused`. This eliminates per-frame work
+	   for off-screen particles — the dominant per-frame cost when
+	   scrolling a Riku-scale tree.
+
+	   We observe the children container rather than this node's own
+	   wrapper because a child's particles travel UP the rail far
+	   beyond the child's wrapper (all the way to this node's avatar).
+	   The container is the box that clips that travel, so it is the
+	   only element whose viewport intersection answers "could any of
+	   these particles be visible right now?". Observing the wrapper
+	   froze particles that were still visibly in flight above it.
+
+	   `bind:this` sets childrenEl back to null when the {#if} block
+	   unmounts on collapse; the effect re-runs, the previous cleanup
+	   unobserves, and we return early. */
+	$effect(() => {
+		if (!childrenEl) return;
+		return observeConduitsForPause(childrenEl);
+	});
+
 	/* ── Root-only: measure the deepest descendant and size the
 	     offset-path to fit it. ResizeObserver re-measures when the
 	     tree expands/collapses so the path adapts to layout changes
@@ -1277,7 +1373,7 @@
 </script>
 
 <div
-	class="relative tree-node-wrapper"
+	class={['relative tree-node-wrapper', decoration?.wrapper]}
 	bind:this={wrapperEl}
 	data-user-id={user.id}
 	data-wrapper-on-lineage={isInLineage ? 'true' : 'false'}
@@ -1508,6 +1604,7 @@
 			user.isPreviewNode
 				? 'cursor-default opacity-50'
 				: 'cursor-pointer',
+			decoration?.outerRow,
 		]}
 		onclick={() => onSelect(user)}
 		onkeydown={(e) => { if (!user.isPreviewNode && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); onSelect(user); } }}
@@ -1584,6 +1681,7 @@
 						   clearly outshine this, preserving the hierarchy. */
 						? 'bg-primary/9 ring-1 ring-primary/22 hover:bg-primary/13 cu-row selection-elev-user-persist'
 						: 'group-hover/row:bg-white/4'),
+				decoration?.row,
 			]}
 		>
 		<div
@@ -1596,6 +1694,7 @@
 				   outermost ring instead. Removed automatically the
 				   instant the origin gains a first child. */
 				isUnheardOrigin && 'unheard-origin',
+				decoration?.avatar,
 			]}
 		>
 			{#if user.nodeKind === 'successful-amplifier' && !user.isPreviewNode}
@@ -1974,7 +2073,10 @@
 			left edge and its center — so particles visually arrive at
 			the node rather than at the chevron.
 		-->
-		<div class="relative pl-12 ml-3.5 overflow-clip [overflow-clip-margin:10px]">
+		<div
+			class="relative pl-12 ml-3.5 overflow-clip [overflow-clip-margin:10px]"
+			bind:this={childrenEl}
+		>
 			{#each sortedChildren as child, i (child.id)}
 				<Self
 					user={child}
@@ -1982,6 +2084,8 @@
 					{onSelect}
 					{onPreview}
 					{initialExpanded}
+					{decorateNode}
+					{expansionCommand}
 					depth={depth + 1}
 					isLast={i === sortedChildren.length - 1 && !hasHiddenTail}
 					onParticleArrival={onChildParticleArrival}

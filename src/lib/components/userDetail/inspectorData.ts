@@ -62,6 +62,26 @@ export type Selection =
 	(hash-seeded on item id), so the synthetic scouts (Daria, Renan,
 	etc.) are stable.
 */
+/* Non-mutating bottom-up annotation. Returns a NEW PropagationUser
+   with `branchSize` set to its total descendant count plus a new
+   children array of similarly-annotated descendants. The original
+   `u` is left untouched — critical because `signalForest.roots`
+   comes from the memoized cache in `propagationForestFor()` and
+   downstream consumers (Item Detail) expect the original descendant-
+   count `branchSize` to remain pristine. */
+function annotateUnderItem(u: PropagationUser): { user: PropagationUser; descendants: number } {
+	let total = 0;
+	const annotatedChildren: PropagationUser[] = u.children.map((c) => {
+		const { user, descendants } = annotateUnderItem(c);
+		total += 1 + descendants;
+		return user;
+	});
+	return {
+		user: { ...u, branchSize: total, children: annotatedChildren },
+		descendants: total,
+	};
+}
+
 export function buildUnifiedForest(tree: UserSignalTree): PropagationForest {
 	const rootUserId = tree.root.id;
 
@@ -71,19 +91,43 @@ export function buildUnifiedForest(tree: UserSignalTree): PropagationForest {
 			const signalForest = propagationForestFor(signal.itemId, signal.listeners, rootUserId);
 			const rebranded = findUserInForest(signalForest, rootUserId);
 			const downstream = rebranded ? rebranded.children : signalForest.roots;
+			/* Annotate downstream non-mutatively. Each scout gets a
+			   NEW PropagationUser with its branchSize re-derived to
+			   reflect the user-tree context (raw descendant count
+			   instead of the propagation engine's procedural value).
+			   The original scouts in the memoized cache are NEVER
+			   touched. */
+			let itemDownstreamCount = 0;
+			const annotatedDownstream = downstream.map((c) => {
+				const { user, descendants } = annotateUnderItem(c);
+				itemDownstreamCount += 1 + descendants;
+				return user;
+			});
+			void itemDownstreamCount; // available if we ever want item-level totals
 			return {
 				id: signal.itemId,
 				name: signal.title,
 				avatar: signal.coverArt,
 				character: signal.artist,
+				/* Item-node branchSize is the editorial impact score
+				   (drives the inline +N display in PropagationNode),
+				   NOT a descendant count. The descendant scouts under
+				   it carry their own user-tree-context branchSize. */
 				branchSize: signal.impact,
 				amplifications: signal.generations,
 				discoveredAgo: '',
 				behaviorNote: '',
 				scenes: signal.tags,
-				children: downstream,
+				children: annotatedDownstream,
 			};
 		});
+
+	let danReach = 0;
+	for (const item of itemChildren) {
+		let itemDownstream = 0;
+		for (const child of item.children) itemDownstream += 1 + child.branchSize;
+		danReach += 1 + itemDownstream;
+	}
 
 	const danNode: PropagationUser = {
 		id: rootUserId,
@@ -91,7 +135,7 @@ export function buildUnifiedForest(tree: UserSignalTree): PropagationForest {
 		avatar: tree.root.avatar,
 		character: tree.root.role,
 		amplifications: itemChildren.length,
-		branchSize: 0,
+		branchSize: danReach,
 		discoveredAgo: '',
 		behaviorNote: '',
 		scenes: [],
@@ -100,25 +144,6 @@ export function buildUnifiedForest(tree: UserSignalTree): PropagationForest {
 		isCurrentUser: true,
 		nodeKind: 'successful-amplifier',
 	};
-
-	/* Recompute branchSize bottom-up for everything EXCEPT item nodes
-	   (whose branchSize is the editorial impact score). */
-	function annotateUnderItem(u: PropagationUser): number {
-		let n = 0;
-		for (const c of u.children) n += 1 + annotateUnderItem(c);
-		u.branchSize = n;
-		return n;
-	}
-	for (const item of itemChildren) {
-		for (const child of item.children) annotateUnderItem(child);
-	}
-	let danReach = 0;
-	for (const item of itemChildren) {
-		let itemDownstream = 0;
-		for (const child of item.children) itemDownstream += 1 + child.branchSize;
-		danReach += 1 + itemDownstream;
-	}
-	danNode.branchSize = danReach;
 
 	return {
 		itemId: `user-tree-${rootUserId}`,

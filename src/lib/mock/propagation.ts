@@ -2507,11 +2507,26 @@ const ARCHETYPE_NOTES: Record<string, { summary: string; crossingNote: string; o
  * node) can find them. For items where Dan is genuinely the route
  * source, Dan is included as an origin.
  */
+/* Memoization cache for `propagationForestFor()`. The generator is
+   deterministic for a given `(itemId, scouts, sourceScoutId)`
+   triple. Now that `buildUnifiedForest()` (the other major consumer)
+   is non-mutating, the cached forest's nodes are safe to share
+   across multiple consumers and across renders. At Riku's scale
+   (25 signals × `propagationForestFor()` call per signal) this
+   saves ~750 wasted synthetic node generations per page mount.
+   `\x1f` (ASCII unit separator) keeps the key safe against any
+   colon / dash that might appear in an itemId. */
+const _forestCache = new Map<string, PropagationForest>();
+
 export function propagationForestFor(
 	itemId: string,
 	scouts: number,
 	sourceScoutId?: string,
 ): PropagationForest {
+	const cacheKey = `${itemId}\x1f${scouts}\x1f${sourceScoutId ?? ''}`;
+	const cached = _forestCache.get(cacheKey);
+	if (cached) return cached;
+
 	const seed = hashString(itemId);
 	const rand = makeRng(seed);
 	const ctx: BuilderCtx = { rand, usedIds: new Set(), usedNames: new Set() };
@@ -2554,7 +2569,7 @@ export function propagationForestFor(
 	const notes = ARCHETYPE_NOTES[archetype.name];
 	const sceneList = pickN(rand, SCENES, randInt(rand, 3, 5));
 
-	return {
+	const result: PropagationForest = {
 		itemId,
 		roots: built.roots,
 		hiddenRootUsers: built.hiddenRootUsers,
@@ -2569,6 +2584,8 @@ export function propagationForestFor(
 		crossingNote: notes.crossingNote,
 		originNote: notes.originNote,
 	};
+	_forestCache.set(cacheKey, result);
+	return result;
 }
 
 /**

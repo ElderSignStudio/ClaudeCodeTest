@@ -30,6 +30,8 @@
 		revealNonce = 0,
 		onAmplify = undefined,
 		initialExpanded = undefined,
+		decorateNode = undefined,
+		expansionCommand = null,
 	}: {
 		forest: PropagationForest;
 		selectedUserId: string | null;
@@ -43,6 +45,35 @@
 		 *  keeps every node expanded — unchanged for callers (Item
 		 *  Detail) that don't opt in. */
 		initialExpanded?: ((user: PropagationUser) => boolean) | undefined;
+		/** Optional per-node decoration hook. Returns CSS class
+		 *  strings applied to the wrapper / outer-row / row-
+		 *  selection-zone / avatar elements alongside PropagationNode's
+		 *  own reactive class arrays. Lets external callers apply
+		 *  persistent decorator classes (e.g. UserSignalTree's
+		 *  item-node-* family) without DOM mutation. Threaded
+		 *  through to every PropagationNode and its recursive
+		 *  descendants. Default `undefined` leaves Item Detail
+		 *  untouched. */
+		decorateNode?:
+			| ((user: PropagationUser) => {
+				wrapper?: string;
+				outerRow?: string;
+				row?: string;
+				avatar?: string;
+			})
+			| undefined;
+		/** Bulk expand/collapse command. When the `nonce` changes, every
+		 *  mounted PropagationNode whose id is in `targets` flips its
+		 *  internal `expanded` state to match `kind`. Nodes outside the
+		 *  target set are untouched, and chevron interaction continues
+		 *  to own per-node state between commands. Replaces the legacy
+		 *  pattern of simulating chevron clicks via the DOM. Default
+		 *  `null` is a no-op. */
+		expansionCommand?: {
+			targets: Set<string>;
+			kind: 'expand' | 'collapse';
+			nonce: number;
+		} | null;
 		/** When the user clicks their OWN real node, the +page derives the
 		 *  ORIGIN → … → USER ancestor chain and passes it here. Every node
 		 *  in the set stays at full opacity; everything else dims via
@@ -499,6 +530,8 @@
 				depth={0}
 				{onAmplify}
 				{initialExpanded}
+				{decorateNode}
+				{expansionCommand}
 			/>
 		{/each}
 	</div>
@@ -525,6 +558,8 @@
 						depth={0}
 						{onAmplify}
 						{initialExpanded}
+						{decorateNode}
+						{expansionCommand}
 					/>
 				{/each}
 			</div>
